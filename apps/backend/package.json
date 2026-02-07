@@ -5,14 +5,19 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
-    "lint": "eslint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@elysiajs/openapi": "^1.4.14",
-    "elysia": "latest"
+    "elysia": "latest",
+    "eslint": "^10.0.0"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "@eslint/js": "^10.0.1",
+    "bun-types": "latest",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.3.0",
+    "typescript-eslint": "^8.54.0"
   },
   "module": "src/index.js"
 }
