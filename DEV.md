@@ -1,7 +1,7 @@
 # Informações úteis
 ## ! IMPORTANTE
 
-depois de instalar o bun, executem o comando `bun isntall` pra instalar todos os pacotes que o projeto precisa
+depois de instalar o bun, executem o comando `bun install` pra instalar todos os pacotes que o projeto precisa
 
 ## Type Safety
 > Pra uma DX mais rápida e menos frustrante quando forem mexer com o typescript.
