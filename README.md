@@ -34,3 +34,11 @@ Facilitar o acompanhamento de indicadores financeiros, como valor de ações, ta
 
 	Backend: Node.js
 	Frontend: React
+
+## Equipe
+
+- Kawan Mark (PO)
+- Pedro Custódio (SM)
+- Lucas Roberto (Dev)
+- Gabriel Albertini (Dev)
+- Alexandre Pierri (Dev)
