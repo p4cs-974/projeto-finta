@@ -1,5 +1,13 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { openapi } from "@elysiajs/openapi";
+
+export default new Elysia()
+  .get("/", () => "Hello Vercel Function")
+  .post("/", ({ body }) => body, {
+    body: t.Object({
+      name: t.String(),
+    }),
+  });
 
 const app = new Elysia()
   .use(openapi())
