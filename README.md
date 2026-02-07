@@ -37,8 +37,16 @@ Facilitar o acompanhamento de indicadores financeiros, como valor de ações, ta
 
 ## Equipe
 
-- Kawan Mark (PO)
-- Pedro Custódio (SM)
-- Lucas Roberto (Dev)
-- Gabriel Albertini (Dev)
-- Alexandre Pierri (Dev)
+| Nome | Papel |
+|------|-------|
+| Kawan Mark | Product Owner (PO) |
+| Pedro Custódio | Scrum Master (SM) |
+| Alexandre Pierri | Desenvolvedor |
+| Lucas Roberto | Desenvolvedor |
+| Gabriel Albertini | Desenvolvedor |
+
+## Estrutura do Projeto
+
+### Laboratórios e Entregas
+
+- **[Lab 01 - Definição de Projeto](./Gestão%20de%20Projetos%20de%20Software/Lab01%20-%20Definicao%20de%20Projeto/)**: Lean Canvas, papéis do time e visão inicial do produto
