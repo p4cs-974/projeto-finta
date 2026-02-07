@@ -1,12 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
-  "globalEnv": [
-    "NODE_ENV",
-    "PORT",
-    "API_URL",
-    "DATABASE_URL"
-  ],
+  // "globalDependencies": ["**/.env.*local"],
+  // "globalEnv": [
+  //   "NODE_ENV",
+  //   "PORT",
+  //   "API_URL",
+  //   "DATABASE_URL"
+  // ],
+  "ui": "tui",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -20,17 +21,17 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
-    "test": {
-      "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
-    },
-    "test:watch": {
-      "cache": false,
-      "persistent": true
-    },
-    "clean": {
-      "cache": false
-    },
+    // "test": {
+    //   "dependsOn": ["^build"],
+    //   "outputs": ["coverage/**"]
+    // },
+    // "test:watch": {
+    //   "cache": false,
+    //   "persistent": true
+    // },
+    // "clean": {
+    //   "cache": false
+    // },
     "type-check": {
       "dependsOn": ["^build"],
       "outputs": []
