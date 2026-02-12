@@ -11,7 +11,7 @@ export default new Elysia()
 
 const app = new Elysia()
   .use(openapi())
-  .get("/", () => "Hello Elysia")
+  .get("/", () => "Hello Teste😍")
   .listen(3000);
 
 console.log(
