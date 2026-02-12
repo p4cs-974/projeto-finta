@@ -10,6 +10,11 @@ const app = new Elysia()
     body: t.Object({
       name: t.String(),
     }),
+  })
+
+  // rota dinâmica para criptos
+  .get("/crypto/:symbol", ({ params }) => {
+    return { symbol: params.symbol, price: "mockado" };
   });
 
 if (!process.env.VERCEL) {
