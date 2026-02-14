@@ -6,7 +6,7 @@ Sistema FINTA (FINancial Tracking & Analysis)
 
 ## 2. Objetivo do projeto
 
-Auxiliar pessoas a terem um controle melhor da sua vida financeira monitorando indicadores financeiros populares, como ações, cripto e tabela fipe. Auxiliar investidores iniciantes a controlar sua vida financeira de maneira unificadada desde o início.
+Desenvolver um sistema de consultas financeiras centralizado que permita que o usuário crie uma biblioteca, com o objetivo de auxiliar pessoas a terem um controle melhor da sua vida financeira monitorando indicadores financeiros populares, como ações, cripto e tabela fipe, e auxiliar investidores iniciantes a controlar sua vida financeira de maneira unificadada desde o início, buscando aproximar o público brasileiro do mercado financeiro de criptomoedas e ações.
 
 ## 3. Problema que o sistema resolve
 
@@ -18,7 +18,7 @@ Pessoas que buscam uma organização financeira melhor, e acesso mais unificado 
 
 ## 5. Objetivos do produto
 
-Centralizar informações financeiras relevantes ao usuário de forma amigável pra pessoas iniciantes na vida financeira.
+Centralizar informações a respeito de criptomoedas, ações e tabela fipe de maneira amigável ao usário, permitido que ele realize consultas, e crie uma biblioteca própria de ações/criptomoedas ou modelos de carro específicos da tabela FIPE.
 
 ## 6. Principais funcionalidades
 
