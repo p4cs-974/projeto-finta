@@ -22,11 +22,11 @@ As histórias foram priorizadas utilizando o método **MoSCoW**, considerando o 
 | ID | História de Usuário | Prioridade | Justificativa |
 |----|---------------------|------------|---------------|
 | **US01** | Como usuário, quero visualizar uma interface limpa e centralizada para acompanhar meus dados financeiros rapidamente. | **Must Have** | Essencial para a primeira impressão e usabilidade do sistema. É a base para todas as outras funcionalidades. |
-| **US02** | Como usuário, quero cadastrar minhas receitas e despesas para manter meu saldo pessoal atualizado. | **Must Have** | Funcionalidade core de gestão financeira. Valor fundamental do produto. |
+| **US02** | Como usuário autenticado, quero salvar meus ativos facoritos para acessá-los rapidamente. | **Should Have** | Funcionalidade principal do sistema. |
 | **US03** | Como investidor, quero ver cotações de ações e criptos em tempo real para não precisar usar ferramentas externas complexas. | **Must Have** | Diferencial competitivo e centralização de informações. Representa o valor único do FINTA. |
 | **US04** | Como entusiasta, quero visualizar a Taxa Selic atualizada para entender o impacto nos meus investimentos de renda fixa. | **Should Have** | Importante para investidores brasileiros, mas não impede o uso básico do sistema. |
-| **US05** | Como interessado em crédito, quero simular parcelas e taxas para comparar o custo total de um financiamento. | **Should Have** | Agrega valor significativo, mas é uma ferramenta auxiliar ao core do produto. |
-| **US06** | Como usuário, quero me autenticar de forma segura para que meus dados financeiros favoritos fiquem protegidos. | **Must Have** | Essencial para segurança e proteção de dados sensíveis. Requisito crítico. |
+| **US05** | Como interessado em crédito, quero **comparar taxas de financiamento de diferentes instituições** para encontrar a melhor opção disponível no mercado. | **Should Have** | Agrega valor significativo, mas é uma ferramenta auxiliar ao core do produto. |
+| **US06** | Como usuário, quero me autenticar de forma segura para que meus dados financeiros fiquem protegidos. | **Must Have** | Essencial para segurança e proteção de dados sensíveis. |
 
 ---
 
@@ -43,14 +43,9 @@ Cada história de usuário foi analisada segundo os critérios **INVEST** para g
 - **Small:** Pode ser entregue em 1 Sprint.
 - **Testável:** Tempo de carregamento e elementos visuais são mensuráveis.
 
-### US02 - Cadastro de Transações
+### US02 - Favoritos
 
-- **Independente:** CRUD básico sem dependências complexas.
-- **Negociável:** Campos e categorias de transações podem ser discutidos.
-- **Valiosa:** Core do produto - gestão financeira pessoal.
-- **Estimável:** Operações CRUD conhecidas (5 story points).
-- **Small:** Implementação viável em 1 Sprint.
-- **Testável:** Cálculo de saldo e persistência são testáveis.
+
 
 ### US03 - Integração com APIs de Mercado
 
