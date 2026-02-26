@@ -1,0 +1,48 @@
+@startuml
+left to right direction
+
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "Usuário" as U
+actor "API de Mercado" as AM
+actor "API Banco Central" as ABC
+actor "Fonte de Taxas de Financiamento" as ATF
+
+rectangle "Sistema FINTA" {
+  usecase "Acessar dashboard financeiro" as UC1
+  usecase "Visualizar saldo consolidado" as UC2
+  usecase "Visualizar detalhes de\nindicadores/ativos" as UC3
+  usecase "Autenticar usuário" as UC4
+  usecase "Exibir aviso de segurança\n(após tentativas inválidas)" as UC5
+  usecase "Gerenciar favoritos" as UC6
+  usecase "Adicionar ativo aos favoritos" as UC7
+  usecase "Listar favoritos com\ncotações atualizadas" as UC8
+  usecase "Consultar cotações em tempo real\n(ações/criptos)" as UC9
+  usecase "Visualizar taxa Selic atualizada" as UC10
+  usecase "Comparar taxas de financiamento" as UC11
+  usecase "Simular financiamento e ver\ndetalhamento de juros" as UC12
+}
+
+U -- UC1
+U -- UC4
+U -- UC6
+U -- UC9
+U -- UC10
+U -- UC11
+U -- UC12
+
+UC1 .> UC2 : <<include>>
+UC1 .> UC3 : <<include>>
+UC6 .> UC7 : <<include>>
+UC6 .> UC8 : <<include>>
+UC8 .> UC9 : <<include>>
+UC4 .> UC5 : <<extend>>
+UC11 .> UC12 : <<include>>
+
+AM -- UC9
+AM -- UC8
+ABC -- UC10
+ATF -- UC11
+ATF -- UC12
+@enduml

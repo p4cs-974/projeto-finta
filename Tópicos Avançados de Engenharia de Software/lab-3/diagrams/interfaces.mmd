@@ -1,0 +1,48 @@
+classDiagram
+direction LR
+
+class IPriceQueryService {
+  <<interface>>
+  +getCryptoQuote(symbol: string): CryptoQuote
+  +getStockQuote(ticker: string): StockQuote
+}
+
+class IFipeQueryService {
+  <<interface>>
+  +getVehiclePrice(input: VehicleQuery): FipePrice
+}
+
+class IRegistrationService {
+  <<interface>>
+  +register(input: RegistrationInput): RegistrationResult
+}
+
+class IUserLibraryService {
+  <<interface>>
+  +addAsset(input: AssetInput): LibraryItem
+  +listAssets(): LibraryItem[]
+}
+
+class IMarketDataGateway {
+  <<interface>>
+  +fetchCrypto(symbol: string): ExternalCryptoQuote
+  +fetchStock(ticker: string): ExternalStockQuote
+}
+
+class IFipeGateway {
+  <<interface>>
+  +fetchVehiclePrice(input: VehicleQuery): ExternalFipePrice
+}
+
+class IAuthRepository {
+  <<interface>>
+  +createUser(input: RegistrationInput): User
+  +existsByEmail(email: string): boolean
+}
+
+class IUserLibraryRepository {
+  <<interface>>
+  +save(item: LibraryItem): LibraryItem
+  +findAll(): LibraryItem[]
+  +existsByTicker(ticker: string): boolean
+}

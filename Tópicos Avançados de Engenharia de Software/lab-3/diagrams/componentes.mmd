@@ -1,0 +1,42 @@
+flowchart LR
+    U[/"Usuário"/]
+    MKT[/"API Mercado Financeiro"/]
+    FIPE[/"API FIPE"/]
+
+    subgraph Client["Cliente"]
+      FE["Frontend Web App <<component>>"]
+      LIB["User Library Repository (Client) <<component>>"]
+    end
+
+    subgraph Server["Servidor FINTA"]
+      BE["Backend API <<component>>"]
+      AUTH["Auth Repository <<component>>"]
+      MKTAD["Market Data Adapter <<component>>"]
+      FIPEAD["FIPE Adapter <<component>>"]
+    end
+
+    IPrice["IPriceQueryService <<interface>>"]
+    IFipe["IFipeQueryService <<interface>>"]
+    IReg["IRegistrationService <<interface>>"]
+    ILib["IUserLibraryRepository <<interface>>"]
+    IMarket["IMarketDataGateway <<interface>>"]
+    IFipeExt["IFipeGateway <<interface>>"]
+
+    U --> FE
+    FE --> IPrice
+    FE --> IFipe
+    FE --> IReg
+    FE --> ILib
+
+    IPrice --> BE
+    IFipe --> BE
+    IReg --> BE
+
+    ILib --> LIB
+    BE --> AUTH
+    BE --> IMarket
+    IMarket --> MKTAD
+    MKTAD --> MKT
+    BE --> IFipeExt
+    IFipeExt --> FIPEAD
+    FIPEAD --> FIPE

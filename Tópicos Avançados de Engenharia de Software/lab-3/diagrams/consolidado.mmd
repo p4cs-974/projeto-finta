@@ -1,0 +1,58 @@
+flowchart TB
+    U[/"Usuário"/]
+    MKT[/"API Mercado Financeiro"/]
+    FIPE[/"API FIPE"/]
+
+    subgraph UseCases["Casos de Uso"]
+      UC1(["Consultar preço do Bitcoin"])
+      UC2(["Consultar preço carro (FIPE)"])
+      UC3(["Adicionar ação à biblioteca (ex.: Google)"])
+      UC4(["Cadastrar conta"])
+    end
+
+    subgraph Client["Cliente"]
+      FE["Frontend Web App <<component>>"]
+      LIB["Biblioteca Local <<component>>"]
+    end
+
+    subgraph Server["Servidor FINTA"]
+      BE["Backend API <<component>>"]
+      AUTH["Auth Repository <<component>>"]
+      MKTAD["Market Data Adapter <<component>>"]
+      FIPEAD["FIPE Adapter <<component>>"]
+    end
+
+    IPrice["IPriceQueryService <<interface>>"]
+    IFipe["IFipeQueryService <<interface>>"]
+    IReg["IRegistrationService <<interface>>"]
+    ILib["IUserLibraryRepository <<interface>>"]
+    IMarket["IMarketDataGateway <<interface>>"]
+    IFipeExt["IFipeGateway <<interface>>"]
+
+    U --> UC1
+    U --> UC2
+    U --> UC3
+    U --> UC4
+
+    UC1 --> FE
+    UC2 --> FE
+    UC3 --> FE
+    UC4 --> FE
+
+    FE --> IPrice
+    FE --> IFipe
+    FE --> IReg
+    FE --> ILib
+
+    IPrice --> BE
+    IFipe --> BE
+    IReg --> BE
+    ILib --> LIB
+
+    BE --> AUTH
+    BE --> IMarket
+    IMarket --> MKTAD
+    MKTAD --> MKT
+    BE --> IFipeExt
+    IFipeExt --> FIPEAD
+    FIPEAD --> FIPE
