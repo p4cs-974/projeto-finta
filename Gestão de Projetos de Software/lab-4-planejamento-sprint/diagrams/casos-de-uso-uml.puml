@@ -1,0 +1,99 @@
+@startuml UC-FINTA-Completo
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+title Casos de Uso - Sistema FINTA (Consolidado)
+
+actor "Usuario" as U
+actor "Servico de Autenticacao" as AUTH
+actor "API Financeira" as FIN
+actor "API Cripto" as CRYPTO
+actor "Banco de Favoritos" as DB_FAV
+actor "API Selic" as SELIC
+actor "API de Taxas de Financiamento" as TAXAS
+actor "Banco de Simulacoes" as DB_SIM
+
+rectangle "Sistema FINTA" {
+  package "Acesso e Mercado" {
+    usecase "UC1 - Visualizar dashboard financeiro" as UC1
+    usecase "UC2 - Visualizar detalhes de\nindicadores/ativos" as UC2
+    usecase "UC3 - Realizar cadastro" as UC3
+    usecase "UC4 - Realizar login" as UC4
+  }
+
+  package "Favoritos e Cotacoes" {
+    usecase "UC5 - Adicionar favoritos" as UC5
+    usecase "UC6 - Editar favoritos" as UC6
+    usecase "UC7 - Remover favoritos" as UC7
+    usecase "UC8 - Consultar cotacoes em\ntempo real (acoes/criptos)" as UC8
+  }
+
+  package "Selic e Financiamento" {
+    usecase "UC9 - Visualizar taxa Selic atualizada" as UC9
+    usecase "UC10 - Comparar taxas de\nfinanciamento" as UC10
+    usecase "UC11 - Simular financiamento" as UC11
+    usecase "UC12 - Salvar financiamento\nsimulado" as UC12
+    usecase "UC13 - Visualizar financiamento\nsimulado salvo" as UC13
+    usecase "UC14 - Remover financiamento\nsimulado salvo" as UC14
+  }
+
+  usecase "Validar dados de entrada" as UC_VAL_DADOS
+  usecase "Validar autenticacao" as UC_VAL_AUTH
+}
+
+U -- UC1
+U -- UC2
+U -- UC3
+U -- UC4
+U -- UC5
+U -- UC6
+U -- UC7
+U -- UC8
+U -- UC9
+U -- UC10
+U -- UC11
+U -- UC12
+U -- UC13
+U -- UC14
+
+UC1 .> UC_VAL_AUTH : <<include>>
+UC2 .> UC_VAL_AUTH : <<include>>
+UC3 .> UC_VAL_DADOS : <<include>>
+UC4 .> UC_VAL_DADOS : <<include>>
+UC5 .> UC_VAL_AUTH : <<include>>
+UC6 .> UC_VAL_AUTH : <<include>>
+UC7 .> UC_VAL_AUTH : <<include>>
+UC8 .> UC_VAL_AUTH : <<include>>
+UC9 .> UC_VAL_AUTH : <<include>>
+UC10 .> UC_VAL_AUTH : <<include>>
+UC11 .> UC_VAL_AUTH : <<include>>
+UC12 .> UC_VAL_AUTH : <<include>>
+UC13 .> UC_VAL_AUTH : <<include>>
+UC14 .> UC_VAL_AUTH : <<include>>
+
+UC5 .> UC8 : <<include>>
+UC6 .> UC8 : <<include>>
+UC7 .> UC8 : <<include>>
+UC12 .> UC11 : <<include>>
+UC14 .> UC13 : <<include>>
+
+AUTH -- UC3
+AUTH -- UC4
+AUTH -- UC_VAL_AUTH
+FIN -- UC1
+FIN -- UC2
+FIN -- UC8
+CRYPTO -- UC1
+CRYPTO -- UC2
+CRYPTO -- UC8
+DB_FAV -- UC5
+DB_FAV -- UC6
+DB_FAV -- UC7
+SELIC -- UC9
+TAXAS -- UC10
+TAXAS -- UC11
+DB_SIM -- UC12
+DB_SIM -- UC13
+DB_SIM -- UC14
+@enduml
