@@ -104,22 +104,22 @@
 - PNA parcial 9
 
 ## Cálculo da PUC
-> para UC1, UC2, UC3, UC4, UC5, UC6
+> para UC1, UC2, UC3, UC4, UC5, UC6, UC7
 PA = PNA (soma de todos) x C (c = 1)
 PA = PNA (soma de todos)
-PA = 7 + 7 + 6 + 6 + 9
-PA = 35
+PA = 7 + 7 + 6 + 6 + 9 + 10 + 8
+PA = 53
 
 PUC = PA * 23 / 36
-PUC = 22,3611111111
-PUC = 23
+PUC = 33,8611111111
+PUC = 34
 
 ## Esforço total
 
-Esforço total = 23 * 8 = 184
+Esforço total = 34 * 8 = 272
 
 ## Custo
 
-184 * 80 = 14.720
+272 * 80 = 21.760
 
 ## Sprint 1
