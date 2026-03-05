@@ -11,7 +11,7 @@ Modelar o sistema utilizando a abordagem de Cheesman & Daniels, estruturando a a
 - [x] Agrupar operações relacionadas em interfaces coesas (identificação de interfaces).
 
 ### Pacote final (25/02/2026 + 2 semanas)
-- [ ] Agrupar interfaces em componentes com responsabilidades claras (identificar componentes).
-- [ ] Definir pré e pós-condições para pelo menos uma operação por componente (contratos das operações).
-- [ ] Identificar dependências entre componentes (via interfaces).
-- [ ] Elaborar diagrama contendo componentes, interfaces fornecidas/requeridas e dependências.
+- [x] Agrupar interfaces em componentes com responsabilidades claras (identificar componentes).
+- [x] Definir pré e pós-condições para pelo menos uma operação por componente (contratos das operações).
+- [x] Identificar dependências entre componentes (via interfaces).
+- [x] Elaborar diagrama contendo componentes, interfaces fornecidas/requeridas e dependências.
