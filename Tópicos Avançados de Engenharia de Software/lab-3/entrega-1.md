@@ -98,7 +98,95 @@ Arquivo fonte: [casos-de-uso.puml](/Users/pedro/Faculdade/topicos-avancados-eng-
 - `IAuthRepository`
   - `createUser(input: RegistrationInput): User`
   - `existsByEmail(email: string): boolean`
-- `IUserLibraryRepository`
-  - `save(item: LibraryItem): LibraryItem`
-  - `findAll(): LibraryItem[]`
-  - `existsByTicker(ticker: string): boolean`
+
+## 4) Identificação de Componentes
+
+Os componentes do pacote final foram definidos com base nas interfaces identificadas e no escopo funcional desta entrega.
+
+- `Frontend Web App`
+  - Responsabilidade: interação com usuário, orquestração de chamadas para o backend e persistência da biblioteca local (`localStorage`) por meio de `IUserLibraryService`.
+  - Interfaces principais: consome `IPriceQueryService`, `IFipeQueryService`, `IRegistrationService`; fornece `IUserLibraryService`.
+- `Backend API`
+  - Responsabilidade: expor serviços de domínio do sistema, validar entradas e orquestrar integrações externas.
+  - Interfaces principais: fornece `IPriceQueryService`, `IFipeQueryService`, `IRegistrationService`; consome `IMarketDataGateway` e `IFipeGateway`.
+  - Módulo interno: `Auth Module` (não é componente de implantação separado).
+- `Market Data Adapter`
+  - Responsabilidade: adaptação da API de mercado financeiro para o contrato interno `IMarketDataGateway`.
+- `FIPE Adapter`
+  - Responsabilidade: adaptação da API FIPE para o contrato interno `IFipeGateway`.
+
+## 5) Contratos das Operações (pré e pós-condições)
+
+### 5.1 Frontend Web App
+
+- Operação: `addAsset(input: AssetInput)`
+- Pré-condições:
+  - `input.ticker` informado e válido.
+  - `localStorage` disponível e acessível no navegador.
+- Pós-condições:
+  - Ativo persistido na biblioteca local sem duplicidade.
+  - Lista exibida ao usuário atualizada com estado consistente.
+
+### 5.2 Backend API
+
+- Operação: `getCryptoQuote(symbol: string)`
+- Pré-condições:
+  - `symbol` informado e não vazio.
+  - `IMarketDataGateway` configurado e operacional.
+- Pós-condições:
+  - Cotação normalizada retornada no contrato `CryptoQuote`; ou
+  - Erro técnico padronizado retornado em caso de falha externa.
+
+### 5.3 Auth Module (interno ao Backend API)
+
+- Operação: `createUser(input: RegistrationInput)`
+- Pré-condições:
+  - Email válido no `input`.
+  - `existsByEmail(input.email)` igual a `false`.
+- Pós-condições:
+  - Usuário criado com identificador único.
+  - Novo registro persistido e recuperável por consulta posterior.
+
+### 5.4 Market Data Adapter
+
+- Operação: `fetchStock(ticker: string)`
+- Pré-condições:
+  - `ticker` informado e válido.
+  - API externa de mercado financeiro acessível.
+- Pós-condições:
+  - Payload retornado no formato acordado por `IMarketDataGateway`; ou
+  - Falha técnica classificada (ex.: indisponibilidade/timeout).
+
+### 5.5 FIPE Adapter
+
+- Operação: `fetchVehiclePrice(input: VehicleQuery)`
+- Pré-condições:
+  - `input.marca`, `input.modelo` e `input.ano` informados.
+  - API FIPE acessível.
+- Pós-condições:
+  - Valor FIPE e metadados mínimos retornados; ou
+  - Resultado vazio controlado/erro técnico padronizado.
+
+## 6) Dependências entre Componentes (via interfaces)
+
+- `Frontend Web App` -> `Backend API`
+  - Via `IPriceQueryService`
+  - Via `IFipeQueryService`
+  - Via `IRegistrationService`
+- `Frontend Web App` -> Biblioteca local
+  - Via `IUserLibraryService` (implementada no cliente)
+- `Backend API` -> `Market Data Adapter`
+  - Via `IMarketDataGateway`
+- `Backend API` -> `FIPE Adapter`
+  - Via `IFipeGateway`
+- `Backend API` -> `Auth Module` (interno)
+  - Via `IAuthRepository` para persistência/autenticação interna
+- Adaptadores -> Sistemas externos
+  - `Market Data Adapter` -> API Mercado Financeiro
+  - `FIPE Adapter` -> API FIPE
+
+## 7) Diagrama de Componentes (PlantUML)
+
+![Diagrama de Componentes](/Users/pedro/Faculdade/topicos-avancados-eng-software/projeto-finta/Tópicos Avançados de Engenharia de Software/lab-3/diagrams/componentes-final.png)
+
+Arquivo fonte: [componentes-final.puml](/Users/pedro/Faculdade/topicos-avancados-eng-software/projeto-finta/Tópicos Avançados de Engenharia de Software/lab-3/diagrams/componentes-final.puml)
