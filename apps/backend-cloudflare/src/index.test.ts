@@ -61,7 +61,7 @@ describe("POST /auth/register", () => {
 		expect(JSON.stringify(payload)).not.toContain("password_hash");
 		expect(fakeDb.getUsers()).toHaveLength(1);
 		expect(fakeDb.getUsers()[0]?.email).toBe("pedro@example.com");
-		expect(fakeDb.getUsers()[0]?.password_hash).toMatch(/^pbkdf2\$sha256\$310000\$/);
+		expect(fakeDb.getUsers()[0]?.password_hash).toMatch(/^pbkdf2\$sha256\$100000\$/);
 	});
 
 	it("stores and returns normalized accented names consistently", async () => {
