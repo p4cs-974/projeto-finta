@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Facehash } from "facehash";
 import Link from "next/link";
 
-const avatarColors = ["#D96C3D", "#E8B86D", "#5E8C61", "#2A6F97", "#7B5EA7"];
+const avatarColors = ["#FF3366", "#00D9FF", "#7FFF00", "#FF6B35", "#9D00FF"];
 
 interface RegisterSuccessResponse {
   data: {
@@ -112,7 +112,7 @@ export function SignupForm({
         return;
       }
 
-      await response.json() as RegisterSuccessResponse;
+      (await response.json()) as RegisterSuccessResponse;
       setFormSuccess("Account created. You are authenticated on this device.");
       router.push("/");
       router.refresh();
@@ -135,7 +135,7 @@ export function SignupForm({
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
-              <div className="flex flex-col items-center gap-3 border-y border-border/60 py-4 text-center">
+              <div className="flex flex-col items-center gap-3 py-4 text-center">
                 <p className="text-xs font-medium text-muted-foreground">
                   Avatar Preview
                 </p>

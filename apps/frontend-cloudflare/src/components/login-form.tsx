@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { sanitizeRedirectTo, type AuthErrorResponse } from "@/lib/auth";
 import Link from "next/link";
+import { ChartLineIcon } from "./ui/chart-line";
 
 export function LoginForm({
   className,
@@ -89,6 +90,7 @@ export function LoginForm({
       <form onSubmit={handleSubmit}>
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
+            <ChartLineIcon size={48} autoPlay />
             <h1 className="text-xl font-bold">Sign in to Finta</h1>
             <FieldDescription>
               Use your email and password to access your account.
