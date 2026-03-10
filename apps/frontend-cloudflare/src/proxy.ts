@@ -9,11 +9,11 @@ import {
 
 function isPublicPath(pathname: string) {
   return publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const session = getSessionFromCookieValue(
     request.cookies.get(AUTH_COOKIE_NAME)?.value,
