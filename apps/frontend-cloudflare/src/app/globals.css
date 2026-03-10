@@ -120,7 +120,18 @@
 	* {
 		@apply border-border outline-ring/50;
 	}
+	html {
+		min-height: 100%;
+		background-color: var(--background);
+	}
+	html:has([data-page-shell="muted"]) {
+		background-color: var(--muted);
+	}
 	body {
+		min-height: 100%;
 		@apply bg-background text-foreground font-sans;
+	}
+	body:has([data-page-shell="muted"]) {
+		background-color: var(--muted);
 	}
 }
