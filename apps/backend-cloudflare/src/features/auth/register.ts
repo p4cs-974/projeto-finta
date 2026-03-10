@@ -57,6 +57,7 @@ export async function handleRegister(request: Request, env: AppEnv): Promise<Res
 		{
 			sub: String(user.id),
 			email: user.email,
+			name: user.name,
 			iat: issuedAt,
 			exp: issuedAt + ACCESS_TOKEN_TTL_SECONDS,
 		},

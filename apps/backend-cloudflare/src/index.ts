@@ -1,5 +1,6 @@
+import { handleLogin } from "./features/auth/login";
 import { handleRegister } from "./features/auth/register";
-import { apiError, errorResponse } from "./lib/http";
+import { apiError, errorResponse, json } from "./lib/http";
 import { renderSwaggerUiHtml } from "./lib/docs";
 import { createOpenApiDocument } from "./lib/openapi";
 
@@ -12,7 +13,7 @@ async function routeRequest(request: Request, env: AppEnv): Promise<Response> {
 	const url = new URL(request.url);
 
 	if (request.method === "GET" && url.pathname === "/openapi.json") {
-		return Response.json(createOpenApiDocument(url.origin));
+		return json(createOpenApiDocument(url.origin));
 	}
 
 	if (request.method === "GET" && url.pathname === "/docs") {
@@ -25,6 +26,10 @@ async function routeRequest(request: Request, env: AppEnv): Promise<Response> {
 
 	if (request.method === "POST" && url.pathname === "/auth/register") {
 		return handleRegister(request, env);
+	}
+
+	if (request.method === "POST" && url.pathname === "/auth/login") {
+		return handleLogin(request, env);
 	}
 
 	throw apiError(404, "NOT_FOUND", "Route not found");

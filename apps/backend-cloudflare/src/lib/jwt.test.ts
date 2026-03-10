@@ -13,6 +13,7 @@ describe("JWT helpers", () => {
 			{
 				sub: "1",
 				email: "pedro@example.com",
+				name: "Pedro Custodio",
 				iat: 1_741_608_000,
 				exp: 1_741_611_600,
 			},
@@ -29,12 +30,14 @@ describe("JWT helpers", () => {
 			decodeBase64UrlJson<{
 				sub: string;
 				email: string;
+				name: string;
 				iat: number;
 				exp: number;
 			}>(payload),
 		).toEqual({
 			sub: "1",
 			email: "pedro@example.com",
+			name: "Pedro Custodio",
 			iat: 1_741_608_000,
 			exp: 1_741_611_600,
 		});
