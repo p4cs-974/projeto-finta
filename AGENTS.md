@@ -5,15 +5,15 @@
 **Finta** (FINancial Tracking & Analysis) is a full-stack financial management application built as a Turborepo monorepo.
 
 - **Monorepo Tool**: Turborepo v2.8.3
-- **Package Manager**: Bun v1.3.6
+- **Package Manager**: pnpm v10
 - **Structure**: `apps/` (applications) + `packages/` (shared libraries)
 
 ## Architecture
 
 ```
 ├── apps/
-│   ├── backend/     # Elysia API server (Bun runtime)
-│   └── frontend/    # React SPA (Vite + Tailwind CSS v4)
+│   ├── backend-cloudflare/   # Cloudflare Worker API + D1
+│   └── frontend-cloudflare/  # Next.js app on Cloudflare Workers
 ├── packages/        # Shared packages (empty currently)
 └── turbo.json       # Task pipeline configuration
 ```
@@ -24,31 +24,32 @@ Run from the project root:
 
 ```bash
 # Development - starts all apps in parallel
-bun run dev
+pnpm run dev
 
 # Build all applications
-bun run build
+pnpm run build
 
 # Lint all packages
-bun run lint
+pnpm run lint
 
 # Run tests across all packages
-bun run test
+pnpm run test
 
 # Clean build artifacts
-bun run clean
+pnpm run clean
 
 # Format code with Prettier
-bun run format
+pnpm run format
 ```
 
 ## Task Pipeline
 
 | Task | Depends On | Outputs |
 |------|------------|---------|
-| `build` | `^build` | `.next/**`, `dist/**` |
+| `build` | `^build` | `.next/**`, `.open-next/**`, `.wrangler/**`, `dist/**` |
 | `dev` | - | persistent, no cache |
 | `lint` | `^lint` | - |
+| `check` | `^check` | - |
 | `type-check` | `^build` | - |
 
 ## Conventions
@@ -62,12 +63,12 @@ bun run format
 
 1. Create directory under `packages/<name>/`
 2. Add `package.json` with proper name and exports
-3. Add to `workspaces` in root `package.json` if needed
+3. Add to `packages` in `pnpm-workspace.yaml` if needed
 4. Reference in apps using workspace protocol: `"@finta/<name>": "workspace:*"`
 
 ## Important Notes
 
-- Backend runs on **port 3000** by default
-- Frontend runs on **port 5173** by default
-- Always use `bun` commands instead of `npm` or `yarn`
+- `backend-cloudflare` uses Wrangler's local Worker server by default
+- `frontend-cloudflare` uses Next.js dev server by default
+- Always use `pnpm` commands instead of `npm` or `yarn`
 - Turborepo caches build outputs - use `--force` to skip cache if needed

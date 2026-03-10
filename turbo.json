@@ -12,7 +12,15 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*", ".env.*local"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", ".open-next/**", ".wrangler/**", "dist/**"]
+    },
+    "cf-typegen": {
+      "inputs": ["$TURBO_DEFAULT$", "wrangler.json", "wrangler.jsonc", "wrangler.toml"],
+      "outputs": ["env.d.ts", "worker-configuration.d.ts"]
+    },
+    "check": {
+      "dependsOn": ["^check"],
+      "outputs": []
     },
     "dev": {
       "cache": false,
@@ -32,6 +40,10 @@
     // "clean": {
     //   "cache": false
     // },
+    "deploy": {
+      "cache": false,
+      "dependsOn": ["build"]
+    },
     "type-check": {
       "dependsOn": ["^build"],
       "outputs": []
