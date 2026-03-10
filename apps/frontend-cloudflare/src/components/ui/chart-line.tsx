@@ -2,7 +2,7 @@
 
 import type { Variants } from "motion/react";
 import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
+import * as React from "react";
 import {
   forwardRef,
   useCallback,
@@ -18,7 +18,9 @@ export interface ChartLineIconHandle {
   stopAnimation: () => void;
 }
 
-interface ChartLineIconProps extends HTMLAttributes<HTMLDivElement> {
+interface ChartLineIconProps extends React.ComponentPropsWithoutRef<
+  typeof motion.div
+> {
   size?: number;
   autoPlay?: boolean;
 }
