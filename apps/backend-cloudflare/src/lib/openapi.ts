@@ -12,6 +12,78 @@ export function createOpenApiDocument(baseUrl: string) {
 			},
 		],
 		paths: {
+			"/auth/login": {
+				post: {
+					summary: "Authenticate an existing user",
+					tags: ["Auth"],
+					requestBody: {
+						required: true,
+						content: {
+							"application/json": {
+								schema: {
+									$ref: "#/components/schemas/LoginRequest",
+								},
+								example: {
+									email: "pedro@example.com",
+									password: "SenhaSegura123",
+								},
+							},
+						},
+					},
+					responses: {
+						"200": {
+							description: "User authenticated",
+							content: {
+								"application/json": {
+									schema: {
+										$ref: "#/components/schemas/AuthSuccessResponse",
+									},
+								},
+							},
+						},
+						"400": {
+							description: "Malformed JSON body",
+							content: {
+								"application/json": {
+									schema: {
+										$ref: "#/components/schemas/ErrorResponse",
+									},
+								},
+							},
+						},
+						"401": {
+							description: "Invalid credentials",
+							content: {
+								"application/json": {
+									schema: {
+										$ref: "#/components/schemas/ErrorResponse",
+									},
+								},
+							},
+						},
+						"415": {
+							description: "Unsupported media type",
+							content: {
+								"application/json": {
+									schema: {
+										$ref: "#/components/schemas/ErrorResponse",
+									},
+								},
+							},
+						},
+						"422": {
+							description: "Validation error",
+							content: {
+								"application/json": {
+									schema: {
+										$ref: "#/components/schemas/ErrorResponse",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"/auth/register": {
 				post: {
 					summary: "Register a new user",
@@ -37,7 +109,7 @@ export function createOpenApiDocument(baseUrl: string) {
 							content: {
 								"application/json": {
 									schema: {
-										$ref: "#/components/schemas/RegisterSuccessResponse",
+										$ref: "#/components/schemas/AuthSuccessResponse",
 									},
 								},
 							},
@@ -88,6 +160,24 @@ export function createOpenApiDocument(baseUrl: string) {
 		},
 		components: {
 			schemas: {
+				LoginRequest: {
+					type: "object",
+					additionalProperties: false,
+					required: ["email", "password"],
+					properties: {
+						email: {
+							type: "string",
+							format: "email",
+							maxLength: 255,
+						},
+						password: {
+							type: "string",
+							minLength: 8,
+							maxLength: 72,
+							format: "password",
+						},
+					},
+				},
 				RegisterRequest: {
 					type: "object",
 					additionalProperties: false,
@@ -131,7 +221,7 @@ export function createOpenApiDocument(baseUrl: string) {
 						},
 					},
 				},
-				RegisterSuccessResponse: {
+				AuthSuccessResponse: {
 					type: "object",
 					required: ["data"],
 					properties: {
@@ -168,6 +258,7 @@ export function createOpenApiDocument(baseUrl: string) {
 								code: {
 									type: "string",
 									enum: [
+										"INVALID_CREDENTIALS",
 										"INVALID_JSON",
 										"UNSUPPORTED_MEDIA_TYPE",
 										"VALIDATION_ERROR",

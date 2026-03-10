@@ -26,6 +26,21 @@ export async function findUserByEmail(
 	);
 }
 
+export async function findUserAuthByEmail(
+	db: D1Database,
+	email: string,
+): Promise<
+	Pick<UserRecord, "id" | "name" | "email" | "password_hash" | "created_at"> | null
+> {
+	return (
+		(await db
+			.prepare("SELECT id, name, email, password_hash, created_at FROM users WHERE email = ? LIMIT 1")
+			.bind(email)
+			.first<Pick<UserRecord, "id" | "name" | "email" | "password_hash" | "created_at">>()) ??
+		null
+	);
+}
+
 export async function insertUser(
 	db: D1Database,
 	input: {

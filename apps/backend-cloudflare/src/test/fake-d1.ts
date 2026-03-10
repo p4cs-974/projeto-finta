@@ -50,6 +50,23 @@ export function createFakeD1Database() {
 				return (user ? ({ id: user.id } as T) : null);
 			}
 
+			if (sql === "SELECT id, name, email, password_hash, created_at FROM users WHERE email = ? LIMIT 1") {
+				const email = String(values[0]);
+				const user = Array.from(users.values()).find((candidate) => candidate.email === email);
+
+				if (!user) {
+					return null;
+				}
+
+				return {
+					id: user.id,
+					name: user.name,
+					email: user.email,
+					password_hash: user.password_hash,
+					created_at: user.created_at,
+				} as T;
+			}
+
 			if (sql === "SELECT id, name, email, created_at FROM users WHERE id = ? LIMIT 1") {
 				const id = Number(values[0]);
 				const user = users.get(id);

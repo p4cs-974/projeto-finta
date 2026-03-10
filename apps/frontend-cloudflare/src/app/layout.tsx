@@ -3,6 +3,30 @@ import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+const systemThemeScript = `
+(() => {
+	const root = document.documentElement;
+	const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+	const applyTheme = (isDark) => {
+		root.classList.toggle("dark", isDark);
+		root.style.colorScheme = isDark ? "dark" : "light";
+	};
+
+	applyTheme(mediaQuery.matches);
+
+	const handleChange = (event) => {
+		applyTheme(event.matches);
+	};
+
+	if (typeof mediaQuery.addEventListener === "function") {
+		mediaQuery.addEventListener("change", handleChange);
+	} else {
+		mediaQuery.addListener(handleChange);
+	}
+})();
+`;
+
 const geistSans = Geist({
 	variable: "--font-geist-sans",
 	subsets: ["latin"],
@@ -27,16 +51,23 @@ export default function RootLayout({
 		<html
 			lang="en"
 			className={`${geistSans.variable} ${geistMono.variable}`}
+			suppressHydrationWarning
 		>
-      <head>
-        {process.env.NODE_ENV === "development" && (
-          <Script
-            src="//unpkg.com/react-grab/dist/index.global.js"
-            crossOrigin="anonymous"
-            strategy="beforeInteractive"
-          />
-        )}
-      </head>
+			<head>
+				<Script
+					id="system-theme"
+					strategy="beforeInteractive"
+				>
+					{systemThemeScript}
+				</Script>
+				{process.env.NODE_ENV === "development" && (
+					<Script
+						src="//unpkg.com/react-grab/dist/index.global.js"
+						crossOrigin="anonymous"
+						strategy="beforeInteractive"
+					/>
+				)}
+			</head>
 			<body className="antialiased">
 				{children}
 			</body>

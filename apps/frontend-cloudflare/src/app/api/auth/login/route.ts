@@ -9,7 +9,7 @@ import {
 export async function POST(request: Request) {
   try {
     const body = await request.text();
-    const response = await fetch(`${getBackendBaseUrl()}/auth/register`, {
+    const response = await fetch(`${getBackendBaseUrl()}/auth/login`, {
       method: "POST",
       headers: {
         "content-type":
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
           message: "Authentication service is unavailable",
         },
       },
-      { status: 502 }
+      { status: 502 },
     );
   }
 }
