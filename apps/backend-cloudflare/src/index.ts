@@ -1,14 +1,43 @@
-import { renderHtml } from "./renderHtml";
+import { handleRegister } from "./features/auth/register";
+import { apiError, errorResponse } from "./lib/http";
+import { renderSwaggerUiHtml } from "./lib/docs";
+import { createOpenApiDocument } from "./lib/openapi";
 
-export default {
-	async fetch(request, env) {
-		const stmt = env.DB.prepare("SELECT * FROM comments LIMIT 3");
-		const { results } = await stmt.all();
+export interface AppEnv {
+	DB: D1Database;
+	JWT_SECRET: string;
+}
 
-		return new Response(renderHtml(JSON.stringify(results, null, 2)), {
+async function routeRequest(request: Request, env: AppEnv): Promise<Response> {
+	const url = new URL(request.url);
+
+	if (request.method === "GET" && url.pathname === "/openapi.json") {
+		return Response.json(createOpenApiDocument(url.origin));
+	}
+
+	if (request.method === "GET" && url.pathname === "/docs") {
+		return new Response(renderSwaggerUiHtml(`${url.origin}/openapi.json`), {
 			headers: {
-				"content-type": "text/html",
+				"content-type": "text/html; charset=utf-8",
 			},
 		});
+	}
+
+	if (request.method === "POST" && url.pathname === "/auth/register") {
+		return handleRegister(request, env);
+	}
+
+	throw apiError(404, "NOT_FOUND", "Route not found");
+}
+
+export default {
+	async fetch(request: Request, env: AppEnv): Promise<Response> {
+		try {
+			return await routeRequest(request, env);
+		} catch (error) {
+			return errorResponse(error);
+		}
 	},
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<AppEnv>;
+
+export { routeRequest };
