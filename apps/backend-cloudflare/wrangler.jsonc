@@ -15,6 +15,13 @@
       "database_id": "7b9f7fb0-cc04-4506-a63a-1eb7c00f7d40",
     },
   ],
+  "kv_namespaces": [
+    {
+      "binding": "ASSET_CACHE",
+      "id": "00000000000000000000000000000000",
+      "preview_id": "00000000000000000000000000000000",
+    },
+  ],
   "observability": {
     "enabled": true,
   },
