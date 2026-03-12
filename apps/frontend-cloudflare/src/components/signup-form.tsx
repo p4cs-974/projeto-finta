@@ -1,7 +1,8 @@
 "use client";
 
-import { useDeferredValue, useId, useState } from "react";
-import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { useActionState, useDeferredValue, useId, useState } from "react";
+import { useFormStatus } from "react-dom";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,78 +20,53 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { register } from "@/features/identity-access/api";
-import { ApiRequestError } from "@/lib/http-client";
 import { Input } from "@/components/ui/input";
-import { Facehash } from "facehash";
 import Link from "next/link";
+import {
+  registerAction,
+} from "@/app/actions/auth";
+import { initialSignupFormState } from "@/components/auth/auth-form-state";
 
-const avatarColors = ["#FF3366", "#00D9FF", "#7FFF00", "#FF6B35", "#9D00FF"];
+const FacehashAvatar = dynamic(
+  () =>
+    import("@/components/signup/facehash-avatar").then(
+      (module) => module.FacehashAvatar,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="size-[88px] border border-border bg-muted/40" aria-hidden="true" />
+    ),
+  },
+);
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? "Creating Account..." : "Create Account"}
+    </Button>
+  );
+}
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const router = useRouter();
+  const [state, formAction] = useActionState(
+    registerAction,
+    initialSignupFormState,
+  );
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formSuccess, setFormSuccess] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<"name" | "email" | "password" | "confirmPassword", string[]>>
-  >({});
   const fallbackId = useId();
   const avatarSeed = useDeferredValue(
     [fullName.trim(), email.trim().toLowerCase()].filter(Boolean).join(" | ") ||
       fallbackId,
   );
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setFormError(null);
-    setFormSuccess(null);
-    setFieldErrors({});
-
-    if (password !== confirmPassword) {
-      setFieldErrors({
-        confirmPassword: ["Passwords do not match."],
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      await register({
-        name: fullName,
-        email,
-        password,
-      });
-      setFormSuccess("Account created. You are authenticated on this device.");
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      if (error instanceof ApiRequestError) {
-        const nextFieldErrors = error.body?.error.details?.fieldErrors ?? {};
-
-        setFieldErrors({
-          name: nextFieldErrors.name,
-          email: nextFieldErrors.email,
-          password: nextFieldErrors.password,
-        });
-        setFormError(error.message);
-        return;
-      }
-
-      setFormError("Could not reach the server. Try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -102,53 +78,44 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
+          <form action={formAction}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-3 py-4 text-center">
                 <p className="text-xs font-medium text-muted-foreground">
                   Avatar Preview
                 </p>
-                <Facehash
-                  aria-label="Live FaceHash avatar preview"
-                  className="shadow-[0_12px_24px_-18px_rgba(15,23,42,0.7)]"
-                  colors={avatarColors}
-                  enableBlink
-                  intensity3d="subtle"
-                  name={avatarSeed}
-                  size={88}
-                  variant="gradient"
-                />
+                <FacehashAvatar name={avatarSeed} />
               </div>
               <Field>
                 <FieldLabel htmlFor="name">Full Name</FieldLabel>
                 <Input
                   id="name"
+                  name="name"
                   type="text"
                   placeholder="John Doe"
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  disabled={isSubmitting}
-                  aria-invalid={fieldErrors.name?.length ? true : undefined}
+                  aria-invalid={state.fieldErrors.name?.length ? true : undefined}
                   required
                 />
                 <FieldError
-                  errors={fieldErrors.name?.map((message) => ({ message }))}
+                  errors={state.fieldErrors.name?.map((message) => ({ message }))}
                 />
               </Field>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  disabled={isSubmitting}
-                  aria-invalid={fieldErrors.email?.length ? true : undefined}
+                  aria-invalid={state.fieldErrors.email?.length ? true : undefined}
                   required
                 />
                 <FieldError
-                  errors={fieldErrors.email?.map((message) => ({ message }))}
+                  errors={state.fieldErrors.email?.map((message) => ({ message }))}
                 />
               </Field>
               <Field>
@@ -157,17 +124,17 @@ export function SignupForm({
                     <FieldLabel htmlFor="password">Password</FieldLabel>
                     <Input
                       id="password"
+                      name="password"
                       type="password"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
-                      disabled={isSubmitting}
                       aria-invalid={
-                        fieldErrors.password?.length ? true : undefined
+                        state.fieldErrors.password?.length ? true : undefined
                       }
                       required
                     />
                     <FieldError
-                      errors={fieldErrors.password?.map((message) => ({
+                      errors={state.fieldErrors.password?.map((message) => ({
                         message,
                       }))}
                     />
@@ -178,21 +145,25 @@ export function SignupForm({
                     </FieldLabel>
                     <Input
                       id="confirm-password"
+                      name="confirmPassword"
                       type="password"
                       value={confirmPassword}
                       onChange={(event) =>
                         setConfirmPassword(event.target.value)
                       }
-                      disabled={isSubmitting}
                       aria-invalid={
-                        fieldErrors.confirmPassword?.length ? true : undefined
+                        state.fieldErrors.confirmPassword?.length
+                          ? true
+                          : undefined
                       }
                       required
                     />
                     <FieldError
-                      errors={fieldErrors.confirmPassword?.map((message) => ({
-                        message,
-                      }))}
+                      errors={state.fieldErrors.confirmPassword?.map(
+                        (message) => ({
+                          message,
+                        }),
+                      )}
                     />
                   </Field>
                 </Field>
@@ -201,15 +172,8 @@ export function SignupForm({
                 </FieldDescription>
               </Field>
               <Field>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating Account..." : "Create Account"}
-                </Button>
-                {formError ? <FieldError>{formError}</FieldError> : null}
-                {formSuccess ? (
-                  <FieldDescription className="text-center text-foreground">
-                    {formSuccess}
-                  </FieldDescription>
-                ) : null}
+                <SubmitButton />
+                {state.formError ? <FieldError>{state.formError}</FieldError> : null}
                 <FieldDescription className="text-center">
                   Already have an account? <Link href="/login">Sign in</Link>
                 </FieldDescription>
@@ -218,10 +182,6 @@ export function SignupForm({
           </form>
         </CardContent>
       </Card>
-      {/*<FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </FieldDescription>*/}
     </div>
   );
 }

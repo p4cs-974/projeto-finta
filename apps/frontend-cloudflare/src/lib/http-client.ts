@@ -15,10 +15,7 @@ export async function requestJson<T>(
   input: RequestInfo,
   init?: RequestInit,
 ): Promise<T> {
-  const response = await fetch(input, {
-    ...init,
-    cache: "no-store",
-  });
+  const response = await fetch(input, init);
 
   if (response.status === 204) {
     return undefined as T;

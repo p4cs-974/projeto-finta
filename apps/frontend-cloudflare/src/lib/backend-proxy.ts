@@ -45,7 +45,6 @@ export async function proxyBackendRequest(
         authorization: `Bearer ${token}`,
         ...(init.headers ?? {}),
       },
-      cache: "no-store",
     });
 
     const contentType =

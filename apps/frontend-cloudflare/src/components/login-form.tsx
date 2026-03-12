@@ -1,7 +1,7 @@
 "use client";
 
-import { startTransition, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,19 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { login } from "@/features/identity-access/api";
-import { ApiRequestError } from "@/lib/http-client";
 import { Input } from "@/components/ui/input";
-import { sanitizeRedirectTo } from "@/lib/auth";
 import Link from "next/link";
 import { ChartLineIcon } from "./ui/chart-line";
+import {
+  loginAction,
+} from "@/app/actions/auth";
+import { initialLoginFormState } from "@/components/auth/auth-form-state";
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return <Button type="submit" disabled={pending}>{pending ? "Signing In..." : "Sign In"}</Button>;
+}
 
 export function LoginForm({
   className,
@@ -26,61 +33,17 @@ export function LoginForm({
 }: React.ComponentProps<"div"> & {
   redirectTo?: string;
 }) {
-  const router = useRouter();
+  const [state, formAction] = useActionState(loginAction, initialLoginFormState);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<"email" | "password", string[]>>
-  >({});
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFormError(null);
-    setFieldErrors({});
-    setIsSubmitting(true);
-
-    try {
-      await login({
-        email,
-        password,
-      });
-      const nextPath = sanitizeRedirectTo(redirectTo);
-
-      startTransition(() => {
-        router.push(nextPath);
-        router.refresh();
-      });
-    } catch (error) {
-      if (error instanceof ApiRequestError) {
-        const fieldErrors = error.body?.error.details?.fieldErrors ?? {};
-
-        if (error.status === 422) {
-          setFieldErrors({
-            email: fieldErrors.email,
-            password: fieldErrors.password,
-          });
-        }
-
-        setFormError(
-          error.status === 401 ? "Invalid email or password." : error.message,
-        );
-        return;
-      }
-
-      setFormError("Could not reach the server. Try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form onSubmit={handleSubmit}>
+      <form action={formAction}>
+        <input type="hidden" name="redirectTo" value={redirectTo ?? "/"} />
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
-            <ChartLineIcon size={48} autoPlay />
+            <ChartLineIcon size={48} />
             <h1 className="text-xl font-bold">Sign in to Finta</h1>
             <FieldDescription>
               Use your email and password to access your account.
@@ -92,36 +55,34 @@ export function LoginForm({
               id="email"
               type="email"
               placeholder="m@example.com"
+              name="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              disabled={isSubmitting}
-              aria-invalid={fieldErrors.email?.length ? true : undefined}
+              aria-invalid={state.fieldErrors.email?.length ? true : undefined}
               required
             />
             <FieldError
-              errors={fieldErrors.email?.map((message) => ({ message }))}
+              errors={state.fieldErrors.email?.map((message) => ({ message }))}
             />
           </Field>
           <Field>
             <FieldLabel htmlFor="password">Password</FieldLabel>
             <Input
               id="password"
+              name="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              disabled={isSubmitting}
-              aria-invalid={fieldErrors.password?.length ? true : undefined}
+              aria-invalid={state.fieldErrors.password?.length ? true : undefined}
               required
             />
             <FieldError
-              errors={fieldErrors.password?.map((message) => ({ message }))}
+              errors={state.fieldErrors.password?.map((message) => ({ message }))}
             />
           </Field>
           <Field>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Signing In..." : "Sign In"}
-            </Button>
-            {formError ? <FieldError>{formError}</FieldError> : null}
+            <SubmitButton />
+            {state.formError ? <FieldError>{state.formError}</FieldError> : null}
             <FieldDescription className="text-center">
               Don&apos;t have an account? <Link href="/signup">Sign up</Link>
             </FieldDescription>

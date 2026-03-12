@@ -1,83 +1,53 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { startTransition, useRef, useState } from "react";
+
 import { ChartLineIcon } from "./ui/chart-line";
-import { SearchIcon, SearchIconHandle } from "./ui/search";
+import { SearchIcon } from "./ui/search";
 import { SessionAvatar } from "./session-avatar";
-import { AuthSessionPayload } from "@/lib/auth";
 import { Button } from "./ui/button";
 import { LogoutIcon } from "./ui/logout";
+import type { AuthSessionPayload } from "@/lib/auth";
+import { logoutAction } from "@/app/actions/auth";
 
 interface HeaderProps {
   session: AuthSessionPayload;
 }
 
 export default function Header({ session }: HeaderProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const searchIconRef = useRef<SearchIconHandle>(null);
-
-  if (pathname === "/login" || pathname === "/logout") {
-    return null;
-  }
-
-  async function handleLogout() {
-    setIsLoggingOut(true);
-
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-    } finally {
-      startTransition(() => {
-        router.push("/login");
-        router.refresh();
-      });
-      setIsLoggingOut(false);
-    }
-  }
-
   return (
-    <div className="flex flex-row items-center gap-4 place-content-between px-4 py-4 mx-4 my-4 bg-card border border-border">
-      {/*Logo*/}
+    <header className="mx-4 my-4 flex flex-row items-center gap-4 border border-border bg-card px-4 py-4 place-content-between">
       <Link
         href="/"
-        className="flex gap-1 flex-row text-2xl font-medium items-center hover:opacity-80 transition-opacity"
+        className="flex flex-row items-center gap-2 text-2xl font-medium transition-opacity hover:opacity-80"
       >
         <ChartLineIcon size={26} autoPlay />
         Finta
       </Link>
 
-      {/*NavBar*/}
-      <nav className="hidden md:flex items-center gap-2">
+      <nav className="hidden items-center gap-2 md:flex">
         <Link
           href="/search"
-          className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
-          onMouseEnter={() => searchIconRef.current?.startAnimation()}
-          onMouseLeave={() => searchIconRef.current?.stopAnimation()}
+          className="group inline-flex items-center gap-2 border border-transparent px-2 py-1 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-muted/50"
         >
-          <SearchIcon ref={searchIconRef} size={14} />
+          <SearchIcon size={14} />
           Search
         </Link>
       </nav>
 
-      {/*Auth*/}
-      <div className="flex flex-row gap-2 items-center">
+      <div className="flex flex-row items-center gap-3">
         <SessionAvatar size={28} seed={`${session.name} | ${session.email}`} />
-        {session.name.split(" ")[0]}
-        <Button
-          variant="ghost"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          aria-label="Sign out"
-          className="px-0"
-        >
-          <LogoutIcon className={isLoggingOut ? "opacity-50" : ""} />
-        </Button>
+        <div className="hidden text-left sm:block">
+          <p className="text-sm font-medium text-foreground">
+            {session.name.split(" ")[0]}
+          </p>
+          <p className="text-xs text-muted-foreground">{session.email}</p>
+        </div>
+        <form action={logoutAction}>
+          <Button type="submit" variant="ghost">
+            <LogoutIcon size={18} />
+            Sign Out
+          </Button>
+        </form>
       </div>
-    </div>
+    </header>
   );
 }

@@ -10,7 +10,7 @@ export default function SignupPage() {
           href="#"
           className="flex items-baseline gap-2 self-center font-medium text-3xl"
         >
-          <ChartLineIcon size={27} autoPlay />
+          <ChartLineIcon size={27} />
           Finta
         </a>
         <SignupForm className="border-border border" />
