@@ -80,14 +80,17 @@ export function createFakeKvNamespace(startTime = Date.now()): KVNamespace & {
 		async delete(key: string) {
 			store.delete(key);
 		},
-		async list() {
+		async list(options?: KVNamespaceListOptions) {
+			const prefix = options?.prefix ?? "";
+			const limit = options?.limit ?? Number.POSITIVE_INFINITY;
 			const keys = [...store.keys()]
 				.map((key) => {
 					purgeExpired(key);
 					return key;
 				})
-				.filter((key) => store.has(key))
+				.filter((key) => store.has(key) && key.startsWith(prefix))
 				.sort()
+				.slice(0, limit)
 				.map((key) => ({
 					name: key,
 					expiration: undefined,

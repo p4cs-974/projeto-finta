@@ -53,3 +53,17 @@ export interface CryptoAssetQuoteResponse {
 		source: "cache" | "live";
 	};
 }
+
+export interface RecentAssetSelection {
+	symbol: string;
+	type: "stock" | "crypto";
+	label: string;
+	market: string | null;
+	currency: string | null;
+	logoUrl: string | null;
+	lastSelectedAt: string;
+}
+
+export interface CachedAssetSearchResponse {
+	data: Array<AssetQuoteWithCacheResponse | CryptoAssetQuoteResponse>;
+}

@@ -149,6 +149,104 @@ export function createOpenApiDocument(baseUrl: string) {
 					},
 				},
 			},
+			"/ativos/{ticker}/cache": {
+				get: {
+					summary: "Probe the exact cached quote for a B3 or crypto asset",
+					tags: ["Assets"],
+					security: [{ bearerAuth: [] }],
+					parameters: [
+						{
+							name: "ticker",
+							in: "path",
+							required: true,
+							schema: {
+								type: "string",
+								example: "PETR4",
+							},
+						},
+						{
+							name: "type",
+							in: "query",
+							required: false,
+							description: "When set to crypto, probes the crypto cache.",
+							schema: {
+								type: "string",
+								enum: ["crypto"],
+							},
+						},
+					],
+					responses: {
+						"200": {
+							description: "Cached quote found",
+							content: {
+								"application/json": {
+									schema: {
+										oneOf: [
+											{ $ref: "#/components/schemas/AssetQuoteWithCacheResponse" },
+											{ $ref: "#/components/schemas/CryptoAssetQuoteResponse" },
+										],
+									},
+								},
+							},
+						},
+						"401": errorContent("Missing, invalid or expired bearer token"),
+						"404": errorContent("Asset cache miss"),
+						"422": errorContent("Invalid ticker, type or symbol"),
+					},
+				},
+			},
+			"/users/me/recent-assets": {
+				get: {
+					summary: "List recent asset selections for the authenticated user",
+					tags: ["Assets"],
+					security: [{ bearerAuth: [] }],
+					responses: {
+						"200": {
+							description: "Recent selections",
+							content: {
+								"application/json": {
+									schema: {
+										type: "object",
+										required: ["data"],
+										properties: {
+											data: {
+												type: "array",
+												maxItems: 5,
+												items: {
+													$ref: "#/components/schemas/RecentAssetSelection",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"401": errorContent("Missing, invalid or expired bearer token"),
+					},
+				},
+				post: {
+					summary: "Store a recent asset selection for the authenticated user",
+					tags: ["Assets"],
+					security: [{ bearerAuth: [] }],
+					requestBody: {
+						required: true,
+						content: {
+							"application/json": {
+								schema: {
+									$ref: "#/components/schemas/SaveRecentAssetSelectionRequest",
+								},
+							},
+						},
+					},
+					responses: {
+						"204": {
+							description: "Recent selection stored",
+						},
+						"401": errorContent("Missing, invalid or expired bearer token"),
+						"422": errorContent("Invalid request body"),
+					},
+				},
+			},
 		},
 		components: {
 			securitySchemes: {
@@ -290,6 +388,40 @@ export function createOpenApiDocument(baseUrl: string) {
 						cache: { $ref: "#/components/schemas/CacheMeta" },
 					},
 				},
+				RecentAssetSelection: {
+					type: "object",
+					required: [
+						"symbol",
+						"type",
+						"label",
+						"market",
+						"currency",
+						"logoUrl",
+						"lastSelectedAt",
+					],
+					properties: {
+						symbol: { type: "string", example: "PETR4" },
+						type: { type: "string", enum: ["stock", "crypto"] },
+						label: { type: "string", example: "Petroleo Brasileiro S.A. Petrobras" },
+						market: { type: ["string", "null"], example: "B3" },
+						currency: { type: ["string", "null"], example: "BRL" },
+						logoUrl: { type: ["string", "null"], format: "uri", example: "https://example.com/petr4.png" },
+						lastSelectedAt: { type: "string", format: "date-time" },
+					},
+				},
+				SaveRecentAssetSelectionRequest: {
+					type: "object",
+					additionalProperties: false,
+					required: ["symbol", "type", "label"],
+					properties: {
+						symbol: { type: "string", example: "PETR4" },
+						type: { type: "string", enum: ["stock", "crypto"] },
+						label: { type: "string", example: "Petroleo Brasileiro S.A. Petrobras" },
+						market: { type: ["string", "null"], example: "B3" },
+						currency: { type: ["string", "null"], example: "BRL" },
+						logoUrl: { type: ["string", "null"], format: "uri", example: "https://example.com/petr4.png" },
+					},
+				},
 				ErrorResponse: {
 					type: "object",
 					required: ["error"],
@@ -301,6 +433,7 @@ export function createOpenApiDocument(baseUrl: string) {
 								code: {
 									type: "string",
 									enum: [
+										"ASSET_CACHE_MISS",
 										"ASSET_NOT_FOUND",
 										"EXTERNAL_SERVICE_ERROR",
 										"INVALID_CREDENTIALS",

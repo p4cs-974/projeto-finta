@@ -15,7 +15,7 @@ import type {
 } from "./types";
 
 const ASSET_CACHE_TTL_MS = 5 * 60 * 1000;
-const ASSET_LOCK_TTL_SECONDS = 30;
+const ASSET_LOCK_TTL_SECONDS = 60;
 
 interface GetAssetDependencies {
 	now?: () => Date;
@@ -29,7 +29,7 @@ export function isAssetQuoteCacheStale(
 	return Date.parse(entry.updatedAt) + ASSET_CACHE_TTL_MS <= now.getTime();
 }
 
-function buildAssetResponse(
+export function buildAssetResponse(
 	entry: AssetQuoteCacheEntry,
 	cacheKey: string,
 	stale: boolean,

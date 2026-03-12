@@ -16,7 +16,7 @@ import type {
 } from "./types";
 
 const CRYPTO_CACHE_TTL_MS = 5 * 60 * 1000;
-const CRYPTO_LOCK_TTL_SECONDS = 30;
+const CRYPTO_LOCK_TTL_SECONDS = 60;
 
 interface GetCryptoAssetDependencies {
 	now?: () => Date;
@@ -30,7 +30,7 @@ export function isCryptoAssetCacheStale(
 	return Date.parse(entry.updatedAt) + CRYPTO_CACHE_TTL_MS <= now.getTime();
 }
 
-function buildCryptoAssetResponse(
+export function buildCryptoAssetResponse(
 	entry: CryptoAssetCacheEntry,
 	cacheKey: string,
 	stale: boolean,

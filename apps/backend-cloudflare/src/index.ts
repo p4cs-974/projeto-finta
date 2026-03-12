@@ -1,5 +1,9 @@
 import { handleGetAsset } from "./features/assets/get-asset";
+import { handleGetCachedAsset } from "./features/assets/get-cached-asset";
 import { handleGetCryptoAsset } from "./features/assets/get-crypto-asset";
+import { handleGetRecentAssets } from "./features/assets/get-recent-assets";
+import { handleSaveRecentAsset } from "./features/assets/save-recent-asset";
+import { handleSearchCachedAssets } from "./features/assets/search-cached-assets";
 import { handleLogin } from "./features/auth/login";
 import { handleRegister } from "./features/auth/register";
 import { validateAssetType } from "./lib/assets";
@@ -43,6 +47,23 @@ async function routeRequest(request: Request, env: AppEnv, ctx: ExecutionContext
 
 	if (request.method === "POST" && url.pathname === "/auth/login") {
 		return handleLogin(request, env);
+	}
+
+	if (request.method === "GET" && url.pathname === "/users/me/recent-assets") {
+		return handleGetRecentAssets(request, env);
+	}
+
+	if (request.method === "POST" && url.pathname === "/users/me/recent-assets") {
+		return handleSaveRecentAsset(request, env);
+	}
+
+	if (request.method === "GET" && url.pathname === "/ativos/cache-search") {
+		return handleSearchCachedAssets(request, env);
+	}
+
+	if (request.method === "GET" && url.pathname.startsWith("/ativos/") && url.pathname.endsWith("/cache")) {
+		const rawTicker = url.pathname.slice("/ativos/".length, -"/cache".length);
+		return handleGetCachedAsset(request, env, rawTicker);
 	}
 
 	if (request.method === "GET" && url.pathname.startsWith("/ativos/")) {

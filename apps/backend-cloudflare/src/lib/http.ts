@@ -1,4 +1,5 @@
 export type ApiErrorCode =
+	| "ASSET_CACHE_MISS"
 	| "ASSET_NOT_FOUND"
 	| "EMAIL_ALREADY_IN_USE"
 	| "EXTERNAL_SERVICE_ERROR"

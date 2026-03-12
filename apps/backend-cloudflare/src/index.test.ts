@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import worker from "./index";
+import {
+	buildAssetQuoteCacheKey,
+	buildCryptoQuoteCacheKey,
+} from "./lib/assets";
 import { signJwt } from "./lib/jwt";
 import { hashPassword } from "./lib/password";
 import { createFakeD1Database } from "./test/fake-d1";
@@ -50,6 +54,26 @@ function createAssetRequest(pathname: string, token?: string) {
 					authorization: `Bearer ${token}`,
 				}
 			: undefined,
+	});
+}
+
+function createJsonRequest(
+	pathname: string,
+	method: "POST",
+	body: unknown,
+	token?: string,
+) {
+	return new Request(`http://localhost${pathname}`, {
+		method,
+		headers: {
+			"content-type": "application/json",
+			...(token
+				? {
+						authorization: `Bearer ${token}`,
+					}
+				: {}),
+		},
+		body: JSON.stringify(body),
 	});
 }
 
@@ -769,7 +793,7 @@ describe("GET /ativos/:ticker", () => {
 		const fakeDb = createFakeD1Database();
 		const token = await createAccessToken();
 
-		const response = await worker.fetch(createAssetRequest("/ativos/PETR4.SA", token), createEnv(fakeDb));
+		const response = await worker.fetch(createAssetRequest("/ativos/PETR4.SA1", token), createEnv(fakeDb));
 		const payload = await response.json<{ error: { code: string; message: string } }>();
 
 		expect(response.status).toBe(422);
@@ -1080,5 +1104,484 @@ describe("GET /ativos legacy search route", () => {
 
 		expect(response.status).toBe(404);
 		expect(payload.error.code).toBe("NOT_FOUND");
+	});
+});
+
+describe("GET /ativos/:ticker/cache", () => {
+	it("returns 200 for a cached stock quote without calling fetch", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+		await env.ASSET_CACHE.put(
+			buildAssetQuoteCacheKey("PETR4"),
+			JSON.stringify({
+				ticker: "PETR4",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					ticker: "PETR4",
+					name: "Petroleo Brasileiro S.A. Petrobras",
+					market: "B3",
+					currency: "BRL",
+					price: 37.42,
+					change: 0.85,
+					changePercent: 2.32,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+					logoUrl: "https://example.com/petr4.png",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/petr4/cache", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: {
+				ticker: string;
+			};
+			cache: {
+				source: string;
+			};
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data.ticker).toBe("PETR4");
+		expect(payload.cache.source).toBe("cache");
+		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+
+	it("returns 200 for a cached crypto quote without calling fetch", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+		await env.ASSET_CACHE.put(
+			buildCryptoQuoteCacheKey("BTC"),
+			JSON.stringify({
+				symbol: "BTC",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					symbol: "BTC",
+					name: "Bitcoin",
+					currency: "USD",
+					price: 88_432.15,
+					change: 1_250.5,
+					changePercent: 1.43,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/BTC/cache?type=crypto", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: {
+				symbol: string;
+			};
+			cache: {
+				source: string;
+			};
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data.symbol).toBe("BTC");
+		expect(payload.cache.source).toBe("cache");
+		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+
+	it("returns 404 ASSET_CACHE_MISS when KV has no entry", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/PETR4/cache", token),
+			createEnv(fakeDb),
+		);
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(404);
+		expect(payload.error.code).toBe("ASSET_CACHE_MISS");
+	});
+});
+
+describe("GET /ativos/cache-search", () => {
+	it("returns partial stock matches from KV", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+
+		await env.ASSET_CACHE.put(
+			buildAssetQuoteCacheKey("PETR4"),
+			JSON.stringify({
+				ticker: "PETR4",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					ticker: "PETR4",
+					name: "Petroleo Brasileiro S.A. Petrobras",
+					market: "B3",
+					currency: "BRL",
+					price: 37.42,
+					change: 0.85,
+					changePercent: 2.32,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+					logoUrl: "https://example.com/petr4.png",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/cache-search?q=pet", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: Array<{
+				data: {
+					ticker: string;
+				};
+			}>;
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data).toHaveLength(1);
+		expect(payload.data[0]?.data.ticker).toBe("PETR4");
+	});
+
+	it("returns partial crypto matches from KV", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+
+		await env.ASSET_CACHE.put(
+			buildCryptoQuoteCacheKey("BTC"),
+			JSON.stringify({
+				symbol: "BTC",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					symbol: "BTC",
+					name: "Bitcoin",
+					currency: "USD",
+					price: 88_432.15,
+					change: 1_250.5,
+					changePercent: 1.43,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/cache-search?q=bt&type=crypto", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: Array<{
+				data: {
+					symbol: string;
+				};
+			}>;
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data).toHaveLength(1);
+		expect(payload.data[0]?.data.symbol).toBe("BTC");
+	});
+
+	it("returns 422 for invalid stock prefixes", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/cache-search?q=petr4.sa1", token),
+			createEnv(fakeDb),
+		);
+
+		expect(response.status).toBe(422);
+	});
+
+	it("accepts suffixed stock prefixes", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+
+		await env.ASSET_CACHE.put(
+			buildAssetQuoteCacheKey("AAPL34.SA"),
+			JSON.stringify({
+				ticker: "AAPL34.SA",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					ticker: "AAPL34.SA",
+					name: "Apple Inc BDR",
+					market: "B3",
+					currency: "BRL",
+					price: 52.14,
+					change: 0.41,
+					changePercent: 0.79,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+					logoUrl: "https://example.com/aapl34.png",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/cache-search?q=aapl34.s", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: Array<{
+				data: {
+					ticker: string;
+				};
+			}>;
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data).toHaveLength(1);
+		expect(payload.data[0]?.data.ticker).toBe("AAPL34.SA");
+	});
+});
+
+describe("recent asset selections", () => {
+	it("returns an empty array for a new user", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets", token),
+			createEnv(fakeDb),
+		);
+		const payload = await response.json<{ data: unknown[] }>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data).toEqual([]);
+	});
+
+	it("stores the first selection", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+		const env = createEnv(fakeDb);
+
+		const response = await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "PETR4",
+					type: "stock",
+					label: "Petroleo Brasileiro S.A. Petrobras",
+					market: "B3",
+					currency: "BRL",
+					logoUrl: "https://example.com/petr4.png",
+				},
+				token,
+			),
+			env,
+		);
+
+		expect(response.status).toBe(204);
+		expect(fakeDb.getRecentSelections()).toHaveLength(1);
+		expect(fakeDb.getRecentSelections()[0]).toMatchObject({
+			symbol: "PETR4",
+			asset_type: "stock",
+			logo_url: "https://example.com/petr4.png",
+		});
+	});
+
+	it("updates timestamp instead of duplicating a repeated selection", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+		const env = createEnv(fakeDb);
+
+		await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "BTC",
+					type: "crypto",
+					label: "Bitcoin",
+					currency: "USD",
+				},
+				token,
+			),
+			env,
+		);
+
+		await new Promise((resolve) => setTimeout(resolve, 5));
+
+		await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "btc",
+					type: "crypto",
+					label: "Bitcoin",
+					currency: "USD",
+				},
+				token,
+			),
+			env,
+		);
+
+		expect(fakeDb.getRecentSelections()).toHaveLength(1);
+		expect(fakeDb.getRecentSelections()[0]?.symbol).toBe("BTC");
+	});
+
+	it("trims the oldest item after the sixth selection", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+		const env = createEnv(fakeDb);
+		const selections = ["PETR4", "VALE3", "ITUB4", "WEGE3", "ABEV3", "BBAS3"];
+
+		for (const symbol of selections) {
+			await worker.fetch(
+				createJsonRequest(
+					"/users/me/recent-assets",
+					"POST",
+					{
+						symbol,
+						type: "stock",
+						label: symbol,
+						market: "B3",
+						currency: "BRL",
+					},
+					token,
+				),
+				env,
+			);
+		}
+
+		const response = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: Array<{
+				symbol: string;
+			}>;
+		}>();
+
+		expect(payload.data).toHaveLength(5);
+		expect(payload.data.map((item) => item.symbol)).toEqual([
+			"BBAS3",
+			"ABEV3",
+			"WEGE3",
+			"ITUB4",
+			"VALE3",
+		]);
+	});
+
+	it("keeps recents isolated per user", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const firstToken = await createAccessToken({ sub: "1" });
+		const secondToken = await createAccessToken({
+			sub: "2",
+			email: "maria@example.com",
+			name: "Maria",
+		});
+
+		await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "PETR4",
+					type: "stock",
+					label: "Petrobras",
+					market: "B3",
+					currency: "BRL",
+					logoUrl: "https://example.com/petr4.png",
+				},
+				firstToken,
+			),
+			env,
+		);
+
+		await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "BTC",
+					type: "crypto",
+					label: "Bitcoin",
+					currency: "USD",
+				},
+				secondToken,
+			),
+			env,
+		);
+
+		const firstResponse = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets", firstToken),
+			env,
+		);
+		const secondResponse = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets", secondToken),
+			env,
+		);
+		const firstPayload = await firstResponse.json<{ data: Array<{ symbol: string }> }>();
+		const secondPayload = await secondResponse.json<{ data: Array<{ symbol: string }> }>();
+
+		expect(firstPayload.data.map((item) => item.symbol)).toEqual(["PETR4"]);
+		expect(secondPayload.data.map((item) => item.symbol)).toEqual(["BTC"]);
+	});
+
+	it("returns 401 for unauthenticated requests", async () => {
+		const fakeDb = createFakeD1Database();
+
+		const getResponse = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets"),
+			createEnv(fakeDb),
+		);
+		const postResponse = await worker.fetch(
+			createJsonRequest("/users/me/recent-assets", "POST", {
+				symbol: "PETR4",
+				type: "stock",
+				label: "Petrobras",
+				market: "B3",
+				currency: "BRL",
+			}),
+			createEnv(fakeDb),
+		);
+
+		expect(getResponse.status).toBe(401);
+		expect(postResponse.status).toBe(401);
+	});
+
+	it("returns 422 for invalid payloads", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "PE",
+					type: "bond",
+					label: "",
+				},
+				token,
+			),
+			createEnv(fakeDb),
+		);
+		const payload = await response.json<{
+			error: {
+				code: string;
+				details?: {
+					fieldErrors?: Record<string, string[]>;
+				};
+			};
+		}>();
+
+		expect(response.status).toBe(422);
+		expect(payload.error.code).toBe("VALIDATION_ERROR");
+		expect(payload.error.details?.fieldErrors).toBeTruthy();
 	});
 });

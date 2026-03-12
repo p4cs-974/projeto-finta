@@ -5,6 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import Header from "@/components/header";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { AUTH_COOKIE_NAME, getSessionFromCookieValue } from "@/lib/auth";
 
 const systemThemeScript = `
@@ -86,9 +87,11 @@ export default async function RootLayout({
           />
         )}
       </head>
-      <body className="antialiased">
-        {session ? <Header session={session} /> : null}
-        {children}
+      <body className="flex min-h-svh flex-col antialiased">
+        <QueryProvider>
+          {session ? <Header session={session} /> : null}
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );

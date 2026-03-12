@@ -46,7 +46,7 @@ Erros relevantes:
 
 - `401 INVALID_TOKEN`: bearer ausente, inválido ou expirado
 - `404 ASSET_NOT_FOUND`: ticker não encontrado no provider
-- `422 VALIDATION_ERROR`: ticker fora do padrão `^[A-Z]{4}[0-9]{1,2}$`
+- `422 VALIDATION_ERROR`: ticker fora do padrão `^[A-Z]{4}[0-9]{1,2}(?:\\.[A-Z]{2,5})?$`
 - `502 EXTERNAL_SERVICE_ERROR`: erro ou timeout na Brapi
 
 `POST /auth/register`

@@ -16,12 +16,13 @@ describe("asset ticker validation", () => {
 	it("trims and uppercases valid B3 tickers", () => {
 		expect(validateAssetTicker(" petr4 ")).toBe("PETR4");
 		expect(validateAssetTicker("vale3")).toBe("VALE3");
+		expect(validateAssetTicker(" aapl34.sa ")).toBe("AAPL34.SA");
 	});
 
 	it("rejects invalid ticker formats", () => {
 		expect(() => validateAssetTicker("PETR")).toThrowError(HttpError);
-		expect(() => validateAssetTicker("PETR4.SA")).toThrowError(HttpError);
 		expect(() => validateAssetTicker("1234")).toThrowError(HttpError);
+		expect(() => validateAssetTicker("PETR4.SA1")).toThrowError(HttpError);
 	});
 });
 
