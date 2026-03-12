@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { startTransition, useState } from "react";
+import { startTransition, useRef, useState } from "react";
 import { ChartLineIcon } from "./ui/chart-line";
+import { SearchIcon, SearchIconHandle } from "./ui/search";
 import { SessionAvatar } from "./session-avatar";
 import { AuthSessionPayload } from "@/lib/auth";
 import { Button } from "./ui/button";
@@ -16,6 +18,7 @@ export default function Header({ session }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const searchIconRef = useRef<SearchIconHandle>(null);
 
   if (pathname === "/login" || pathname === "/logout") {
     return null;
@@ -40,13 +43,26 @@ export default function Header({ session }: HeaderProps) {
   return (
     <div className="flex flex-row items-center gap-4 place-content-between px-4 py-4 mx-4 my-4 bg-card border border-border">
       {/*Logo*/}
-      <div className="flex gap-1 flex-row text-2xl font-medium">
+      <Link
+        href="/"
+        className="flex gap-1 flex-row text-2xl font-medium items-center hover:opacity-80 transition-opacity"
+      >
         <ChartLineIcon size={26} autoPlay />
         Finta
-      </div>
+      </Link>
 
       {/*NavBar*/}
-      <div className="w-full bg-red-950"></div>
+      <nav className="hidden md:flex items-center gap-2">
+        <Link
+          href="/search"
+          className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+          onMouseEnter={() => searchIconRef.current?.startAnimation()}
+          onMouseLeave={() => searchIconRef.current?.stopAnimation()}
+        >
+          <SearchIcon ref={searchIconRef} size={14} />
+          Search
+        </Link>
+      </nav>
 
       {/*Auth*/}
       <div className="flex flex-row gap-2 items-center">

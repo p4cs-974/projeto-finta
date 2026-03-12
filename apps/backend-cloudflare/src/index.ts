@@ -1,5 +1,12 @@
+import { handleGetAsset } from "./features/assets/get-asset";
+import { handleGetCachedAsset } from "./features/assets/get-cached-asset";
+import { handleGetCryptoAsset } from "./features/assets/get-crypto-asset";
+import { handleGetRecentAssets } from "./features/assets/get-recent-assets";
+import { handleSaveRecentAsset } from "./features/assets/save-recent-asset";
+import { handleSearchCachedAssets } from "./features/assets/search-cached-assets";
 import { handleLogin } from "./features/auth/login";
 import { handleRegister } from "./features/auth/register";
+import { validateAssetType } from "./lib/assets";
 import { apiError, errorResponse, json } from "./lib/http";
 import { renderSwaggerUiHtml } from "./lib/docs";
 import { createOpenApiDocument } from "./lib/openapi";
@@ -7,9 +14,19 @@ import { createOpenApiDocument } from "./lib/openapi";
 export interface AppEnv {
 	DB: D1Database;
 	JWT_SECRET: string;
+	BRAPI_TOKEN: string;
+	ASSET_CACHE: KVNamespace;
 }
 
-async function routeRequest(request: Request, env: AppEnv): Promise<Response> {
+function createNoopExecutionContext(): ExecutionContext {
+	return {
+		waitUntil() {},
+		passThroughOnException() {},
+		props: {},
+	};
+}
+
+async function routeRequest(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
 	const url = new URL(request.url);
 
 	if (request.method === "GET" && url.pathname === "/openapi.json") {
@@ -32,13 +49,39 @@ async function routeRequest(request: Request, env: AppEnv): Promise<Response> {
 		return handleLogin(request, env);
 	}
 
+	if (request.method === "GET" && url.pathname === "/users/me/recent-assets") {
+		return handleGetRecentAssets(request, env);
+	}
+
+	if (request.method === "POST" && url.pathname === "/users/me/recent-assets") {
+		return handleSaveRecentAsset(request, env);
+	}
+
+	if (request.method === "GET" && url.pathname === "/ativos/cache-search") {
+		return handleSearchCachedAssets(request, env);
+	}
+
+	if (request.method === "GET" && url.pathname.startsWith("/ativos/") && url.pathname.endsWith("/cache")) {
+		const rawTicker = url.pathname.slice("/ativos/".length, -"/cache".length);
+		return handleGetCachedAsset(request, env, rawTicker);
+	}
+
+	if (request.method === "GET" && url.pathname.startsWith("/ativos/")) {
+		const rawTicker = url.pathname.slice("/ativos/".length);
+		if (validateAssetType(url.searchParams.get("type")) === "crypto") {
+			return handleGetCryptoAsset(request, env, ctx, rawTicker);
+		}
+
+		return handleGetAsset(request, env, ctx, rawTicker);
+	}
+
 	throw apiError(404, "NOT_FOUND", "Route not found");
 }
 
 export default {
-	async fetch(request: Request, env: AppEnv): Promise<Response> {
+	async fetch(request: Request, env: AppEnv, ctx?: ExecutionContext): Promise<Response> {
 		try {
-			return await routeRequest(request, env);
+			return await routeRequest(request, env, ctx ?? createNoopExecutionContext());
 		} catch (error) {
 			return errorResponse(error);
 		}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { signJwt } from "./jwt";
+import { signJwt, verifyJwt } from "./jwt";
 
 function decodeBase64UrlJson<T>(value: string): T {
 	const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
@@ -41,5 +41,56 @@ describe("JWT helpers", () => {
 			iat: 1_741_608_000,
 			exp: 1_741_611_600,
 		});
+	});
+
+	it("verifies valid HS256 tokens", async () => {
+		const token = await signJwt(
+			{
+				sub: "1",
+				email: "pedro@example.com",
+				name: "Pedro Custodio",
+				iat: 1_741_608_000,
+				exp: 1_741_611_600,
+			},
+			"test-secret",
+		);
+
+		await expect(verifyJwt(token, "test-secret", 1_741_608_100_000)).resolves.toEqual({
+			sub: "1",
+			email: "pedro@example.com",
+			name: "Pedro Custodio",
+			iat: 1_741_608_000,
+			exp: 1_741_611_600,
+		});
+	});
+
+	it("rejects expired tokens", async () => {
+		const token = await signJwt(
+			{
+				sub: "1",
+				email: "pedro@example.com",
+				name: "Pedro Custodio",
+				iat: 1_741_608_000,
+				exp: 1_741_611_600,
+			},
+			"test-secret",
+		);
+
+		await expect(verifyJwt(token, "test-secret", 1_741_611_600_000)).resolves.toBeNull();
+	});
+
+	it("rejects tokens with an invalid signature", async () => {
+		const token = await signJwt(
+			{
+				sub: "1",
+				email: "pedro@example.com",
+				name: "Pedro Custodio",
+				iat: 1_741_608_000,
+				exp: 1_741_611_600,
+			},
+			"test-secret",
+		);
+
+		await expect(verifyJwt(token, "wrong-secret", 1_741_608_100_000)).resolves.toBeNull();
 	});
 });

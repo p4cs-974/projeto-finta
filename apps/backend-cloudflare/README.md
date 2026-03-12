@@ -12,6 +12,43 @@ Swagger UI para testar a API no navegador.
 
 Documento OpenAPI 3.1 consumido pelo Swagger UI.
 
+`GET /ativos/{ticker}`
+
+Retorna uma cotação resumida de um ativo da B3. Exige `Authorization: Bearer <jwt>`.
+
+Exemplo:
+
+```bash
+curl --request GET \
+  --url http://localhost:8787/ativos/PETR4 \
+  --header "Authorization: Bearer <jwt>"
+```
+
+Resposta `200 OK`:
+
+```json
+{
+  "data": {
+    "ticker": "PETR4",
+    "name": "Petroleo Brasileiro S.A. Petrobras",
+    "market": "B3",
+    "currency": "BRL",
+    "price": 38.42,
+    "change": -0.18,
+    "changePercent": -0.47,
+    "quotedAt": "2026-03-10T18:00:00.000Z",
+    "logoUrl": "https://example.com/petr4.png"
+  }
+}
+```
+
+Erros relevantes:
+
+- `401 INVALID_TOKEN`: bearer ausente, inválido ou expirado
+- `404 ASSET_NOT_FOUND`: ticker não encontrado no provider
+- `422 VALIDATION_ERROR`: ticker fora do padrão `^[A-Z]{4}[0-9]{1,2}(?:\\.[A-Z]{2,5})?$`
+- `502 EXTERNAL_SERVICE_ERROR`: erro ou timeout na Brapi
+
 `POST /auth/register`
 
 Body JSON:
@@ -48,12 +85,14 @@ Segredo local em `apps/backend-cloudflare/.dev.vars`:
 
 ```dotenv
 JWT_SECRET=dev-only-secret
+BRAPI_TOKEN=your-brapi-token
 ```
 
 Segredo remoto:
 
 ```bash
 pnpm --filter backend-cloudflare wrangler secret put JWT_SECRET
+pnpm --filter backend-cloudflare wrangler secret put BRAPI_TOKEN
 ```
 
 ## Comandos

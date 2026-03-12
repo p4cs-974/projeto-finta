@@ -1,10 +1,40 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import worker from "./index";
+import {
+	buildAssetQuoteCacheKey,
+	buildCryptoQuoteCacheKey,
+} from "./lib/assets";
+import { signJwt } from "./lib/jwt";
 import { hashPassword } from "./lib/password";
 import { createFakeD1Database } from "./test/fake-d1";
+import { createFakeKvNamespace } from "./test/fake-kv";
 
 const JWT_SECRET = "test-secret";
+const BRAPI_TOKEN = "brapi-test-token";
+
+function createEnv(fakeDb: ReturnType<typeof createFakeD1Database>) {
+	return {
+		DB: fakeDb.db,
+		JWT_SECRET,
+		BRAPI_TOKEN,
+		ASSET_CACHE: createFakeKvNamespace(),
+	};
+}
+
+async function createAccessToken(overrides: Partial<Parameters<typeof signJwt>[0]> = {}) {
+	return signJwt(
+		{
+			sub: "1",
+			email: "pedro@example.com",
+			name: "Pedro Custodio",
+			iat: 1_900_000_000,
+			exp: 1_900_003_600,
+			...overrides,
+		},
+		JWT_SECRET,
+	);
+}
 
 function createAuthRequest(pathname: string, body: string, contentType = "application/json") {
 	return new Request(`http://localhost${pathname}`, {
@@ -15,6 +45,59 @@ function createAuthRequest(pathname: string, body: string, contentType = "applic
 		body,
 	});
 }
+
+function createAssetRequest(pathname: string, token?: string) {
+	return new Request(`http://localhost${pathname}`, {
+		method: "GET",
+		headers: token
+			? {
+					authorization: `Bearer ${token}`,
+				}
+			: undefined,
+	});
+}
+
+function createJsonRequest(
+	pathname: string,
+	method: "POST",
+	body: unknown,
+	token?: string,
+) {
+	return new Request(`http://localhost${pathname}`, {
+		method,
+		headers: {
+			"content-type": "application/json",
+			...(token
+				? {
+						authorization: `Bearer ${token}`,
+					}
+				: {}),
+		},
+		body: JSON.stringify(body),
+	});
+}
+
+function createExecutionContext() {
+	const promises: Promise<unknown>[] = [];
+
+	return {
+		ctx: {
+			waitUntil(promise: Promise<unknown>) {
+				promises.push(promise);
+			},
+			passThroughOnException() {},
+			props: {},
+		} as ExecutionContext,
+		waitUntilPromises: promises,
+		async flushWaitUntil() {
+			await Promise.all(promises);
+		},
+	};
+}
+
+afterEach(() => {
+	vi.restoreAllMocks();
+});
 
 describe("POST /auth/register", () => {
 	it("creates the user, normalizes the email and returns a bearer token", async () => {
@@ -29,10 +112,7 @@ describe("POST /auth/register", () => {
 					password: "SenhaSegura123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{
 			data: {
@@ -76,10 +156,7 @@ describe("POST /auth/register", () => {
 					password: "SenhaSegura123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{
 			data: {
@@ -113,10 +190,7 @@ describe("POST /auth/register", () => {
 					password: "SenhaSegura123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{ error: { code: string } }>();
 
@@ -136,10 +210,7 @@ describe("POST /auth/register", () => {
 					password: "123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{
 			error: {
@@ -169,10 +240,7 @@ describe("POST /auth/register", () => {
 					password: "SenhaSegura123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{
 			error: {
@@ -191,10 +259,10 @@ describe("POST /auth/register", () => {
 	it("returns 400 for malformed JSON", async () => {
 		const fakeDb = createFakeD1Database();
 
-		const response = await worker.fetch(createAuthRequest("/auth/register", '{"name":"Pedro"'), {
-			DB: fakeDb.db,
-			JWT_SECRET,
-		});
+		const response = await worker.fetch(
+			createAuthRequest("/auth/register", '{"name":"Pedro"'),
+			createEnv(fakeDb),
+		);
 		const payload = await response.json<{ error: { code: string } }>();
 
 		expect(response.status).toBe(400);
@@ -214,10 +282,7 @@ describe("POST /auth/register", () => {
 				}),
 				"text/plain",
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{ error: { code: string } }>();
 
@@ -245,10 +310,7 @@ describe("POST /auth/login", () => {
 					password: "SenhaSegura123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{
 			data: {
@@ -295,10 +357,7 @@ describe("POST /auth/login", () => {
 					password: "SenhaSegura123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 
 		expect(response.status).toBe(200);
@@ -315,10 +374,7 @@ describe("POST /auth/login", () => {
 					password: "SenhaSegura123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{ error: { code: string; message: string } }>();
 
@@ -345,10 +401,7 @@ describe("POST /auth/login", () => {
 					password: "SenhaErrada123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{ error: { code: string } }>();
 
@@ -367,10 +420,7 @@ describe("POST /auth/login", () => {
 					password: "123",
 				}),
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{
 			error: {
@@ -390,10 +440,10 @@ describe("POST /auth/login", () => {
 	it("returns 400 for malformed JSON", async () => {
 		const fakeDb = createFakeD1Database();
 
-		const response = await worker.fetch(createAuthRequest("/auth/login", '{"email":"pedro@example.com"'), {
-			DB: fakeDb.db,
-			JWT_SECRET,
-		});
+		const response = await worker.fetch(
+			createAuthRequest("/auth/login", '{"email":"pedro@example.com"'),
+			createEnv(fakeDb),
+		);
 		const payload = await response.json<{ error: { code: string } }>();
 
 		expect(response.status).toBe(400);
@@ -412,10 +462,7 @@ describe("POST /auth/login", () => {
 				}),
 				"text/plain",
 			),
-			{
-				DB: fakeDb.db,
-				JWT_SECRET,
-			},
+			createEnv(fakeDb),
 		);
 		const payload = await response.json<{ error: { code: string } }>();
 
@@ -428,10 +475,7 @@ describe("documentation routes", () => {
 	it("serves the OpenAPI document", async () => {
 		const fakeDb = createFakeD1Database();
 
-		const response = await worker.fetch(new Request("http://localhost/openapi.json"), {
-			DB: fakeDb.db,
-			JWT_SECRET,
-		});
+		const response = await worker.fetch(new Request("http://localhost/openapi.json"), createEnv(fakeDb));
 		const payload = await response.json<{
 			openapi: string;
 			paths: Record<string, unknown>;
@@ -443,21 +487,1101 @@ describe("documentation routes", () => {
 		expect(payload.openapi).toBe("3.1.1");
 		expect(payload.paths["/auth/login"]).toBeTruthy();
 		expect(payload.paths["/auth/register"]).toBeTruthy();
+		expect(payload.paths["/ativos/{ticker}"]).toBeTruthy();
+		expect(payload.paths["/ativos"]).toBeUndefined();
+		const assetPath = payload.paths["/ativos/{ticker}"] as {
+			get?: {
+				responses?: {
+					"200"?: {
+						content?: {
+							"application/json"?: {
+								schema?: {
+									oneOf?: unknown[];
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+		expect(assetPath.get?.responses?.["200"]?.content?.["application/json"]?.schema?.oneOf).toHaveLength(2);
 		expect(payload.servers[0]?.url).toBe("http://localhost");
 	});
 
 	it("serves Swagger UI HTML", async () => {
 		const fakeDb = createFakeD1Database();
 
-		const response = await worker.fetch(new Request("http://localhost/docs"), {
-			DB: fakeDb.db,
-			JWT_SECRET,
-		});
+		const response = await worker.fetch(new Request("http://localhost/docs"), createEnv(fakeDb));
 		const html = await response.text();
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get("content-type")).toContain("text/html");
 		expect(html).toContain("swagger-ui");
 		expect(html).toContain("http://localhost/openapi.json");
+	});
+});
+
+describe("GET /ativos/:ticker", () => {
+	it("creates B3 cache on the first lookup and returns cache metadata", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					results: [
+						{
+							symbol: "PETR4",
+							longName: "Petroleo Brasileiro S.A. Petrobras",
+							currency: "BRL",
+							regularMarketPrice: 38.42,
+							regularMarketChange: -0.18,
+							regularMarketChangePercent: -0.47,
+							regularMarketTime: 1_741_632_000,
+							logourl: "https://example.com/petr4.png",
+						},
+					],
+				}),
+				{ status: 200, headers: { "content-type": "application/json" } },
+			),
+		);
+
+		const response = await worker.fetch(createAssetRequest("/ativos/petr4", token), env);
+		const payload = await response.json<{
+			data: {
+				ticker: string;
+				logoUrl: string | null;
+				market: string;
+				currency: string;
+				quotedAt: string;
+			};
+			cache: {
+				key: string;
+				stale: boolean;
+				source: string;
+				updatedAt: string;
+			};
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data.ticker).toBe("PETR4");
+		expect(payload.data.market).toBe("B3");
+		expect(payload.data.currency).toBe("BRL");
+		expect(payload.data.logoUrl).toBe("https://example.com/petr4.png");
+		expect(payload.data.quotedAt).toBe("2025-03-10T18:40:00.000Z");
+		expect(payload.cache.key).toBe("asset-quote:v1:PETR4");
+		expect(payload.cache.stale).toBe(false);
+		expect(payload.cache.source).toBe("live");
+		expect(payload.cache.updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+		expect(JSON.parse(env.ASSET_CACHE.readRaw("asset-quote:v1:PETR4") ?? "{}")).toMatchObject({
+			ticker: "PETR4",
+			data: expect.objectContaining({
+				ticker: "PETR4",
+			}),
+		});
+		expect(globalThis.fetch).toHaveBeenCalledWith(
+			"https://brapi.dev/api/quote/PETR4",
+			expect.objectContaining({
+				headers: expect.objectContaining({
+					authorization: `Bearer ${BRAPI_TOKEN}`,
+				}),
+			}),
+		);
+	});
+
+	it("serves a repeated B3 lookup from KV without calling brapi again", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					results: [{ symbol: "PETR4", longName: "Petrobras", regularMarketPrice: 38.42 }],
+				}),
+				{ status: 200 },
+			),
+		);
+
+		await worker.fetch(createAssetRequest("/ativos/PETR4", token), env);
+		const secondResponse = await worker.fetch(createAssetRequest("/ativos/PETR4", token), env);
+		const payload = await secondResponse.json<{ cache: { source: string } }>();
+
+		expect(secondResponse.status).toBe(200);
+		expect(payload.cache.source).toBe("cache");
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("returns stale B3 cache immediately and refreshes it in the background", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const { ctx, flushWaitUntil } = createExecutionContext();
+
+		await env.ASSET_CACHE.put(
+			"asset-quote:v1:PETR4",
+			JSON.stringify({
+				ticker: "PETR4",
+				updatedAt: "2020-03-10T18:00:00.000Z",
+				data: {
+					ticker: "PETR4",
+					name: "Petrobras",
+					market: "B3",
+					currency: "BRL",
+					price: 10,
+					change: 1,
+					changePercent: 2,
+					quotedAt: "2026-03-10T18:00:00.000Z",
+					logoUrl: null,
+				},
+			}),
+		);
+
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					results: [{ symbol: "PETR4", longName: "Petrobras", regularMarketPrice: 999 }],
+				}),
+				{ status: 200 },
+			),
+		);
+
+		const response = await worker.fetch(createAssetRequest("/ativos/PETR4", token), env, ctx);
+		const payload = await response.json<{ data: { price: number }; cache: { stale: boolean; source: string } }>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data.price).toBe(10);
+		expect(payload.cache.stale).toBe(true);
+		expect(payload.cache.source).toBe("cache");
+
+		await flushWaitUntil();
+
+		expect(JSON.parse(env.ASSET_CACHE.readRaw("asset-quote:v1:PETR4") ?? "{}")).toMatchObject({
+			data: expect.objectContaining({ price: 999 }),
+		});
+	});
+
+	it("avoids duplicate B3 refreshes while the lock is held", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const firstCtx = createExecutionContext();
+		const secondCtx = createExecutionContext();
+		let resolveRefresh: () => void = () => {
+			throw new Error("Refresh resolver was not set");
+		};
+
+		await env.ASSET_CACHE.put(
+			"asset-quote:v1:PETR4",
+			JSON.stringify({
+				ticker: "PETR4",
+				updatedAt: "2020-03-10T18:00:00.000Z",
+				data: {
+					ticker: "PETR4",
+					name: "Petrobras",
+					market: "B3",
+					currency: "BRL",
+					price: 10,
+					change: 0,
+					changePercent: 0,
+					quotedAt: "2026-03-10T18:00:00.000Z",
+					logoUrl: null,
+				},
+			}),
+		);
+
+		const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(
+			async () =>
+				new Promise<Response>((resolve) => {
+					resolveRefresh = () => {
+						resolve(
+							new Response(
+								JSON.stringify({
+									results: [{ symbol: "PETR4", longName: "Petrobras", regularMarketPrice: 321 }],
+								}),
+								{ status: 200 },
+							),
+						);
+					};
+				}),
+		);
+
+		const firstResponse = await worker.fetch(createAssetRequest("/ativos/PETR4", token), env, firstCtx.ctx);
+		const secondResponse = await worker.fetch(createAssetRequest("/ativos/PETR4", token), env, secondCtx.ctx);
+
+		expect(firstResponse.status).toBe(200);
+		expect(secondResponse.status).toBe(200);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(env.ASSET_CACHE.readRaw("asset-quote-lock:v1:PETR4")).toBe("1");
+
+		resolveRefresh();
+		await firstCtx.flushWaitUntil();
+		await secondCtx.flushWaitUntil();
+
+		expect(env.ASSET_CACHE.readRaw("asset-quote-lock:v1:PETR4")).toBeNull();
+	});
+
+	it("returns logoUrl as null when the provider logo is empty", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					results: [
+						{
+							symbol: "VALE3",
+							shortName: "Vale",
+							regularMarketPrice: 55.2,
+							regularMarketChange: 0.12,
+							regularMarketChangePercent: 0.21,
+							regularMarketTime: "2026-03-10T18:00:00.000Z",
+							logourl: "   ",
+						},
+					],
+				}),
+				{ status: 200, headers: { "content-type": "application/json" } },
+			),
+		);
+
+		const response = await worker.fetch(createAssetRequest("/ativos/vale3", token), createEnv(fakeDb));
+		const payload = await response.json<{
+			data: { logoUrl: string | null; currency: string };
+			cache: { source: string };
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data.logoUrl).toBeNull();
+		expect(payload.data.currency).toBe("BRL");
+		expect(payload.cache.source).toBe("live");
+	});
+
+	it("returns 401 when the bearer token is missing", async () => {
+		const fakeDb = createFakeD1Database();
+
+		const response = await worker.fetch(createAssetRequest("/ativos/PETR4"), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(401);
+		expect(payload.error.code).toBe("INVALID_TOKEN");
+	});
+
+	it("returns 401 when the token is invalid", async () => {
+		const fakeDb = createFakeD1Database();
+
+		const response = await worker.fetch(createAssetRequest("/ativos/PETR4", "not-a-jwt"), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(401);
+		expect(payload.error.code).toBe("INVALID_TOKEN");
+	});
+
+	it("returns 401 when the token is expired", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken({
+			exp: 1,
+		});
+
+		const response = await worker.fetch(createAssetRequest("/ativos/PETR4", token), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(401);
+		expect(payload.error.code).toBe("INVALID_TOKEN");
+	});
+
+	it("returns 422 for invalid tickers", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(createAssetRequest("/ativos/PETR4.SA1", token), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string; message: string } }>();
+
+		expect(response.status).toBe(422);
+		expect(payload.error.code).toBe("VALIDATION_ERROR");
+		expect(payload.error.message).toBe("Invalid asset ticker");
+	});
+
+	it("returns 404 when the asset does not exist", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ results: [] }), { status: 200 }));
+
+		const response = await worker.fetch(createAssetRequest("/ativos/ABCD1", token), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(404);
+		expect(payload.error.code).toBe("ASSET_NOT_FOUND");
+	});
+
+	it("returns 502 when the asset provider fails", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("upstream error", { status: 500 }));
+
+		const response = await worker.fetch(createAssetRequest("/ativos/PETR4", token), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(502);
+		expect(payload.error.code).toBe("EXTERNAL_SERVICE_ERROR");
+	});
+
+	it("returns 502 when the asset provider times out", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		vi.spyOn(globalThis, "fetch").mockRejectedValue(new DOMException("Timed out", "AbortError"));
+
+		const response = await worker.fetch(createAssetRequest("/ativos/PETR4", token), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string; message: string } }>();
+
+		expect(response.status).toBe(502);
+		expect(payload.error.code).toBe("EXTERNAL_SERVICE_ERROR");
+		expect(payload.error.message).toBe("Asset provider request timed out");
+	});
+});
+
+describe("GET /ativos/:ticker?type=crypto", () => {
+	it("creates crypto cache on the first lookup and returns cache metadata", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					results: [
+						{
+							symbol: "BTC",
+							longName: "Bitcoin",
+							currency: "USD",
+							regularMarketPrice: 30.99,
+							regularMarketChange: 0.42,
+							regularMarketChangePercent: 1.37,
+							regularMarketTime: "2026-03-11T00:38:08.000Z",
+						},
+					],
+				}),
+				{ status: 200 },
+			),
+		);
+
+		const response = await worker.fetch(createAssetRequest("/ativos/BTC?type=crypto", token), env);
+		const payload = await response.json<{
+			data: { symbol: string; currency: string; quotedAt: string };
+			cache: { key: string; stale: boolean; source: string };
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data.symbol).toBe("BTC");
+		expect(payload.data.currency).toBe("USD");
+		expect(payload.data.quotedAt).toBe("2026-03-11T00:38:08.000Z");
+		expect(payload.cache.key).toBe("crypto-quote:v1:BTC");
+		expect(payload.cache.stale).toBe(false);
+		expect(payload.cache.source).toBe("live");
+		expect(JSON.parse(env.ASSET_CACHE.readRaw("crypto-quote:v1:BTC") ?? "{}")).toMatchObject({
+			symbol: "BTC",
+			data: expect.objectContaining({ symbol: "BTC" }),
+		});
+	});
+
+	it("serves repeated crypto lookups from KV and isolates cache by symbol", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+			const url = String(input);
+
+			if (url.endsWith("/quote/BTC")) {
+				return new Response(JSON.stringify({ results: [{ symbol: "BTC", longName: "Bitcoin" }] }), { status: 200 });
+			}
+
+			if (url.endsWith("/quote/ETH")) {
+				return new Response(JSON.stringify({ results: [{ symbol: "ETH", longName: "Ethereum" }] }), { status: 200 });
+			}
+
+			throw new Error(`Unexpected URL ${url}`);
+		});
+
+		await worker.fetch(createAssetRequest("/ativos/BTC?type=crypto", token), env);
+		const secondBtc = await worker.fetch(createAssetRequest("/ativos/BTC?type=crypto", token), env);
+		await worker.fetch(createAssetRequest("/ativos/ETH?type=crypto", token), env);
+		const payload = await secondBtc.json<{ cache: { source: string } }>();
+
+		expect(secondBtc.status).toBe(200);
+		expect(payload.cache.source).toBe("cache");
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		expect(env.ASSET_CACHE.readRaw("crypto-quote:v1:BTC")).toBeTruthy();
+		expect(env.ASSET_CACHE.readRaw("crypto-quote:v1:ETH")).toBeTruthy();
+	});
+
+	it("returns stale crypto cache immediately and refreshes it in the background", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const { ctx, flushWaitUntil } = createExecutionContext();
+
+		await env.ASSET_CACHE.put(
+			"crypto-quote:v1:BTC",
+			JSON.stringify({
+				symbol: "BTC",
+				updatedAt: "2020-03-10T18:00:00.000Z",
+				data: {
+					symbol: "BTC",
+					name: "Bitcoin",
+					currency: "USD",
+					price: 10,
+					change: 1,
+					changePercent: 2,
+					quotedAt: "2026-03-10T18:00:00.000Z",
+				},
+			}),
+		);
+
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					results: [
+						{
+							symbol: "BTC",
+							longName: "Bitcoin",
+							currency: "USD",
+							regularMarketPrice: 999,
+							regularMarketTime: "2026-03-10T18:06:00.000Z",
+						},
+					],
+				}),
+				{ status: 200 },
+			),
+		);
+
+		const response = await worker.fetch(createAssetRequest("/ativos/BTC?type=crypto", token), env, ctx);
+		const payload = await response.json<{ data: { price: number }; cache: { stale: boolean; source: string } }>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data.price).toBe(10);
+		expect(payload.cache.stale).toBe(true);
+		expect(payload.cache.source).toBe("cache");
+
+		await flushWaitUntil();
+
+		expect(JSON.parse(env.ASSET_CACHE.readRaw("crypto-quote:v1:BTC") ?? "{}")).toMatchObject({
+			data: expect.objectContaining({ price: 999 }),
+		});
+	});
+
+	it("avoids duplicate crypto refreshes while the lock is held", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const firstCtx = createExecutionContext();
+		const secondCtx = createExecutionContext();
+		let resolveRefresh: () => void = () => {
+			throw new Error("Refresh resolver was not set");
+		};
+
+		await env.ASSET_CACHE.put(
+			"crypto-quote:v1:BTC",
+			JSON.stringify({
+				symbol: "BTC",
+				updatedAt: "2020-03-10T18:00:00.000Z",
+				data: {
+					symbol: "BTC",
+					name: "Bitcoin",
+					currency: "USD",
+					price: 10,
+					change: 0,
+					changePercent: 0,
+					quotedAt: "2026-03-10T18:00:00.000Z",
+				},
+			}),
+		);
+
+		const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(
+			async () =>
+				new Promise<Response>((resolve) => {
+					resolveRefresh = () => {
+						resolve(
+							new Response(
+								JSON.stringify({
+									results: [{ symbol: "BTC", longName: "Bitcoin", regularMarketPrice: 321 }],
+								}),
+								{ status: 200 },
+							),
+						);
+					};
+				}),
+		);
+
+		const firstResponse = await worker.fetch(
+			createAssetRequest("/ativos/BTC?type=crypto", token),
+			env,
+			firstCtx.ctx,
+		);
+		const secondResponse = await worker.fetch(
+			createAssetRequest("/ativos/BTC?type=crypto", token),
+			env,
+			secondCtx.ctx,
+		);
+
+		expect(firstResponse.status).toBe(200);
+		expect(secondResponse.status).toBe(200);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(env.ASSET_CACHE.readRaw("crypto-quote-lock:v1:BTC")).toBe("1");
+
+		resolveRefresh();
+		await firstCtx.flushWaitUntil();
+		await secondCtx.flushWaitUntil();
+
+		expect(env.ASSET_CACHE.readRaw("crypto-quote-lock:v1:BTC")).toBeNull();
+	});
+
+	it("returns 401 without a token", async () => {
+		const fakeDb = createFakeD1Database();
+
+		const response = await worker.fetch(createAssetRequest("/ativos/BTC?type=crypto"), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(401);
+		expect(payload.error.code).toBe("INVALID_TOKEN");
+	});
+
+	it("returns 422 for invalid crypto type and symbol", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const invalidType = await worker.fetch(
+			createAssetRequest("/ativos/BTC?type=stock", token),
+			createEnv(fakeDb),
+		);
+		const invalidSymbol = await worker.fetch(
+			createAssetRequest("/ativos/B/?type=crypto", token),
+			createEnv(fakeDb),
+		);
+
+		expect(invalidType.status).toBe(422);
+		expect(invalidSymbol.status).toBe(422);
+	});
+
+	it("returns 404 when the crypto asset does not exist", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ results: [] }), { status: 200 }));
+
+		const response = await worker.fetch(createAssetRequest("/ativos/BTC?type=crypto", token), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(404);
+		expect(payload.error.code).toBe("ASSET_NOT_FOUND");
+	});
+
+	it("returns 502 when the crypto provider fails", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("upstream error", { status: 500 }));
+
+		const response = await worker.fetch(createAssetRequest("/ativos/BTC?type=crypto", token), createEnv(fakeDb));
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(502);
+		expect(payload.error.code).toBe("EXTERNAL_SERVICE_ERROR");
+	});
+});
+
+describe("GET /ativos legacy search route", () => {
+	it("does not expose the removed crypto search contract anymore", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos?type=crypto&search=btc", token),
+			createEnv(fakeDb),
+		);
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(404);
+		expect(payload.error.code).toBe("NOT_FOUND");
+	});
+});
+
+describe("GET /ativos/:ticker/cache", () => {
+	it("returns 200 for a cached stock quote without calling fetch", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+		await env.ASSET_CACHE.put(
+			buildAssetQuoteCacheKey("PETR4"),
+			JSON.stringify({
+				ticker: "PETR4",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					ticker: "PETR4",
+					name: "Petroleo Brasileiro S.A. Petrobras",
+					market: "B3",
+					currency: "BRL",
+					price: 37.42,
+					change: 0.85,
+					changePercent: 2.32,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+					logoUrl: "https://example.com/petr4.png",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/petr4/cache", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: {
+				ticker: string;
+			};
+			cache: {
+				source: string;
+			};
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data.ticker).toBe("PETR4");
+		expect(payload.cache.source).toBe("cache");
+		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+
+	it("returns 200 for a cached crypto quote without calling fetch", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+		const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+		await env.ASSET_CACHE.put(
+			buildCryptoQuoteCacheKey("BTC"),
+			JSON.stringify({
+				symbol: "BTC",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					symbol: "BTC",
+					name: "Bitcoin",
+					currency: "USD",
+					price: 88_432.15,
+					change: 1_250.5,
+					changePercent: 1.43,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/BTC/cache?type=crypto", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: {
+				symbol: string;
+			};
+			cache: {
+				source: string;
+			};
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data.symbol).toBe("BTC");
+		expect(payload.cache.source).toBe("cache");
+		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+
+	it("returns 404 ASSET_CACHE_MISS when KV has no entry", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/PETR4/cache", token),
+			createEnv(fakeDb),
+		);
+		const payload = await response.json<{ error: { code: string } }>();
+
+		expect(response.status).toBe(404);
+		expect(payload.error.code).toBe("ASSET_CACHE_MISS");
+	});
+});
+
+describe("GET /ativos/cache-search", () => {
+	it("returns partial stock matches from KV", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+
+		await env.ASSET_CACHE.put(
+			buildAssetQuoteCacheKey("PETR4"),
+			JSON.stringify({
+				ticker: "PETR4",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					ticker: "PETR4",
+					name: "Petroleo Brasileiro S.A. Petrobras",
+					market: "B3",
+					currency: "BRL",
+					price: 37.42,
+					change: 0.85,
+					changePercent: 2.32,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+					logoUrl: "https://example.com/petr4.png",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/cache-search?q=pet", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: Array<{
+				data: {
+					ticker: string;
+				};
+			}>;
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data).toHaveLength(1);
+		expect(payload.data[0]?.data.ticker).toBe("PETR4");
+	});
+
+	it("returns partial crypto matches from KV", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+
+		await env.ASSET_CACHE.put(
+			buildCryptoQuoteCacheKey("BTC"),
+			JSON.stringify({
+				symbol: "BTC",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					symbol: "BTC",
+					name: "Bitcoin",
+					currency: "USD",
+					price: 88_432.15,
+					change: 1_250.5,
+					changePercent: 1.43,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/cache-search?q=bt&type=crypto", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: Array<{
+				data: {
+					symbol: string;
+				};
+			}>;
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data).toHaveLength(1);
+		expect(payload.data[0]?.data.symbol).toBe("BTC");
+	});
+
+	it("returns 422 for invalid stock prefixes", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/cache-search?q=petr4.sa1", token),
+			createEnv(fakeDb),
+		);
+
+		expect(response.status).toBe(422);
+	});
+
+	it("accepts suffixed stock prefixes", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const token = await createAccessToken();
+
+		await env.ASSET_CACHE.put(
+			buildAssetQuoteCacheKey("AAPL34.SA"),
+			JSON.stringify({
+				ticker: "AAPL34.SA",
+				updatedAt: "2026-03-11T14:30:00.000Z",
+				data: {
+					ticker: "AAPL34.SA",
+					name: "Apple Inc BDR",
+					market: "B3",
+					currency: "BRL",
+					price: 52.14,
+					change: 0.41,
+					changePercent: 0.79,
+					quotedAt: "2026-03-11T14:30:00.000Z",
+					logoUrl: "https://example.com/aapl34.png",
+				},
+			}),
+		);
+
+		const response = await worker.fetch(
+			createAssetRequest("/ativos/cache-search?q=aapl34.s", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: Array<{
+				data: {
+					ticker: string;
+				};
+			}>;
+		}>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data).toHaveLength(1);
+		expect(payload.data[0]?.data.ticker).toBe("AAPL34.SA");
+	});
+});
+
+describe("recent asset selections", () => {
+	it("returns an empty array for a new user", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets", token),
+			createEnv(fakeDb),
+		);
+		const payload = await response.json<{ data: unknown[] }>();
+
+		expect(response.status).toBe(200);
+		expect(payload.data).toEqual([]);
+	});
+
+	it("stores the first selection", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+		const env = createEnv(fakeDb);
+
+		const response = await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "PETR4",
+					type: "stock",
+					label: "Petroleo Brasileiro S.A. Petrobras",
+					market: "B3",
+					currency: "BRL",
+					logoUrl: "https://example.com/petr4.png",
+				},
+				token,
+			),
+			env,
+		);
+
+		expect(response.status).toBe(204);
+		expect(fakeDb.getRecentSelections()).toHaveLength(1);
+		expect(fakeDb.getRecentSelections()[0]).toMatchObject({
+			symbol: "PETR4",
+			asset_type: "stock",
+			logo_url: "https://example.com/petr4.png",
+		});
+	});
+
+	it("updates timestamp instead of duplicating a repeated selection", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+		const env = createEnv(fakeDb);
+
+		await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "BTC",
+					type: "crypto",
+					label: "Bitcoin",
+					currency: "USD",
+				},
+				token,
+			),
+			env,
+		);
+
+		await new Promise((resolve) => setTimeout(resolve, 5));
+
+		await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "btc",
+					type: "crypto",
+					label: "Bitcoin",
+					currency: "USD",
+				},
+				token,
+			),
+			env,
+		);
+
+		expect(fakeDb.getRecentSelections()).toHaveLength(1);
+		expect(fakeDb.getRecentSelections()[0]?.symbol).toBe("BTC");
+	});
+
+	it("trims the oldest item after the sixth selection", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+		const env = createEnv(fakeDb);
+		const selections = ["PETR4", "VALE3", "ITUB4", "WEGE3", "ABEV3", "BBAS3"];
+
+		for (const symbol of selections) {
+			await worker.fetch(
+				createJsonRequest(
+					"/users/me/recent-assets",
+					"POST",
+					{
+						symbol,
+						type: "stock",
+						label: symbol,
+						market: "B3",
+						currency: "BRL",
+					},
+					token,
+				),
+				env,
+			);
+		}
+
+		const response = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets", token),
+			env,
+		);
+		const payload = await response.json<{
+			data: Array<{
+				symbol: string;
+			}>;
+		}>();
+
+		expect(payload.data).toHaveLength(5);
+		expect(payload.data.map((item) => item.symbol)).toEqual([
+			"BBAS3",
+			"ABEV3",
+			"WEGE3",
+			"ITUB4",
+			"VALE3",
+		]);
+	});
+
+	it("keeps recents isolated per user", async () => {
+		const fakeDb = createFakeD1Database();
+		const env = createEnv(fakeDb);
+		const firstToken = await createAccessToken({ sub: "1" });
+		const secondToken = await createAccessToken({
+			sub: "2",
+			email: "maria@example.com",
+			name: "Maria",
+		});
+
+		await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "PETR4",
+					type: "stock",
+					label: "Petrobras",
+					market: "B3",
+					currency: "BRL",
+					logoUrl: "https://example.com/petr4.png",
+				},
+				firstToken,
+			),
+			env,
+		);
+
+		await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "BTC",
+					type: "crypto",
+					label: "Bitcoin",
+					currency: "USD",
+				},
+				secondToken,
+			),
+			env,
+		);
+
+		const firstResponse = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets", firstToken),
+			env,
+		);
+		const secondResponse = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets", secondToken),
+			env,
+		);
+		const firstPayload = await firstResponse.json<{ data: Array<{ symbol: string }> }>();
+		const secondPayload = await secondResponse.json<{ data: Array<{ symbol: string }> }>();
+
+		expect(firstPayload.data.map((item) => item.symbol)).toEqual(["PETR4"]);
+		expect(secondPayload.data.map((item) => item.symbol)).toEqual(["BTC"]);
+	});
+
+	it("returns 401 for unauthenticated requests", async () => {
+		const fakeDb = createFakeD1Database();
+
+		const getResponse = await worker.fetch(
+			createAssetRequest("/users/me/recent-assets"),
+			createEnv(fakeDb),
+		);
+		const postResponse = await worker.fetch(
+			createJsonRequest("/users/me/recent-assets", "POST", {
+				symbol: "PETR4",
+				type: "stock",
+				label: "Petrobras",
+				market: "B3",
+				currency: "BRL",
+			}),
+			createEnv(fakeDb),
+		);
+
+		expect(getResponse.status).toBe(401);
+		expect(postResponse.status).toBe(401);
+	});
+
+	it("returns 422 for invalid payloads", async () => {
+		const fakeDb = createFakeD1Database();
+		const token = await createAccessToken();
+
+		const response = await worker.fetch(
+			createJsonRequest(
+				"/users/me/recent-assets",
+				"POST",
+				{
+					symbol: "PE",
+					type: "bond",
+					label: "",
+				},
+				token,
+			),
+			createEnv(fakeDb),
+		);
+		const payload = await response.json<{
+			error: {
+				code: string;
+				details?: {
+					fieldErrors?: Record<string, string[]>;
+				};
+			};
+		}>();
+
+		expect(response.status).toBe(422);
+		expect(payload.error.code).toBe("VALIDATION_ERROR");
+		expect(payload.error.details?.fieldErrors).toBeTruthy();
 	});
 });

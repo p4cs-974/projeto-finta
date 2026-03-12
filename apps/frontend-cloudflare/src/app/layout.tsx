@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+import Header from "@/components/header";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { AUTH_COOKIE_NAME, getSessionFromCookieValue } from "@/lib/auth";
 
 const systemThemeScript = `
 (() => {
@@ -54,11 +59,16 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const session = getSessionFromCookieValue(
+    cookieStore.get(AUTH_COOKIE_NAME)?.value,
+  );
+
   return (
     <html
       lang="en"
@@ -77,7 +87,12 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="flex min-h-svh flex-col antialiased">
+        <QueryProvider>
+          {session ? <Header session={session} /> : null}
+          {children}
+        </QueryProvider>
+      </body>
     </html>
   );
 }
