@@ -12,8 +12,10 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { login } from "@/features/identity-access/api";
+import { ApiRequestError } from "@/lib/http-client";
 import { Input } from "@/components/ui/input";
-import { sanitizeRedirectTo, type AuthErrorResponse } from "@/lib/auth";
+import { sanitizeRedirectTo } from "@/lib/auth";
 import Link from "next/link";
 import { ChartLineIcon } from "./ui/chart-line";
 
@@ -40,45 +42,33 @@ export function LoginForm({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+      await login({
+        email,
+        password,
       });
-
-      if (!response.ok) {
-        const payload = (await response.json()) as AuthErrorResponse;
-
-        if (response.status === 422) {
-          const nextFieldErrors = payload.error.details?.fieldErrors ?? {};
-
-          setFieldErrors({
-            email: nextFieldErrors.email,
-            password: nextFieldErrors.password,
-          });
-        }
-
-        setFormError(
-          response.status === 401
-            ? "Invalid email or password."
-            : payload.error.message,
-        );
-        return;
-      }
-
-      await response.json();
       const nextPath = sanitizeRedirectTo(redirectTo);
 
       startTransition(() => {
         router.push(nextPath);
         router.refresh();
       });
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        const fieldErrors = error.body?.error.details?.fieldErrors ?? {};
+
+        if (error.status === 422) {
+          setFieldErrors({
+            email: fieldErrors.email,
+            password: fieldErrors.password,
+          });
+        }
+
+        setFormError(
+          error.status === 401 ? "Invalid email or password." : error.message,
+        );
+        return;
+      }
+
       setFormError("Could not reach the server. Try again.");
     } finally {
       setIsSubmitting(false);

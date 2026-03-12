@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-	/* config options here */
+  transpilePackages: [
+    "@finta/shared-kernel",
+    "@finta/price-query",
+    "@finta/identity-access",
+    "@finta/user-assets",
+  ],
 };
 
 export default nextConfig;

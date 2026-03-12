@@ -1,10 +1,7 @@
+import type { AuthSessionResponseBody } from "@finta/identity-access";
 import { NextResponse } from "next/server";
 
-import {
-  AUTH_COOKIE_NAME,
-  type AuthSuccessResponse,
-  getBackendBaseUrl,
-} from "@/lib/auth";
+import { AUTH_COOKIE_NAME, getBackendBaseUrl } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +30,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const successPayload = payload as AuthSuccessResponse;
+    const successPayload = payload as AuthSessionResponseBody;
     const nextResponse = NextResponse.json(successPayload, {
       status: response.status,
       headers: {
@@ -58,7 +55,7 @@ export async function POST(request: Request) {
           message: "Authentication service is unavailable",
         },
       },
-      { status: 502 }
+      { status: 502 },
     );
   }
 }

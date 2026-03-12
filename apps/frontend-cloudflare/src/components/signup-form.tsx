@@ -19,35 +19,13 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { register } from "@/features/identity-access/api";
+import { ApiRequestError } from "@/lib/http-client";
 import { Input } from "@/components/ui/input";
 import { Facehash } from "facehash";
 import Link from "next/link";
 
 const avatarColors = ["#FF3366", "#00D9FF", "#7FFF00", "#FF6B35", "#9D00FF"];
-
-interface RegisterSuccessResponse {
-  data: {
-    user: {
-      id: number;
-      name: string;
-      email: string;
-      createdAt: string;
-    };
-    token: string;
-    tokenType: "Bearer";
-    expiresIn: number;
-  };
-}
-
-interface RegisterErrorResponse {
-  error: {
-    code: string;
-    message: string;
-    details?: {
-      fieldErrors?: Record<string, string[] | undefined>;
-    };
-  };
-}
 
 export function SignupForm({
   className,
@@ -87,36 +65,27 @@ export function SignupForm({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          name: fullName,
-          email,
-          password,
-        }),
+      await register({
+        name: fullName,
+        email,
+        password,
       });
-
-      if (!response.ok) {
-        const payload = (await response.json()) as RegisterErrorResponse;
-        const nextFieldErrors = payload.error.details?.fieldErrors ?? {};
+      setFormSuccess("Account created. You are authenticated on this device.");
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        const nextFieldErrors = error.body?.error.details?.fieldErrors ?? {};
 
         setFieldErrors({
           name: nextFieldErrors.name,
           email: nextFieldErrors.email,
           password: nextFieldErrors.password,
         });
-        setFormError(payload.error.message);
+        setFormError(error.message);
         return;
       }
 
-      (await response.json()) as RegisterSuccessResponse;
-      setFormSuccess("Account created. You are authenticated on this device.");
-      router.push("/");
-      router.refresh();
-    } catch {
       setFormError("Could not reach the server. Try again.");
     } finally {
       setIsSubmitting(false);

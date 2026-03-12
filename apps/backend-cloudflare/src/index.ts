@@ -1,91 +1,87 @@
-import { handleGetAsset } from "./features/assets/get-asset";
-import { handleGetCachedAsset } from "./features/assets/get-cached-asset";
-import { handleGetCryptoAsset } from "./features/assets/get-crypto-asset";
-import { handleGetRecentAssets } from "./features/assets/get-recent-assets";
-import { handleSaveRecentAsset } from "./features/assets/save-recent-asset";
-import { handleSearchCachedAssets } from "./features/assets/search-cached-assets";
-import { handleLogin } from "./features/auth/login";
-import { handleRegister } from "./features/auth/register";
-import { validateAssetType } from "./lib/assets";
+import { createNoopExecutionContext, type AppEnv } from "./app-env";
+import { handleLogin } from "./adapters/http/identity-access/login";
+import { handleRegister } from "./adapters/http/identity-access/register";
+import { handleGetCachedQuote } from "./adapters/http/price-query/get-cached-quote";
+import { handleGetLiveQuote } from "./adapters/http/price-query/get-live-quote";
+import { handleSearchCachedQuotes } from "./adapters/http/price-query/search-cached-quotes";
+import { handleListRecentSelections } from "./adapters/http/user-assets/list-recent-selections";
+import { handleRecordRecentSelection } from "./adapters/http/user-assets/record-recent-selection";
 import { apiError, errorResponse, json } from "./lib/http";
 import { renderSwaggerUiHtml } from "./lib/docs";
 import { createOpenApiDocument } from "./lib/openapi";
 
-export interface AppEnv {
-	DB: D1Database;
-	JWT_SECRET: string;
-	BRAPI_TOKEN: string;
-	ASSET_CACHE: KVNamespace;
-}
+async function routeRequest(
+  request: Request,
+  env: AppEnv,
+  ctx: ExecutionContext,
+): Promise<Response> {
+  const url = new URL(request.url);
 
-function createNoopExecutionContext(): ExecutionContext {
-	return {
-		waitUntil() {},
-		passThroughOnException() {},
-		props: {},
-	};
-}
+  if (request.method === "GET" && url.pathname === "/openapi.json") {
+    return json(createOpenApiDocument(url.origin));
+  }
 
-async function routeRequest(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
-	const url = new URL(request.url);
+  if (request.method === "GET" && url.pathname === "/docs") {
+    return new Response(renderSwaggerUiHtml(`${url.origin}/openapi.json`), {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+      },
+    });
+  }
 
-	if (request.method === "GET" && url.pathname === "/openapi.json") {
-		return json(createOpenApiDocument(url.origin));
-	}
+  if (request.method === "POST" && url.pathname === "/auth/register") {
+    return handleRegister(request, env);
+  }
 
-	if (request.method === "GET" && url.pathname === "/docs") {
-		return new Response(renderSwaggerUiHtml(`${url.origin}/openapi.json`), {
-			headers: {
-				"content-type": "text/html; charset=utf-8",
-			},
-		});
-	}
+  if (request.method === "POST" && url.pathname === "/auth/login") {
+    return handleLogin(request, env);
+  }
 
-	if (request.method === "POST" && url.pathname === "/auth/register") {
-		return handleRegister(request, env);
-	}
+  if (request.method === "GET" && url.pathname === "/users/me/recent-assets") {
+    return handleListRecentSelections(request, env);
+  }
 
-	if (request.method === "POST" && url.pathname === "/auth/login") {
-		return handleLogin(request, env);
-	}
+  if (request.method === "POST" && url.pathname === "/users/me/recent-assets") {
+    return handleRecordRecentSelection(request, env);
+  }
 
-	if (request.method === "GET" && url.pathname === "/users/me/recent-assets") {
-		return handleGetRecentAssets(request, env);
-	}
+  if (request.method === "GET" && url.pathname === "/ativos/cache-search") {
+    return handleSearchCachedQuotes(request, env);
+  }
 
-	if (request.method === "POST" && url.pathname === "/users/me/recent-assets") {
-		return handleSaveRecentAsset(request, env);
-	}
+  if (
+    request.method === "GET" &&
+    url.pathname.startsWith("/ativos/") &&
+    url.pathname.endsWith("/cache")
+  ) {
+    const rawTicker = url.pathname.slice("/ativos/".length, -"/cache".length);
+    return handleGetCachedQuote(request, env, rawTicker);
+  }
 
-	if (request.method === "GET" && url.pathname === "/ativos/cache-search") {
-		return handleSearchCachedAssets(request, env);
-	}
+  if (request.method === "GET" && url.pathname.startsWith("/ativos/")) {
+    const rawTicker = url.pathname.slice("/ativos/".length);
+    return handleGetLiveQuote(request, env, ctx, rawTicker);
+  }
 
-	if (request.method === "GET" && url.pathname.startsWith("/ativos/") && url.pathname.endsWith("/cache")) {
-		const rawTicker = url.pathname.slice("/ativos/".length, -"/cache".length);
-		return handleGetCachedAsset(request, env, rawTicker);
-	}
-
-	if (request.method === "GET" && url.pathname.startsWith("/ativos/")) {
-		const rawTicker = url.pathname.slice("/ativos/".length);
-		if (validateAssetType(url.searchParams.get("type")) === "crypto") {
-			return handleGetCryptoAsset(request, env, ctx, rawTicker);
-		}
-
-		return handleGetAsset(request, env, ctx, rawTicker);
-	}
-
-	throw apiError(404, "NOT_FOUND", "Route not found");
+  throw apiError(404, "NOT_FOUND", "Route not found");
 }
 
 export default {
-	async fetch(request: Request, env: AppEnv, ctx?: ExecutionContext): Promise<Response> {
-		try {
-			return await routeRequest(request, env, ctx ?? createNoopExecutionContext());
-		} catch (error) {
-			return errorResponse(error);
-		}
-	},
+  async fetch(
+    request: Request,
+    env: AppEnv,
+    ctx?: ExecutionContext,
+  ): Promise<Response> {
+    try {
+      return await routeRequest(
+        request,
+        env,
+        ctx ?? createNoopExecutionContext(),
+      );
+    } catch (error) {
+      return errorResponse(error);
+    }
+  },
 } satisfies ExportedHandler<AppEnv>;
 
 export { routeRequest };

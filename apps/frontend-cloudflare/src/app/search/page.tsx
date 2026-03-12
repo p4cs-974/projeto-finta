@@ -1,5 +1,8 @@
 import { SearchClient } from "@/components/search/search-client";
-import { normalizeSearchInput, type SearchMode } from "@/lib/search";
+import {
+  normalizeSearchInput,
+  type SearchMode,
+} from "@/features/price-query/presentation";
 
 interface SearchPageProps {
   searchParams: Promise<{

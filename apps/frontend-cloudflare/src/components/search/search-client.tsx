@@ -1,5 +1,7 @@
 "use client";
 
+import type { QuoteWithCacheMeta as QuoteResponse } from "@finta/price-query";
+import type { RecentAssetSelection, TrackedAssetRef } from "@finta/user-assets";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpRight,
@@ -15,6 +17,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
 import {
+  getCachedQuote,
+  getLiveQuote,
+  searchCachedQuotes,
+} from "@/features/price-query/api";
+import {
   formatMoney,
   formatRelativeTime,
   getModeAssetType,
@@ -22,34 +29,20 @@ import {
   getQuoteLogoUrl,
   getQuoteSymbol,
   getRecentMode,
-  isStockQuoteResponse,
+  isStockQuoteWithCache as isStockQuoteResponse,
   isValidSearchInput,
   normalizeSearchInput,
-  type QuoteResponse,
-  type RecentAssetSelection,
   type SearchMode,
-} from "@/lib/search";
+} from "@/features/price-query/presentation";
+import {
+  listRecentSelections,
+  recordRecentSelection,
+} from "@/features/user-assets/api";
+import { ApiRequestError } from "@/lib/http-client";
 
 interface SearchClientProps {
   initialMode: SearchMode;
   initialQuery: string;
-}
-
-interface ApiErrorPayload {
-  error?: {
-    code?: string;
-    message?: string;
-  };
-}
-
-class ApiRequestError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-    readonly code?: string,
-  ) {
-    super(message);
-  }
 }
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
@@ -64,73 +57,6 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   }, [delayMs, value]);
 
   return debounced;
-}
-
-async function requestJson<T>(
-  input: RequestInfo,
-  init?: RequestInit,
-): Promise<T> {
-  const response = await fetch(input, {
-    ...init,
-    cache: "no-store",
-  });
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  const text = await response.text();
-  let payload: ApiErrorPayload | T | null = null;
-
-  if (text) {
-    try {
-      payload = JSON.parse(text) as ApiErrorPayload | T;
-    } catch {
-      payload = null;
-    }
-  }
-
-  if (!response.ok) {
-    const errorPayload = payload as ApiErrorPayload | null;
-    throw new ApiRequestError(
-      errorPayload?.error?.message ??
-        `Request failed with status ${response.status}`,
-      response.status,
-      errorPayload?.error?.code,
-    );
-  }
-
-  if (payload === null) {
-    throw new ApiRequestError(
-      "Server returned an invalid JSON response",
-      response.status,
-    );
-  }
-
-  return payload as T;
-}
-
-function buildAssetPath(symbol: string, mode: SearchMode, suffix = "") {
-  const params = new URLSearchParams();
-
-  if (mode === "crypto") {
-    params.set("type", "crypto");
-  }
-
-  const queryString = params.toString();
-  return `/api/assets/${encodeURIComponent(symbol)}${suffix}${queryString ? `?${queryString}` : ""}`;
-}
-
-function buildAssetSearchPath(query: string, mode: SearchMode) {
-  const params = new URLSearchParams({
-    q: query,
-  });
-
-  if (mode === "crypto") {
-    params.set("type", "crypto");
-  }
-
-  return `/api/assets/search?${params.toString()}`;
 }
 
 function StatChip({ label, value }: { label: string; value: string }) {
@@ -428,21 +354,8 @@ export function SearchClient({ initialMode, initialQuery }: SearchClientProps) {
   }
 
   const recentMutation = useMutation({
-    mutationFn: async (selection: {
-      symbol: string;
-      type: "stock" | "crypto";
-      label: string;
-      market?: string | null;
-      currency?: string | null;
-      logoUrl?: string | null;
-    }) =>
-      requestJson<void>("/api/users/me/recent-assets", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json; charset=utf-8",
-        },
-        body: JSON.stringify(selection),
-      }),
+    mutationFn: (selection: TrackedAssetRef) =>
+      recordRecentSelection(selection),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recent-assets"] });
     },
@@ -451,23 +364,13 @@ export function SearchClient({ initialMode, initialQuery }: SearchClientProps) {
   const recentsQuery = useQuery({
     queryKey: ["recent-assets"],
     enabled: normalizedQuery.length === 0,
-    queryFn: async () => {
-      const payload = await requestJson<{ data: RecentAssetSelection[] }>(
-        "/api/users/me/recent-assets",
-      );
-      return payload.data;
-    },
+    queryFn: () => listRecentSelections(),
   });
 
   const cachedMatchesQuery = useQuery({
     queryKey: ["asset-cache-search", mode, normalizedQuery],
     enabled: normalizedQuery.length > 0,
-    queryFn: async () => {
-      const payload = await requestJson<{ data: QuoteResponse[] }>(
-        buildAssetSearchPath(normalizedQuery, mode),
-      );
-      return payload.data;
-    },
+    queryFn: () => searchCachedQuotes(normalizedQuery, getModeAssetType(mode)),
   });
 
   const cacheProbeQuery = useQuery<QuoteResponse | null>({
@@ -476,9 +379,7 @@ export function SearchClient({ initialMode, initialQuery }: SearchClientProps) {
       normalizedQuery.length > 0 && isValidSearchInput(normalizedQuery, mode),
     queryFn: async () => {
       try {
-        return await requestJson<QuoteResponse>(
-          buildAssetPath(normalizedQuery, mode, "/cache"),
-        );
+        return await getCachedQuote(normalizedQuery, getModeAssetType(mode));
       } catch (error) {
         if (
           error instanceof ApiRequestError &&
@@ -497,8 +398,7 @@ export function SearchClient({ initialMode, initialQuery }: SearchClientProps) {
     queryKey: ["asset-live-quote", mode, debouncedQuery],
     enabled:
       debouncedQuery.length > 0 && isValidSearchInput(debouncedQuery, mode),
-    queryFn: () =>
-      requestJson<QuoteResponse>(buildAssetPath(debouncedQuery, mode)),
+    queryFn: () => getLiveQuote(debouncedQuery, getModeAssetType(mode)),
   });
 
   useEffect(() => {
@@ -515,7 +415,7 @@ export function SearchClient({ initialMode, initialQuery }: SearchClientProps) {
     persistedLiveKeyRef.current = persistenceKey;
     recentMutation.mutate({
       symbol: getQuoteSymbol(liveQuoteQuery.data),
-      type: getModeAssetType(mode),
+      assetType: getModeAssetType(mode),
       label: getQuoteLabel(liveQuoteQuery.data),
       market: isStockQuoteResponse(liveQuoteQuery.data)
         ? liveQuoteQuery.data.data.market
@@ -539,14 +439,14 @@ export function SearchClient({ initialMode, initialQuery }: SearchClientProps) {
   }
 
   function handleRecentClick(selection: RecentAssetSelection) {
-    const nextMode = getRecentMode(selection.type);
+    const nextMode = getRecentMode(selection.assetType);
 
     setMode(nextMode);
     setQuery(selection.symbol);
     replaceUrl(nextMode, selection.symbol);
     recentMutation.mutate({
       symbol: selection.symbol,
-      type: selection.type,
+      assetType: selection.assetType,
       label: selection.label,
       market: selection.market,
       currency: selection.currency,
@@ -565,7 +465,7 @@ export function SearchClient({ initialMode, initialQuery }: SearchClientProps) {
     replaceUrl(nextMode, nextQuery);
     recentMutation.mutate({
       symbol: nextQuery,
-      type: getModeAssetType(nextMode),
+      assetType: getModeAssetType(nextMode),
       label: getQuoteLabel(quote),
       market: isStockQuoteResponse(quote) ? quote.data.market : null,
       currency: quote.data.currency,
@@ -674,7 +574,7 @@ export function SearchClient({ initialMode, initialQuery }: SearchClientProps) {
                     {recentsQuery.data && recentsQuery.data.length > 0 ? (
                       <ul className="space-y-2">
                         {recentsQuery.data.map((item) => (
-                          <li key={`${item.type}:${item.symbol}`}>
+                          <li key={`${item.assetType}:${item.symbol}`}>
                             <button
                               type="button"
                               onClick={() => handleRecentClick(item)}
@@ -695,7 +595,7 @@ export function SearchClient({ initialMode, initialQuery }: SearchClientProps) {
                               </div>
                               <div className="shrink-0 text-right">
                                 <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                                  {item.type}
+                                  {item.assetType}
                                 </p>
                                 <p className="mt-1 text-xs text-muted-foreground">
                                   {formatRelativeTime(item.lastSelectedAt)}

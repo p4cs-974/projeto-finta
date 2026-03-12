@@ -10,30 +10,6 @@ export interface AuthSessionPayload {
   exp: number;
 }
 
-interface AuthSuccessResponse {
-  data: {
-    token: string;
-    tokenType: "Bearer";
-    expiresIn: number;
-    user: {
-      id: number;
-      name: string;
-      email: string;
-      createdAt: string;
-    };
-  };
-}
-
-export interface AuthErrorResponse {
-  error: {
-    code: string;
-    message: string;
-    details?: {
-      fieldErrors?: Record<string, string[] | undefined>;
-    };
-  };
-}
-
 const defaultBackendBaseUrl = "http://127.0.0.1:8787";
 
 function decodeBase64Url(value: string) {
@@ -64,14 +40,14 @@ export function isSessionPayloadValid(
 ): payload is AuthSessionPayload {
   return Boolean(
     payload &&
-      typeof payload.sub === "string" &&
-      payload.sub.length > 0 &&
-      typeof payload.email === "string" &&
-      payload.email.length > 0 &&
-      typeof payload.name === "string" &&
-      payload.name.length > 0 &&
-      Number.isFinite(payload.iat) &&
-      Number.isFinite(payload.exp),
+    typeof payload.sub === "string" &&
+    payload.sub.length > 0 &&
+    typeof payload.email === "string" &&
+    payload.email.length > 0 &&
+    typeof payload.name === "string" &&
+    payload.name.length > 0 &&
+    Number.isFinite(payload.iat) &&
+    Number.isFinite(payload.exp),
   );
 }
 
@@ -117,5 +93,3 @@ export function getBackendBaseUrl() {
 
   return configuredBaseUrl.replace(/\/+$/, "");
 }
-
-export type { AuthSuccessResponse };

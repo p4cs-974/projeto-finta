@@ -49,6 +49,16 @@ Erros relevantes:
 - `422 VALIDATION_ERROR`: ticker fora do padrão `^[A-Z]{4}[0-9]{1,2}(?:\\.[A-Z]{2,5})?$`
 - `502 EXTERNAL_SERVICE_ERROR`: erro ou timeout na Brapi
 
+`GET /ativos/{ticker}?type=crypto`
+
+Retorna uma cotação resumida de criptoativos. Exige `Authorization: Bearer <jwt>`.
+
+Observações:
+
+- cotações de `stock` continuam na Brapi
+- cotações de `crypto` usam CoinCap
+- `GET /ativos/cache-search` continua somente em KV, sem consultar providers
+
 `POST /auth/register`
 
 Body JSON:
@@ -86,13 +96,15 @@ Segredo local em `apps/backend-cloudflare/.dev.vars`:
 ```dotenv
 JWT_SECRET=dev-only-secret
 BRAPI_TOKEN=your-brapi-token
+COINCAP_API_KEY=your-coincap-api-key
 ```
 
 Segredo remoto:
 
 ```bash
-pnpm --filter backend-cloudflare wrangler secret put JWT_SECRET
-pnpm --filter backend-cloudflare wrangler secret put BRAPI_TOKEN
+pnpm --filter backend-cloudflare exec wrangler secret put JWT_SECRET
+pnpm --filter backend-cloudflare exec wrangler secret put BRAPI_TOKEN
+pnpm --filter backend-cloudflare exec wrangler secret put COINCAP_API_KEY
 ```
 
 ## Comandos
