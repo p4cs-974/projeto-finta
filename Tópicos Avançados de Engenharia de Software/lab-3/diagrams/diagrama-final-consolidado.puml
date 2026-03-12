@@ -1,0 +1,88 @@
+@startuml diagrama-final-consolidado
+top to bottom direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+title FINTA - Diagrama Final Consolidado
+
+actor "Usuario" as User
+
+component "Frontend Cloudflare\nWeb App + BFF" as Front
+component "Identity Access" as Identity
+component "Market Monitoring" as Market
+component "Favorites" as Favorites
+component "Macro Indicators" as Macro
+component "Financing" as Financing
+
+database "Cloudflare D1" as D1
+database "Cloudflare KV" as KV
+cloud "API Financeira\n(Brapi)" as FinanceApi
+cloud "API Cripto\n(CoinCap)" as CryptoApi
+cloud "API Selic / Bacen" as SelicApi
+cloud "API Taxas de\nFinanciamento" as FundingApi
+cloud "Infra de seguranca\n(Hash + JWT)" as SecurityInfra
+
+User --> Front
+
+Front --> Identity : IIdentityAccess
+Front --> Market : IDashboardQuery\nIAssetQuery\nIRecentSelections
+Front --> Favorites : IFavorites
+Front --> Macro : IMacroIndicators
+Front --> Financing : IFinancingRates\nIFinancingSimulation
+
+Favorites --> Market : IAssetQuery
+
+Identity --> D1 : IUserRepository
+Identity --> SecurityInfra : IPasswordHasher\nITokenService
+
+Market --> FinanceApi : IMarketDataGateway
+Market --> CryptoApi : IMarketDataGateway
+Market --> KV : IQuoteSnapshotStore
+Market --> D1 : IUserAssetRepository
+
+Favorites --> D1 : IFavoritesRepository
+
+Macro --> SelicApi : ISelicGateway
+
+Financing --> FundingApi : IFinancingRatesGateway
+Financing --> D1 : IFinancingSimulationRepository
+
+note right of Identity
+Responsabilidade:
+- cadastro
+- login
+- emissao de token
+end note
+
+note right of Market
+Responsabilidade:
+- cotacoes live/cache
+- busca de ativos
+- detalhes de ativo
+- historico recente
+- agregacao do dashboard
+end note
+
+note right of Favorites
+Responsabilidade:
+- adicionar favorito
+- editar favorito
+- remover favorito
+- listar favoritos
+end note
+
+note right of Macro
+Responsabilidade:
+- consultar Selic
+- normalizar fonte oficial
+end note
+
+note right of Financing
+Responsabilidade:
+- listar taxas
+- simular financiamento
+- salvar/listar/remover simulacoes
+end note
+
+@enduml

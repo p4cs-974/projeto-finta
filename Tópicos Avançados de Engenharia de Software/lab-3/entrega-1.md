@@ -2,191 +2,263 @@
 
 ## Escopo e premissas
 
-- Escopo funcional validado:
-  - Consultar preço do Bitcoin.
-  - Consultar preço de carro na Tabela FIPE.
-  - Adicionar ação à biblioteca (ex.: Google).
-  - Cadastro de usuário (sem caso de uso de login nesta entrega).
+- Escopo funcional consolidado:
+  - Visualizar dashboard financeiro.
+  - Visualizar detalhes de indicadores e ativos.
+  - Realizar cadastro.
+  - Realizar login.
+  - Adicionar, editar e remover favoritos.
+  - Consultar cotações em tempo real de ações e cripto.
+  - Visualizar taxa Selic atualizada.
+  - Listar taxas de financiamento.
+  - Simular financiamento, visualizar simulações salvas e removê-las.
 - Ator primário: `Usuário`.
 - Sistemas externos:
-  - API de mercado financeiro.
-  - API FIPE.
-- Persistência da biblioteca do usuário no cliente (`localStorage`).
-- Arquitetura alvo: `Frontend Web (Next/React) + Backend API (Elysia/Bun)`.
+  - `Brapi`.
+  - `CoinCap`.
+- Persistência implementada:
+  - `Cloudflare D1` para `users` e `recent_asset_selections`.
+  - `Cloudflare KV` (binding `ASSET_CACHE`) para cache de cotações.
+- Arquitetura implementada:
+  - `frontend-cloudflare (Next.js)`.
+  - `backend-cloudflare (Cloudflare Workers + D1 + KV)`.
+  - `@finta/identity-access`.
+  - `@finta/price-query`.
+  - `@finta/user-assets`.
+  - `@finta/shared-kernel`.
+- Premissa de modelagem:
+  - as correções desta revisão refletem apenas o que está implementado hoje no código do monorepo; itens de backlog não são considerados nas seções corrigidas.
+- Link do Git:
+  - <https://github.com/p4cs-974/projeto-finta>
 
 ## 1) Diagrama de Casos de Uso
 
-![Diagrama de Casos de Uso](/Users/pedro/Faculdade/topicos-avancados-eng-software/projeto-finta/Tópicos Avançados de Engenharia de Software/lab-3/diagrams/casos-de-uso.png)
+![Diagrama de Casos de Uso](./diagrams/casos-de-uso-finta.png)
 
-Arquivo fonte: [casos-de-uso.puml](/Users/pedro/Faculdade/topicos-avancados-eng-software/projeto-finta/Tópicos Avançados de Engenharia de Software/lab-3/diagrams/casos-de-uso.puml)
+Arquivo fonte: [casos-de-uso-finta.puml](./diagrams/casos-de-uso-finta.puml)
 
-## 2) Descrição dos 3 Casos de Uso principais
+## 2) Descrição dos Casos de Uso principais
 
-### UC-01 - Consultar preço do Bitcoin
+### UC-03 - Realizar cadastro
 
-- Objetivo: permitir que o usuário obtenha a cotação atual do Bitcoin.
-- Atores: `Usuário` (primário), `API Mercado Financeiro` (secundário).
-- Pré-condições: sistema disponível; integração com API de mercado ativa.
+- Objetivo: criar conta e iniciar sessão autenticada.
+- Atores: `Usuário` (primário).
+- Pré-condições:
+  - nome, email e senha informados em formato válido.
 - Fluxo principal:
-  1. Usuário solicita consulta de preço do Bitcoin.
-  2. Frontend envia requisição ao Backend.
-  3. Backend consulta a API de mercado financeiro.
-  4. Backend normaliza o payload e retorna ao Frontend.
-  5. Frontend exibe preço, data/hora da cotação e fonte.
+  1. O usuário preenche o formulário de cadastro.
+  2. O frontend envia a requisição para `/api/auth/register`.
+  3. O backend valida o payload.
+  4. O `RegistrationService` verifica se o email já existe.
+  5. A senha é protegida por hash.
+  6. O usuário é persistido no D1.
+  7. O token JWT é emitido.
+  8. O frontend grava o cookie de sessão e redireciona para a área autenticada.
 - Fluxos alternativos:
-  - API externa indisponível: Backend retorna erro técnico padronizado.
-  - Timeout: Backend retorna fallback de indisponibilidade temporária.
-- Pós-condições: cotação exibida ao usuário ou mensagem de falha registrada.
+  - payload inválido: erro de validação;
+  - email já utilizado: rejeição com erro de negócio;
+  - falha de persistência: erro técnico padronizado.
+- Pós-condições:
+  - conta criada com identificador único;
+  - sessão autenticada disponível ao frontend.
 
-### UC-02 - Consultar preço de carro na Tabela FIPE
+### UC-05 - Adicionar favoritos
 
-- Objetivo: permitir consulta de preço de referência FIPE por veículo.
-- Atores: `Usuário` (primário), `API FIPE` (secundário).
-- Pré-condições: dados mínimos do veículo informados (`marca`, `modelo`, `ano`).
+- Objetivo: salvar um ativo na biblioteca permanente do usuário.
+- Atores: `Usuário` (primário), `API Financeira`, `API Cripto` (secundários).
+- Pré-condições:
+  - usuário autenticado;
+  - ativo identificado corretamente;
+  - repositório de favoritos disponível.
 - Fluxo principal:
-  1. Usuário informa marca, modelo e ano.
-  2. Frontend chama Backend com os parâmetros.
-  3. Backend consulta a API FIPE.
-  4. Backend valida e mapeia resultado para contrato interno.
-  5. Frontend apresenta valor FIPE e metadados da consulta.
+  1. O usuário visualiza um ativo e clica em favoritar.
+  2. O frontend envia `addFavorite`.
+  3. O componente `Favorites` usa `IAssetQuery` para validar símbolo, tipo e metadados.
+  4. O sistema verifica duplicidade.
+  5. O favorito é persistido com vínculo ao usuário.
+  6. O sistema confirma a operação e invalida o resumo do dashboard.
 - Fluxos alternativos:
-  - Veículo não encontrado: retorno de resultado vazio com mensagem orientativa.
-  - API FIPE indisponível: retorno de erro técnico padronizado.
-- Pós-condições: valor FIPE exibido ou falha comunicada de forma consistente.
+  - ativo já favoritado: retorno idempotente com mensagem de aviso;
+  - ativo inexistente: operação rejeitada;
+  - falha de persistência: favorito não é confirmado.
+- Pós-condições:
+  - favorito salvo sem duplicidade;
+  - listagem de favoritos apta para reconsulta.
 
-### UC-03 - Adicionar ação à biblioteca (ex.: Google)
+### UC-08 - Consultar cotações em tempo real
 
-- Objetivo: permitir salvar um ativo de interesse na biblioteca pessoal (exemplo: ação do Google).
-- Atores: `Usuário` (primário), `API Mercado Financeiro` (secundário).
-- Pré-condições: usuário cadastrado (cadastro simples); navegador com armazenamento habilitado.
+- Objetivo: consultar cotações de ações e cripto com suporte a cache.
+- Atores: `Usuário` (primário), `Brapi`, `CoinCap` (secundários).
+- Pré-condições:
+  - usuário autenticado;
+  - símbolo informado em formato válido.
 - Fluxo principal:
-  1. Usuário seleciona uma ação para adicionar (exemplo: Google).
-  2. Frontend requisita cotação atual via Backend.
-  3. Backend consulta API de mercado e retorna dados consolidados.
-  4. Frontend persiste ativo na biblioteca local do usuário.
-  5. Frontend confirma inclusão e atualiza a lista.
+  1. O usuário pesquisa ou seleciona um ativo.
+  2. O frontend consulta resultados em cache para navegação rápida.
+  3. Ao abrir o detalhe, solicita `getLiveQuote`.
+  4. O `PriceQueryService` procura a cotação no KV.
+  5. Se não houver cache, consulta `Brapi` ou `CoinCap` e grava o snapshot.
+  6. Se o cache estiver expirado, retorna o último valor e agenda refresh em segundo plano.
+  7. O frontend exibe preço, variação, origem e horário da cotação.
+  8. O `RecentAssetSelectionService` atualiza o histórico recente do usuário em `recent_asset_selections`.
 - Fluxos alternativos:
-  - Ativo já existente na biblioteca: sistema evita duplicidade e informa usuário.
-  - Falha de persistência local: sistema informa erro e não confirma inclusão.
-- Pós-condições: biblioteca local contém a ação (sem duplicidade) ou operação falha de forma explícita.
+  - ticker inválido: erro de validação;
+  - ativo não encontrado: retorno de negócio;
+  - provider indisponível: erro técnico padronizado.
+- Pós-condições:
+  - cotação exibida ao usuário;
+  - cache atualizado ou refresh agendado;
+  - ativo recente persistido.
 
 ## 3) Interfaces de software
 
 ### 3.1 Interfaces externas fornecidas pelo FINTA
 
-- `IPriceQueryService`
-  - `getCryptoQuote(symbol: string): CryptoQuote`
-  - `getStockQuote(ticker: string): StockQuote`
-- `IFipeQueryService`
-  - `getVehiclePrice(input: VehicleQuery): FipePrice`
 - `IRegistrationService`
-  - `register(input: RegistrationInput): RegistrationResult`
-- `IUserLibraryService`
-  - `addAsset(input: AssetInput): LibraryItem`
-  - `listAssets(): LibraryItem[]`
+  - `register(input: RegisterUserInput): Promise<AuthSessionResult>`
+- `IAuthenticationService`
+  - `login(input: LoginInput): Promise<AuthSessionResult>`
+- `IPriceQueryService`
+  - `getLiveQuote(input: QuoteRequest): Promise<QuoteWithCacheMeta>`
+  - `getCachedQuote(input: QuoteRequest): Promise<QuoteWithCacheMeta | null>`
+  - `searchCachedQuotes(input: QuoteSearchRequest): Promise<QuoteWithCacheMeta[]>`
+- `IRecentAssetSelectionService`
+  - `listRecentSelections(input: { userId: number; limit: number }): Promise<RecentAssetSelection[]>`
+  - `recordSelection(input: { userId: number; asset: TrackedAssetRef }): Promise<void>`
+- Endpoint BFF implementado fora dos contratos compartilhados: `POST /api/auth/logout`
 
 ### 3.2 Interfaces externas requeridas pelo FINTA
 
-- `IMarketDataGateway` (API de mercado financeiro)
-  - `fetchCrypto(symbol: string): ExternalCryptoQuote`
-  - `fetchStock(ticker: string): ExternalStockQuote`
-- `IFipeGateway` (API FIPE)
-  - `fetchVehiclePrice(input: VehicleQuery): ExternalFipePrice`
+- `IMarketDataGateway`
+  - `fetchQuote(input: QuoteRequest): Promise<PriceQuote>`
+- Implementações concretas atuais: `BrapiMarketDataGateway` e `CoinCapMarketDataGateway`
+- Composição atual: `createMarketDataGateway(...)`
 
 ### 3.3 Interfaces internas entre componentes
 
-- `IAuthRepository`
-  - `createUser(input: RegistrationInput): User`
-  - `existsByEmail(email: string): boolean`
+- `IUserRepository`
+  - `existsByEmail(email: string): Promise<boolean>`
+  - `createUser(input): Promise<number>`
+  - `findPublicUserById(id: number): Promise<PublicUser | null>`
+  - `findCredentialsByEmail(email: string): Promise<UserCredentials | null>`
+- `IPasswordHasher`
+  - `hash(password: string): Promise<string>`
+  - `verify(password: string, passwordHash: string): Promise<boolean>`
+- `ITokenService`
+  - `issueAccessToken(input): Promise<{ token: string; expiresIn: number; tokenType: "Bearer" }>`
+- `IQuoteSnapshotStore`
+  - `get(input: QuoteRequest): Promise<QuoteCacheEntry | null>`
+  - `put(entry: QuoteCacheEntry): Promise<void>`
+  - `listByPrefix(input: QuoteSearchRequest): Promise<QuoteCacheEntry[]>`
+  - `acquireRefreshLock(input: QuoteRequest, ttlSeconds: number): Promise<boolean>`
+  - `releaseRefreshLock(input: QuoteRequest): Promise<void>`
+- `IUserAssetRepository`
+  - `listRecentSelections(userId: number, limit: number): Promise<RecentAssetSelection[]>`
+  - `upsertRecentSelection(input): Promise<void>`
+  - `trimRecentSelections(userId: number, keep: number): Promise<void>`
 
 ## 4) Identificação de Componentes
 
-Os componentes do pacote final foram definidos com base nas interfaces identificadas e no escopo funcional desta entrega.
+Os componentes identificados nesta revisão refletem apenas o código implementado hoje no monorepo.
 
-- `Frontend Web App`
-  - Responsabilidade: interação com usuário, orquestração de chamadas para o backend e persistência da biblioteca local (`localStorage`) por meio de `IUserLibraryService`.
-  - Interfaces principais: consome `IPriceQueryService`, `IFipeQueryService`, `IRegistrationService`; fornece `IUserLibraryService`.
-- `Backend API`
-  - Responsabilidade: expor serviços de domínio do sistema, validar entradas e orquestrar integrações externas.
-  - Interfaces principais: fornece `IPriceQueryService`, `IFipeQueryService`, `IRegistrationService`; consome `IMarketDataGateway` e `IFipeGateway`.
-  - Módulo interno: `Auth Module` (não é componente de implantação separado).
-- `Market Data Adapter`
-  - Responsabilidade: adaptação da API de mercado financeiro para o contrato interno `IMarketDataGateway`.
-- `FIPE Adapter`
-  - Responsabilidade: adaptação da API FIPE para o contrato interno `IFipeGateway`.
+- `frontend-cloudflare`
+  - Responsabilidade: UI, páginas autenticadas, rotas BFF e gestão do cookie de sessão.
+  - Interfaces principais: expõe `/api/auth/*`, `/api/assets/*` e `/api/users/me/recent-assets`; integra-se ao `backend-cloudflare`.
+- `@finta/identity-access`
+  - Responsabilidade: cadastro, login e emissão da sessão autenticada.
+  - Serviços concretos: `RegistrationService` e `AuthenticationService`.
+  - Interfaces principais: fornece `IRegistrationService` e `IAuthenticationService`; consome `IUserRepository`, `IPasswordHasher` e `ITokenService`.
+- `@finta/price-query`
+  - Responsabilidade: consulta de cotações com suporte a cache.
+  - Serviço concreto: `PriceQueryService`.
+  - Interfaces principais: fornece `IPriceQueryService`; consome `IMarketDataGateway` e `IQuoteSnapshotStore`.
+- `@finta/user-assets`
+  - Responsabilidade: gestão do histórico recente do usuário.
+  - Serviço concreto: `RecentAssetSelectionService`.
+  - Interfaces principais: fornece `IRecentAssetSelectionService`; consome `IUserAssetRepository`.
+- `backend-cloudflare`
+  - Responsabilidade: adapters HTTP, adapters D1/KV e gateways externos.
+  - Interfaces principais: integra `RegistrationService`, `AuthenticationService`, `PriceQueryService` e `RecentAssetSelectionService` com `D1UserRepository`, `D1UserAssetRepository`, `CloudflareKvQuoteSnapshotStore`, `BrapiMarketDataGateway` e `CoinCapMarketDataGateway`.
 
 ## 5) Contratos das Operações (pré e pós-condições)
 
-### 5.1 Frontend Web App
+### 5.1 frontend-cloudflare
 
-- Operação: `addAsset(input: AssetInput)`
+- Operações implementadas: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/assets/search`, `GET /api/assets/[ticker]`, `GET /api/assets/[ticker]/cache`, `GET /api/users/me/recent-assets` e `POST /api/users/me/recent-assets`
 - Pré-condições:
-  - `input.ticker` informado e válido.
-  - `localStorage` disponível e acessível no navegador.
+  - URL base do `backend-cloudflare` configurada;
+  - rotas BFF habilitadas;
+  - cookie de sessão presente nas operações autenticadas.
 - Pós-condições:
-  - Ativo persistido na biblioteca local sem duplicidade.
-  - Lista exibida ao usuário atualizada com estado consistente.
+  - requisições encaminhadas ao `backend-cloudflare`;
+  - rotas de autenticação sincronizam o cookie de sessão;
+  - `POST /api/auth/logout` remove o cookie autenticado.
 
-### 5.2 Backend API
+### 5.2 @finta/identity-access
 
-- Operação: `getCryptoQuote(symbol: string)`
+- Operação: `RegistrationService.register(input: RegisterUserInput)`
 - Pré-condições:
-  - `symbol` informado e não vazio.
-  - `IMarketDataGateway` configurado e operacional.
-- Pós-condições:
-  - Cotação normalizada retornada no contrato `CryptoQuote`; ou
-  - Erro técnico padronizado retornado em caso de falha externa.
-
-### 5.3 Auth Module (interno ao Backend API)
-
-- Operação: `createUser(input: RegistrationInput)`
-- Pré-condições:
-  - Email válido no `input`.
+  - `input.name`, `input.email` e `input.password` válidos;
   - `existsByEmail(input.email)` igual a `false`.
 - Pós-condições:
-  - Usuário criado com identificador único.
-  - Novo registro persistido e recuperável por consulta posterior.
-
-### 5.4 Market Data Adapter
-
-- Operação: `fetchStock(ticker: string)`
+  - usuário persistido com identificador único;
+  - token de acesso emitido;
+  - sessão autenticada retornada ao frontend.
+- Operação: `AuthenticationService.login(input: LoginInput)`
 - Pré-condições:
-  - `ticker` informado e válido.
-  - API externa de mercado financeiro acessível.
+  - `input.email` e `input.password` válidos;
+  - `findCredentialsByEmail(input.email)` retorna um usuário.
 - Pós-condições:
-  - Payload retornado no formato acordado por `IMarketDataGateway`; ou
-  - Falha técnica classificada (ex.: indisponibilidade/timeout).
+  - credenciais validadas;
+  - token de acesso emitido;
+  - sessão autenticada retornada ao frontend.
 
-### 5.5 FIPE Adapter
+### 5.3 @finta/price-query
 
-- Operação: `fetchVehiclePrice(input: VehicleQuery)`
+- Operação: `PriceQueryService.getLiveQuote(input: QuoteRequest)`
 - Pré-condições:
-  - `input.marca`, `input.modelo` e `input.ano` informados.
-  - API FIPE acessível.
+  - `input.symbol` válido para o `assetType`;
+  - `IMarketDataGateway` disponível;
+  - `IQuoteSnapshotStore` configurado.
 - Pós-condições:
-  - Valor FIPE e metadados mínimos retornados; ou
-  - Resultado vazio controlado/erro técnico padronizado.
+  - cotação retornada em `QuoteWithCacheMeta`;
+  - snapshot salvo ou reaproveitado do cache;
+  - refresh assíncrono agendado quando o cache estiver obsoleto.
+
+### 5.4 @finta/user-assets
+
+- Operação: `RecentAssetSelectionService.recordSelection(input: { userId: number; asset: TrackedAssetRef })`
+- Pré-condições:
+  - usuário autenticado;
+  - ativo informado em formato válido;
+  - `IUserAssetRepository` disponível.
+- Pós-condições:
+  - seleção registrada em `recent_asset_selections`;
+  - histórico recente ajustado ao limite configurado.
+- Operação: `RecentAssetSelectionService.listRecentSelections(input: { userId: number; limit: number })`
+- Pré-condições:
+  - usuário autenticado;
+  - `limit` positivo;
+  - `IUserAssetRepository` disponível.
+- Pós-condições:
+  - histórico recente do usuário retornado em ordem decrescente de seleção.
 
 ## 6) Dependências entre Componentes (via interfaces)
 
-- `Frontend Web App` -> `Backend API`
-  - Via `IPriceQueryService`
-  - Via `IFipeQueryService`
-  - Via `IRegistrationService`
-- `Frontend Web App` -> Biblioteca local
-  - Via `IUserLibraryService` (implementada no cliente)
-- `Backend API` -> `Market Data Adapter`
-  - Via `IMarketDataGateway`
-- `Backend API` -> `FIPE Adapter`
-  - Via `IFipeGateway`
-- `Backend API` -> `Auth Module` (interno)
-  - Via `IAuthRepository` para persistência/autenticação interna
-- Adaptadores -> Sistemas externos
-  - `Market Data Adapter` -> API Mercado Financeiro
-  - `FIPE Adapter` -> API FIPE
+- `frontend-cloudflare` -> rotas BFF `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/assets/search`, `GET /api/assets/[ticker]`, `GET /api/assets/[ticker]/cache`, `GET /api/users/me/recent-assets` e `POST /api/users/me/recent-assets`
+- `frontend-cloudflare` -> `backend-cloudflare` via `/auth/register`, `/auth/login`, `/users/me/recent-assets`, `/ativos/cache-search`, `/ativos/:ticker` e `/ativos/:ticker/cache`
+- `backend-cloudflare` -> `RegistrationService`
+- `backend-cloudflare` -> `AuthenticationService`
+- `backend-cloudflare` -> `PriceQueryService`
+- `backend-cloudflare` -> `RecentAssetSelectionService`
+- `RegistrationService` -> `IUserRepository`, `IPasswordHasher`, `ITokenService`
+- `AuthenticationService` -> `IUserRepository`, `IPasswordHasher`, `ITokenService`
+- `PriceQueryService` -> `IMarketDataGateway`, `IQuoteSnapshotStore`
+- `RecentAssetSelectionService` -> `IUserAssetRepository`
+- `backend-cloudflare` -> `BrapiMarketDataGateway`, `CoinCapMarketDataGateway`, `D1UserRepository`, `D1UserAssetRepository`, `CloudflareKvQuoteSnapshotStore`
 
 ## 7) Diagrama de Componentes (PlantUML)
 
-![Diagrama de Componentes](/Users/pedro/Faculdade/topicos-avancados-eng-software/projeto-finta/Tópicos Avançados de Engenharia de Software/lab-3/diagrams/componentes-final.png)
+![Diagrama de Componentes](./diagrama-final-consolidado.png)
 
-Arquivo fonte: [componentes-final.puml](/Users/pedro/Faculdade/topicos-avancados-eng-software/projeto-finta/Tópicos Avançados de Engenharia de Software/lab-3/diagrams/componentes-final.puml)
+Arquivo fonte: [diagrama-final-consolidado.puml](./diagrams/diagrama-final-consolidado.puml)
