@@ -259,6 +259,6 @@ Os componentes identificados nesta revisão refletem apenas o código implementa
 
 ## 7) Diagrama de Componentes (PlantUML)
 
-![Diagrama de Componentes](./diagrama-final-consolidado.png)
+![Diagrama de Componentes](./diagrams/diagrama-final-consolidado.png)
 
 Arquivo fonte: [diagrama-final-consolidado.puml](./diagrams/diagrama-final-consolidado.puml)

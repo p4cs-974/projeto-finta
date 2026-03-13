@@ -3,86 +3,141 @@ top to bottom direction
 skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam linetype ortho
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam titleFontSize 24
+skinparam titleFontColor #16324F
+skinparam packageTitleFontSize 18
+skinparam packageTitleFontColor #16324F
+skinparam packageBorderColor #7A8A99
+skinparam packageBackgroundColor #F5F7F9
+skinparam component {
+  FontSize 15
+  FontColor #102A43
+  BorderColor #486581
+  BorderThickness 1.2
+  BackgroundColor #FFFFFF
+}
+skinparam database {
+  FontSize 15
+  FontColor #102A43
+  BorderColor #7C5E10
+  BackgroundColor #FFF7DB
+}
+skinparam cloud {
+  FontSize 15
+  FontColor #102A43
+  BorderColor #0F6D7A
+  BackgroundColor #E9FBFF
+}
+skinparam actor {
+  FontSize 16
+  FontColor #102A43
+  BorderColor #486581
+}
+skinparam note {
+  FontSize 14
+  FontColor #102A43
+  BorderColor #A0AEC0
+  BackgroundColor #F8FAFB
+}
+skinparam ArrowColor #425466
+skinparam ArrowThickness 1.3
+skinparam nodesep 70
+skinparam ranksep 95
 
-title FINTA - Diagrama Final Consolidado
+title FINTA - Componentes Implementados
 
 actor "Usuario" as User
 
-component "Frontend Cloudflare\nWeb App + BFF" as Front
-component "Identity Access" as Identity
-component "Market Monitoring" as Market
-component "Favorites" as Favorites
-component "Macro Indicators" as Macro
-component "Financing" as Financing
+package "Camada 1 - Interacao" {
+  component "frontend-cloudflare\nNext.js Web App + BFF" as Front #EAF2FF
+}
 
-database "Cloudflare D1" as D1
-database "Cloudflare KV" as KV
-cloud "API Financeira\n(Brapi)" as FinanceApi
-cloud "API Cripto\n(CoinCap)" as CryptoApi
-cloud "API Selic / Bacen" as SelicApi
-cloud "API Taxas de\nFinanciamento" as FundingApi
-cloud "Infra de seguranca\n(Hash + JWT)" as SecurityInfra
+package "Camada 2 - API / Composicao" {
+  component "backend-cloudflare\nCloudflare Worker API" as Back #EAF2FF
+}
 
-User --> Front
+package "Camada 3 - Servicos de dominio" {
+  component "@finta/identity-access\nRegistrationService\nAuthenticationService" as Identity #EEF8EE
+  component "@finta/price-query\nPriceQueryService" as PriceQuery #EEF8EE
+  component "@finta/user-assets\nRecentAssetSelectionService" as UserAssets #EEF8EE
+}
 
-Front --> Identity : IIdentityAccess
-Front --> Market : IDashboardQuery\nIAssetQuery\nIRecentSelections
-Front --> Favorites : IFavorites
-Front --> Macro : IMacroIndicators
-Front --> Financing : IFinancingRates\nIFinancingSimulation
+package "Camada 4 - Adapters" {
+  component "D1UserRepository" as D1UserRepo #FFFDF7
+  component "PasswordHasherAdapter" as PasswordHasher #FFFDF7
+  component "JwtTokenService" as JwtToken #FFFDF7
+  component "CloudflareKvQuoteSnapshotStore" as QuoteStore #FFFDF7
+  component "createMarketDataGateway\nBrapiMarketDataGateway\nCoinCapMarketDataGateway" as MarketGateway #FFFDF7
+  component "D1UserAssetRepository" as D1UserAssetRepo #FFFDF7
+}
 
-Favorites --> Market : IAssetQuery
+package "Camada 5 - Infraestrutura externa" {
+  database "Cloudflare D1\nusers + recent_asset_selections" as D1
+  database "Cloudflare KV\nASSET_CACHE" as KV
+  cloud "Brapi" as Brapi
+  cloud "CoinCap" as CoinCap
+}
 
-Identity --> D1 : IUserRepository
-Identity --> SecurityInfra : IPasswordHasher\nITokenService
+package "Base compartilhada" {
+  component "@finta/shared-kernel\ncontracts + errors" as SharedKernel #F4EEFF
+}
 
-Market --> FinanceApi : IMarketDataGateway
-Market --> CryptoApi : IMarketDataGateway
-Market --> KV : IQuoteSnapshotStore
-Market --> D1 : IUserAssetRepository
+User --> Front : usa a UI
+Front --> Back : /api/* + fetch server-side
 
-Favorites --> D1 : IFavoritesRepository
+Back --> Identity : auth
+Back --> PriceQuery : quotes
+Back --> UserAssets : recentes
 
-Macro --> SelicApi : ISelicGateway
+Identity --> D1UserRepo : IUserRepository
+Identity --> PasswordHasher : IPasswordHasher
+Identity --> JwtToken : ITokenService
 
-Financing --> FundingApi : IFinancingRatesGateway
-Financing --> D1 : IFinancingSimulationRepository
+PriceQuery --> QuoteStore : IQuoteSnapshotStore
+PriceQuery --> MarketGateway : IMarketDataGateway
 
-note right of Identity
-Responsabilidade:
-- cadastro
-- login
-- emissao de token
+UserAssets --> D1UserAssetRepo : IUserAssetRepository
+
+D1UserRepo --> D1
+D1UserAssetRepo --> D1
+QuoteStore --> KV
+MarketGateway --> Brapi
+MarketGateway --> CoinCap
+
+Identity ..> SharedKernel
+PriceQuery ..> SharedKernel
+UserAssets ..> SharedKernel
+Back ..> SharedKernel
+Front ..> SharedKernel
+
+Identity -[hidden]right-> PriceQuery
+PriceQuery -[hidden]right-> UserAssets
+
+D1UserRepo -[hidden]right-> PasswordHasher
+PasswordHasher -[hidden]right-> JwtToken
+JwtToken -[hidden]right-> QuoteStore
+QuoteStore -[hidden]right-> MarketGateway
+MarketGateway -[hidden]right-> D1UserAssetRepo
+
+D1 -[hidden]right-> KV
+KV -[hidden]right-> Brapi
+Brapi -[hidden]right-> CoinCap
+
+note right of Front
+Entrada do usuario e BFF.
 end note
 
-note right of Market
-Responsabilidade:
-- cotacoes live/cache
-- busca de ativos
-- detalhes de ativo
-- historico recente
-- agregacao do dashboard
+note right of Back
+Compoe os servicos e expone as rotas HTTP.
 end note
 
-note right of Favorites
-Responsabilidade:
-- adicionar favorito
-- editar favorito
-- remover favorito
-- listar favoritos
-end note
-
-note right of Macro
-Responsabilidade:
-- consultar Selic
-- normalizar fonte oficial
-end note
-
-note right of Financing
-Responsabilidade:
-- listar taxas
-- simular financiamento
-- salvar/listar/remover simulacoes
+note right of SharedKernel
+Biblioteca compartilhada de tipos,
+contratos e erros.
 end note
 
 @enduml
