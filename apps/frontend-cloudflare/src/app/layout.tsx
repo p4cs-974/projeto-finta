@@ -44,6 +44,9 @@ export const metadata: Metadata = {
   },
   description:
     "Acompanhe cotações de ações e cripto com um dashboard financeiro server-first feito em Next.js.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export const viewport: Viewport = {
