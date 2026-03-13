@@ -81,13 +81,13 @@ export function adaptBrapiQuote(
 
 async function parseBrapiError(response: Response): Promise<never> {
   if (response.status === 404) {
-    throw createApplicationError(404, "ASSET_NOT_FOUND", "Asset not found");
+    throw createApplicationError(404, "ASSET_NOT_FOUND", "Ativo não encontrado");
   }
 
   throw createApplicationError(
     502,
     "EXTERNAL_SERVICE_ERROR",
-    "Asset provider request failed",
+    "Falha na requisição ao provedor de ativos",
   );
 }
 
@@ -118,7 +118,7 @@ async function performBrapiRequest(
       throw createApplicationError(
         502,
         "EXTERNAL_SERVICE_ERROR",
-        "Asset provider request timed out",
+        "A requisição ao provedor de ativos expirou",
       );
     }
 
@@ -129,7 +129,7 @@ async function performBrapiRequest(
     throw createApplicationError(
       502,
       "EXTERNAL_SERVICE_ERROR",
-      "Asset provider request failed",
+      "Falha na requisição ao provedor de ativos",
     );
   } finally {
     timeout.clear();
@@ -150,7 +150,7 @@ async function fetchQuoteResult(
   const result = payload.results?.[0];
 
   if (!result) {
-    throw createApplicationError(404, "ASSET_NOT_FOUND", "Asset not found");
+    throw createApplicationError(404, "ASSET_NOT_FOUND", "Ativo não encontrado");
   }
 
   return result;

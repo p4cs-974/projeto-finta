@@ -25,7 +25,7 @@ export class AuthenticationService implements IAuthenticationService {
       throw createApplicationError(
         401,
         "INVALID_CREDENTIALS",
-        "Invalid email or password",
+        "E-mail ou senha inválidos",
       );
     }
 
@@ -38,7 +38,7 @@ export class AuthenticationService implements IAuthenticationService {
       throw createApplicationError(
         401,
         "INVALID_CREDENTIALS",
-        "Invalid email or password",
+        "E-mail ou senha inválidos",
       );
     }
 

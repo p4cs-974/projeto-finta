@@ -58,8 +58,8 @@ export async function loginAction(
       return {
         formError:
           result.status === 401
-            ? "Invalid email or password."
-            : payload?.error.message ?? "Could not sign in.",
+            ? "E-mail ou senha inválidos."
+            : payload?.error.message ?? "Não foi possível entrar.",
         fieldErrors: {
           email: fieldErrors.email,
           password: fieldErrors.password,
@@ -78,7 +78,7 @@ export async function loginAction(
     });
   } catch {
     return {
-      formError: "Could not reach the server. Try again.",
+      formError: "Não foi possível conectar ao servidor. Tente novamente.",
       fieldErrors: {},
     };
   }
@@ -99,7 +99,7 @@ export async function registerAction(
     return {
       formError: null,
       fieldErrors: {
-        confirmPassword: ["Passwords do not match."],
+        confirmPassword: ["As senhas não coincidem."],
       },
     };
   }
@@ -116,7 +116,7 @@ export async function registerAction(
       const fieldErrors = payload?.error.details?.fieldErrors ?? {};
 
       return {
-        formError: payload?.error.message ?? "Could not create your account.",
+        formError: payload?.error.message ?? "Não foi possível criar sua conta.",
         fieldErrors: {
           name: fieldErrors.name,
           email: fieldErrors.email,
@@ -136,7 +136,7 @@ export async function registerAction(
     });
   } catch {
     return {
-      formError: "Could not reach the server. Try again.",
+      formError: "Não foi possível conectar ao servidor. Tente novamente.",
       fieldErrors: {},
     };
   }

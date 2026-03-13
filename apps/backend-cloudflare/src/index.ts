@@ -63,7 +63,7 @@ async function routeRequest(
     return handleGetLiveQuote(request, env, ctx, rawTicker);
   }
 
-  throw apiError(404, "NOT_FOUND", "Route not found");
+  throw apiError(404, "NOT_FOUND", "Rota não encontrada");
 }
 
 export default {

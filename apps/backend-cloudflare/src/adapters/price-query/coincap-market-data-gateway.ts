@@ -53,7 +53,7 @@ async function parseJson<T>(response: Response): Promise<T> {
     throw createApplicationError(
       502,
       "EXTERNAL_SERVICE_ERROR",
-      "Asset provider request failed",
+      "Falha na requisição ao provedor de ativos",
     );
   }
 }
@@ -79,7 +79,7 @@ async function performCoinCapRequest(
       throw createApplicationError(
         502,
         "EXTERNAL_SERVICE_ERROR",
-        "Asset provider request failed",
+        "Falha na requisição ao provedor de ativos",
       );
     }
 
@@ -89,7 +89,7 @@ async function performCoinCapRequest(
       throw createApplicationError(
         502,
         "EXTERNAL_SERVICE_ERROR",
-        "Asset provider request timed out",
+        "A requisição ao provedor de ativos expirou",
       );
     }
 
@@ -100,7 +100,7 @@ async function performCoinCapRequest(
     throw createApplicationError(
       502,
       "EXTERNAL_SERVICE_ERROR",
-      "Asset provider request failed",
+      "Falha na requisição ao provedor de ativos",
     );
   } finally {
     timeout.clear();
@@ -124,7 +124,7 @@ function parseFiniteNumber(
     throw createApplicationError(
       502,
       "EXTERNAL_SERVICE_ERROR",
-      `Asset provider payload is missing ${fieldName}`,
+      `A resposta do provedor de ativos não contém ${fieldName}`,
     );
   }
 
@@ -134,7 +134,7 @@ function parseFiniteNumber(
     throw createApplicationError(
       502,
       "EXTERNAL_SERVICE_ERROR",
-      `Asset provider payload has invalid ${fieldName}`,
+      `A resposta do provedor de ativos contém ${fieldName} inválido`,
     );
   }
 
@@ -197,7 +197,7 @@ export class CoinCapMarketDataGateway implements IMarketDataGateway {
     const match = findExactSymbolMatch(searchPayload.data, symbol);
 
     if (!match?.id) {
-      throw createApplicationError(404, "ASSET_NOT_FOUND", "Asset not found");
+      throw createApplicationError(404, "ASSET_NOT_FOUND", "Ativo não encontrado");
     }
 
     const detailResponse = await performCoinCapRequest(
@@ -212,7 +212,7 @@ export class CoinCapMarketDataGateway implements IMarketDataGateway {
       throw createApplicationError(
         502,
         "EXTERNAL_SERVICE_ERROR",
-        "Asset provider request failed",
+        "Falha na requisição ao provedor de ativos",
       );
     }
 

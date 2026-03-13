@@ -109,7 +109,7 @@ function MatchListItem({ quote }: { quote: QuoteWithCacheMeta }) {
         <div className="flex items-center gap-2">
           <p className="text-sm font-semibold text-foreground">{symbol}</p>
           <span className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-            {isStockQuoteWithCache(quote) ? quote.data.market : "crypto"}
+            {isStockQuoteWithCache(quote) ? quote.data.market : "cripto"}
           </span>
         </div>
         <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -220,7 +220,7 @@ function AssetDetails({ quote }: { quote: QuoteWithCacheMeta }) {
           <StatChip label="Moeda" value={quote.data.currency} />
           <StatChip
             label={isStock ? "Mercado" : "Categoria"}
-            value={isStock ? quote.data.market : "Crypto"}
+            value={isStock ? quote.data.market : "Cripto"}
           />
           <StatChip
             label="Cotado"
@@ -266,7 +266,7 @@ async function SearchListPane({
         <div className="flex items-center gap-2">
           <Clock3 className="size-4 text-muted-foreground" />
           <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
-            Recent
+            Recentes
           </p>
         </div>
         {recents.length > 0 ? (
@@ -279,7 +279,7 @@ async function SearchListPane({
           </ul>
         ) : (
           <div className="border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-            No recent searches yet.
+            Ainda não há buscas recentes.
           </div>
         )}
       </div>
@@ -492,7 +492,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <Suspense
                 fallback={
                   <ErrorState
-                    title="Looking for it"
+                    title="Buscando ativo"
                     body={
                       initialQuery
                         ? `A consulta exata para ${initialQuery} está em andamento.`

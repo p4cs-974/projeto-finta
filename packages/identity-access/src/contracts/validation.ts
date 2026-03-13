@@ -15,14 +15,14 @@ const registerUserSchema = z
       .string()
       .transform(normalizeDisplayText)
       .refine((value) => !hasControlCharacters(value), {
-        message: "Name contains invalid control characters",
+        message: "O nome contém caracteres de controle inválidos",
       })
       .pipe(z.string().min(2).max(100)),
     email: z
       .string()
       .transform(normalizeEmailText)
       .refine((value) => !hasControlCharacters(value), {
-        message: "Email contains invalid control characters",
+        message: "O e-mail contém caracteres de controle inválidos",
       })
       .pipe(z.string().min(1).max(255).email()),
     password: z.string().min(8).max(72),
@@ -35,7 +35,7 @@ const loginUserSchema = z
       .string()
       .transform(normalizeEmailText)
       .refine((value) => !hasControlCharacters(value), {
-        message: "Email contains invalid control characters",
+        message: "O e-mail contém caracteres de controle inválidos",
       })
       .pipe(z.string().min(1).max(255).email()),
     password: z.string().min(8).max(72),
@@ -46,7 +46,7 @@ function toValidationError(error: z.ZodError) {
   return createApplicationError(
     422,
     "VALIDATION_ERROR",
-    "Invalid request body",
+    "Corpo da requisição inválido",
     {
       fieldErrors: error.flatten().fieldErrors,
     },

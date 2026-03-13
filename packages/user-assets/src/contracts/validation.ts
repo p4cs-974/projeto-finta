@@ -19,7 +19,7 @@ const trackedAssetSchema = z
       .string()
       .transform(normalizeDisplayText)
       .refine((value) => value.length > 0 && !hasControlCharacters(value), {
-        message: "Label is invalid",
+        message: "O rótulo é inválido",
       }),
     market: z
       .union([z.string(), z.null()])
@@ -30,7 +30,7 @@ const trackedAssetSchema = z
         (value) =>
           value === null || (value.length > 0 && !hasControlCharacters(value)),
         {
-          message: "Market is invalid",
+          message: "O mercado é inválido",
         },
       )
       .optional(),
@@ -43,7 +43,7 @@ const trackedAssetSchema = z
         (value) =>
           value === null || (value.length > 0 && !hasControlCharacters(value)),
         {
-          message: "Currency is invalid",
+          message: "A moeda é inválida",
         },
       )
       .optional(),
@@ -68,7 +68,7 @@ export function parseTrackedAssetRefInput(input: unknown): TrackedAssetRef {
   throw createApplicationError(
     422,
     "VALIDATION_ERROR",
-    "Invalid request body",
+    "Corpo da requisição inválido",
     {
       fieldErrors: parsed.error.flatten().fieldErrors,
     },

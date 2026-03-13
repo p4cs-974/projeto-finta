@@ -29,8 +29,8 @@ export function validateQuoteSymbol(assetType: AssetType, value: string) {
     422,
     "VALIDATION_ERROR",
     assetType === "stock"
-      ? "Invalid asset ticker"
-      : "Invalid crypto asset symbol",
+      ? "Ticker do ativo inválido"
+      : "Símbolo do criptoativo inválido",
   );
 }
 
@@ -49,8 +49,8 @@ export function validateQuoteSearchQuery(assetType: AssetType, value: string) {
     422,
     "VALIDATION_ERROR",
     assetType === "stock"
-      ? "Invalid asset ticker prefix"
-      : "Invalid crypto asset symbol prefix",
+      ? "Prefixo do ticker do ativo inválido"
+      : "Prefixo do símbolo do criptoativo inválido",
   );
 }
 

@@ -28,7 +28,7 @@ export async function handleGetCachedQuote(
   });
 
   if (!response) {
-    throw apiError(404, "ASSET_CACHE_MISS", "Asset quote is not cached");
+    throw apiError(404, "ASSET_CACHE_MISS", "A cotação do ativo não está em cache");
   }
 
   return json(response);

@@ -11,14 +11,14 @@ export function parseRequestedAssetType(input: string | null): AssetType {
     return "crypto";
   }
 
-  throw apiError(422, "VALIDATION_ERROR", "Invalid asset type");
+  throw apiError(422, "VALIDATION_ERROR", "Tipo de ativo inválido");
 }
 
 export function parseAuthenticatedUserId(input: string): number {
   const userId = Number.parseInt(input, 10);
 
   if (!Number.isInteger(userId) || userId <= 0) {
-    throw new Error("Authenticated user id is invalid");
+    throw new Error("O id do usuário autenticado é inválido");
   }
 
   return userId;

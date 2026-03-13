@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
     "@finta/identity-access",
     "@finta/user-assets",
   ],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "media.tenor.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

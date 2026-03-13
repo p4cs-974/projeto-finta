@@ -23,7 +23,11 @@ import { initialLoginFormState } from "@/components/auth/auth-form-state";
 function SubmitButton() {
   const { pending } = useFormStatus();
 
-  return <Button type="submit" disabled={pending}>{pending ? "Signing In..." : "Sign In"}</Button>;
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? "Entrando..." : "Entrar"}
+    </Button>
+  );
 }
 
 export function LoginForm({
@@ -44,9 +48,9 @@ export function LoginForm({
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
             <ChartLineIcon size={48} />
-            <h1 className="text-xl font-bold">Sign in to Finta</h1>
+            <h1 className="text-xl font-bold">Entrar na Finta</h1>
             <FieldDescription>
-              Use your email and password to access your account.
+              Use seu e-mail e sua senha para acessar sua conta.
             </FieldDescription>
           </div>
           <Field>
@@ -66,7 +70,7 @@ export function LoginForm({
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <FieldLabel htmlFor="password">Senha</FieldLabel>
             <Input
               id="password"
               name="password"
@@ -84,7 +88,7 @@ export function LoginForm({
             <SubmitButton />
             {state.formError ? <FieldError>{state.formError}</FieldError> : null}
             <FieldDescription className="text-center">
-              Don&apos;t have an account? <Link href="/signup">Sign up</Link>
+              Ainda não tem conta? <Link href="/signup">Cadastre-se</Link>
             </FieldDescription>
           </Field>
         </FieldGroup>

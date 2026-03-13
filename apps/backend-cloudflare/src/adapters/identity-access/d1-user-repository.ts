@@ -56,7 +56,7 @@ export class D1UserRepository implements IUserRepository {
         throw createApplicationError(
           409,
           "EMAIL_ALREADY_IN_USE",
-          "Email already in use",
+          "E-mail já está em uso",
         );
       }
 

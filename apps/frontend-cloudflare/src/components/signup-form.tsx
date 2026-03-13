@@ -45,7 +45,7 @@ function SubmitButton() {
 
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "Creating Account..." : "Create Account"}
+      {pending ? "Criando conta..." : "Criar conta"}
     </Button>
   );
 }
@@ -72,9 +72,9 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Create your account</CardTitle>
+          <CardTitle className="text-xl">Crie sua conta</CardTitle>
           <CardDescription>
-            Enter your email below to create your account
+            Informe seu e-mail abaixo para criar sua conta
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -82,17 +82,17 @@ export function SignupForm({
             <FieldGroup>
               <div className="flex flex-col items-center gap-3 py-4 text-center">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Avatar Preview
+                  Prévia do avatar
                 </p>
                 <FacehashAvatar name={avatarSeed} />
               </div>
               <Field>
-                <FieldLabel htmlFor="name">Full Name</FieldLabel>
+                <FieldLabel htmlFor="name">Nome completo</FieldLabel>
                 <Input
                   id="name"
                   name="name"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder="João da Silva"
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
                   aria-invalid={state.fieldErrors.name?.length ? true : undefined}
@@ -121,7 +121,7 @@ export function SignupForm({
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password">Senha</FieldLabel>
                     <Input
                       id="password"
                       name="password"
@@ -141,7 +141,7 @@ export function SignupForm({
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="confirm-password">
-                      Confirm Password
+                      Confirmar senha
                     </FieldLabel>
                     <Input
                       id="confirm-password"
@@ -168,14 +168,14 @@ export function SignupForm({
                   </Field>
                 </Field>
                 <FieldDescription>
-                  Must be at least 8 characters long.
+                  Deve ter pelo menos 8 caracteres.
                 </FieldDescription>
               </Field>
               <Field>
                 <SubmitButton />
                 {state.formError ? <FieldError>{state.formError}</FieldError> : null}
                 <FieldDescription className="text-center">
-                  Already have an account? <Link href="/login">Sign in</Link>
+                  Já tem uma conta? <Link href="/login">Entrar</Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>

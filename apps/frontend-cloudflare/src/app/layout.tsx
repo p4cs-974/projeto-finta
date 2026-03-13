@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     template: "%s | Finta",
   },
   description:
-    "Track stocks and crypto quotes with a server-first financial dashboard built on Next.js.",
+    "Acompanhe cotações de ações e cripto com um dashboard financeiro server-first feito em Next.js.",
 };
 
 export const viewport: Viewport = {
@@ -65,7 +65,7 @@ export default async function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >

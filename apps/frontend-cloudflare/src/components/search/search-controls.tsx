@@ -73,7 +73,7 @@ export function SearchControls({
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            aria-label="Search"
+            aria-label="Buscar"
             name="instrument-search"
             autoComplete="off"
             placeholder={
@@ -86,7 +86,7 @@ export function SearchControls({
         </div>
         <div
           role="group"
-          aria-label="Toggle between stocks and crypto"
+          aria-label="Alternar entre ações e cripto"
           className="relative flex h-10 items-center gap-1 border border-border p-1"
         >
           <div
@@ -103,7 +103,7 @@ export function SearchControls({
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {mode === "stocks" ? "Stocks" : <TrendingUp className="size-5" />}
+            {mode === "stocks" ? "Ações" : <TrendingUp className="size-5" />}
           </button>
           <button
             type="button"
@@ -114,7 +114,7 @@ export function SearchControls({
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {mode === "crypto" ? "Crypto" : <Bitcoin className="size-5" />}
+            {mode === "crypto" ? "Cripto" : <Bitcoin className="size-5" />}
           </button>
         </div>
       </div>

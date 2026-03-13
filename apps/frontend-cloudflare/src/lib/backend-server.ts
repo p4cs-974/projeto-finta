@@ -69,7 +69,11 @@ async function getAuthToken() {
   const session = getSessionFromCookieValue(token);
 
   if (!token || !session) {
-    throw new ApiRequestError("Missing or invalid bearer token", 401, "INVALID_TOKEN");
+    throw new ApiRequestError(
+      "Token bearer ausente ou inválido",
+      401,
+      "INVALID_TOKEN",
+    );
   }
 
   return token;
@@ -105,7 +109,8 @@ async function requestBackendJson<T>(
   if (!response.ok) {
     const errorPayload = payload as ApiErrorBody | null;
     throw new ApiRequestError(
-      errorPayload?.error.message ?? `Request failed with status ${response.status}`,
+      errorPayload?.error.message ??
+        `A requisição falhou com status ${response.status}`,
       response.status,
       errorPayload?.error.code,
       errorPayload,

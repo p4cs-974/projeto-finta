@@ -33,14 +33,14 @@ export async function parseJsonRequest<T>(request: Request): Promise<T> {
     throw apiError(
       415,
       "UNSUPPORTED_MEDIA_TYPE",
-      "Content-Type must be application/json",
+      "O Content-Type deve ser application/json",
     );
   }
 
   try {
     return (await request.json()) as T;
   } catch {
-    throw apiError(400, "INVALID_JSON", "Malformed JSON body");
+    throw apiError(400, "INVALID_JSON", "Corpo JSON malformado");
   }
 }
 
@@ -55,7 +55,7 @@ export function errorResponse(error: unknown): Response {
     {
       error: {
         code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred",
+        message: "Ocorreu um erro inesperado",
       },
     },
     { status: 500 },

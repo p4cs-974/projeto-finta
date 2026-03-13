@@ -13,7 +13,7 @@ export function SessionAvatar({
 }) {
   return (
     <Facehash
-      aria-label="Signed-in user avatar"
+      aria-label="Avatar do usuário autenticado"
       className="shadow-[0_18px_36px_-24px_rgba(15,23,42,0.7)]"
       colors={avatarColors}
       enableBlink

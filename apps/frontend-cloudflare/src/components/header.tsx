@@ -29,7 +29,7 @@ export default function Header({ session }: HeaderProps) {
           className="group inline-flex items-center gap-2 border border-transparent px-2 py-1 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-muted/50"
         >
           <SearchIcon size={14} />
-          Search
+          Buscar
         </Link>
       </nav>
 
@@ -44,7 +44,7 @@ export default function Header({ session }: HeaderProps) {
         <form action={logoutAction}>
           <Button type="submit" variant="ghost">
             <LogoutIcon size={18} />
-            Sign Out
+            Sair
           </Button>
         </form>
       </div>

@@ -28,7 +28,7 @@ export class RegistrationService implements IRegistrationService {
       throw createApplicationError(
         409,
         "EMAIL_ALREADY_IN_USE",
-        "Email already in use",
+        "E-mail já está em uso",
       );
     }
 
@@ -56,7 +56,7 @@ export class RegistrationService implements IRegistrationService {
       throw createApplicationError(
         500,
         "INTERNAL_ERROR",
-        "Created user could not be loaded",
+        "Não foi possível carregar o usuário criado",
       );
     }
 

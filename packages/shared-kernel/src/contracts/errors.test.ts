@@ -11,7 +11,7 @@ describe("shared-kernel errors", () => {
     const error = createApplicationError(
       422,
       "VALIDATION_ERROR",
-      "Invalid request body",
+      "Corpo da requisição inválido",
       {
         fieldErrors: {
           email: ["Invalid email"],
@@ -23,7 +23,7 @@ describe("shared-kernel errors", () => {
     expect(error.body).toEqual({
       error: {
         code: "VALIDATION_ERROR",
-        message: "Invalid request body",
+        message: "Corpo da requisição inválido",
         details: {
           fieldErrors: {
             email: ["Invalid email"],

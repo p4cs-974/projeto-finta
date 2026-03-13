@@ -465,7 +465,7 @@ describe("POST /auth/login", () => {
 
     expect(response.status).toBe(401);
     expect(payload.error.code).toBe("INVALID_CREDENTIALS");
-    expect(payload.error.message).toBe("Invalid email or password");
+    expect(payload.error.message).toBe("E-mail ou senha inválidos");
   });
 
   it("returns 401 for wrong passwords", async () => {
@@ -948,7 +948,7 @@ describe("GET /ativos/:ticker", () => {
 
     expect(response.status).toBe(422);
     expect(payload.error.code).toBe("VALIDATION_ERROR");
-    expect(payload.error.message).toBe("Invalid asset ticker");
+    expect(payload.error.message).toBe("Ticker do ativo inválido");
   });
 
   it("returns 404 when the asset does not exist", async () => {
@@ -1005,7 +1005,7 @@ describe("GET /ativos/:ticker", () => {
 
     expect(response.status).toBe(502);
     expect(payload.error.code).toBe("EXTERNAL_SERVICE_ERROR");
-    expect(payload.error.message).toBe("Asset provider request timed out");
+    expect(payload.error.message).toBe("A requisição ao provedor de ativos expirou");
   });
 });
 

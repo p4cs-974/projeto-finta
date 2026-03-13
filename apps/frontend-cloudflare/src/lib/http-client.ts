@@ -36,7 +36,7 @@ export async function requestJson<T>(
     const errorPayload = payload as ApiErrorBody | null;
     throw new ApiRequestError(
       errorPayload?.error?.message ??
-        `Request failed with status ${response.status}`,
+        `A requisição falhou com status ${response.status}`,
       response.status,
       errorPayload?.error?.code,
       errorPayload,
@@ -45,7 +45,7 @@ export async function requestJson<T>(
 
   if (payload === null) {
     throw new ApiRequestError(
-      "Server returned an invalid JSON response",
+      "O servidor retornou uma resposta JSON inválida",
       response.status,
     );
   }

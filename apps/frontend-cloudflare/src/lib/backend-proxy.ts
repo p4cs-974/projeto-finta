@@ -10,10 +10,10 @@ import {
 function invalidTokenResponse() {
   return NextResponse.json(
     {
-      error: {
-        code: "INVALID_TOKEN",
-        message: "Missing or invalid bearer token",
-      },
+        error: {
+          code: "INVALID_TOKEN",
+          message: "Token bearer ausente ou inválido",
+        },
     },
     { status: 401 },
   );
@@ -62,7 +62,7 @@ export async function proxyBackendRequest(
       {
         error: {
           code: "UPSTREAM_UNAVAILABLE",
-          message: "Backend service is unavailable",
+          message: "O serviço de backend está indisponível",
         },
       },
       { status: 502 },

@@ -4,13 +4,13 @@ export function createOpenApiDocument(baseUrl: string) {
 		info: {
 			title: "Finta Backend API",
 			version: "1.0.0",
-			description: "API documentation for the Cloudflare Worker backend.",
+			description: "Documentação da API do backend em Cloudflare Worker.",
 		},
 		servers: [{ url: baseUrl }],
 		paths: {
 			"/auth/login": {
 				post: {
-					summary: "Authenticate an existing user",
+					summary: "Autenticar um usuário existente",
 					tags: ["Auth"],
 					requestBody: {
 						required: true,
@@ -24,12 +24,12 @@ export function createOpenApiDocument(baseUrl: string) {
 							},
 						},
 					},
-					responses: buildAuthResponses("200", "User authenticated"),
+					responses: buildAuthResponses("200", "Usuário autenticado"),
 				},
 			},
 			"/auth/register": {
 				post: {
-					summary: "Register a new user",
+					summary: "Cadastrar um novo usuário",
 					tags: ["Auth"],
 					requestBody: {
 						required: true,
@@ -46,23 +46,23 @@ export function createOpenApiDocument(baseUrl: string) {
 					},
 					responses: {
 						"201": {
-							description: "User created and authenticated",
+							description: "Usuário criado e autenticado",
 							content: {
 								"application/json": {
 									schema: { $ref: "#/components/schemas/AuthSuccessResponse" },
 								},
 							},
 						},
-						"400": errorContent("Malformed JSON body"),
-						"409": errorContent("Email already in use"),
-						"415": errorContent("Unsupported media type"),
-						"422": errorContent("Validation error"),
+						"400": errorContent("Corpo JSON malformado"),
+						"409": errorContent("E-mail já está em uso"),
+						"415": errorContent("Tipo de mídia não suportado"),
+						"422": errorContent("Erro de validação"),
 					},
 				},
 			},
 			"/ativos/{ticker}": {
 				get: {
-					summary: "Get a B3 or crypto asset quote by ticker",
+					summary: "Obter uma cotação de ativo da B3 ou cripto por ticker",
 					tags: ["Assets"],
 					security: [{ bearerAuth: [] }],
 					parameters: [
@@ -79,7 +79,7 @@ export function createOpenApiDocument(baseUrl: string) {
 							name: "type",
 							in: "query",
 							required: false,
-							description: "When set to crypto, performs a crypto lookup instead of a B3 lookup.",
+							description: "Quando definido como crypto, consulta um criptoativo em vez de um ativo da B3.",
 							schema: {
 								type: "string",
 								enum: ["crypto"],
@@ -88,7 +88,7 @@ export function createOpenApiDocument(baseUrl: string) {
 					],
 					responses: {
 						"200": {
-							description: "Asset quote found",
+							description: "Cotação do ativo encontrada",
 							content: {
 								"application/json": {
 									schema: {
@@ -142,16 +142,16 @@ export function createOpenApiDocument(baseUrl: string) {
 								},
 							},
 						},
-						"401": errorContent("Missing, invalid or expired bearer token"),
-						"404": errorContent("Asset not found"),
-						"422": errorContent("Invalid ticker, type or symbol"),
-						"502": errorContent("Asset provider error or timeout"),
+						"401": errorContent("Token bearer ausente, inválido ou expirado"),
+						"404": errorContent("Ativo não encontrado"),
+						"422": errorContent("Ticker, tipo ou símbolo inválido"),
+						"502": errorContent("Erro ou timeout no provedor de ativos"),
 					},
 				},
 			},
 			"/ativos/{ticker}/cache": {
 				get: {
-					summary: "Probe the exact cached quote for a B3 or crypto asset",
+					summary: "Consultar a cotação exata em cache de um ativo da B3 ou cripto",
 					tags: ["Assets"],
 					security: [{ bearerAuth: [] }],
 					parameters: [
@@ -168,7 +168,7 @@ export function createOpenApiDocument(baseUrl: string) {
 							name: "type",
 							in: "query",
 							required: false,
-							description: "When set to crypto, probes the crypto cache.",
+							description: "Quando definido como crypto, consulta o cache de cripto.",
 							schema: {
 								type: "string",
 								enum: ["crypto"],
@@ -177,7 +177,7 @@ export function createOpenApiDocument(baseUrl: string) {
 					],
 					responses: {
 						"200": {
-							description: "Cached quote found",
+							description: "Cotação em cache encontrada",
 							content: {
 								"application/json": {
 									schema: {
@@ -189,20 +189,20 @@ export function createOpenApiDocument(baseUrl: string) {
 								},
 							},
 						},
-						"401": errorContent("Missing, invalid or expired bearer token"),
-						"404": errorContent("Asset cache miss"),
-						"422": errorContent("Invalid ticker, type or symbol"),
+						"401": errorContent("Token bearer ausente, inválido ou expirado"),
+						"404": errorContent("Cotação do ativo não encontrada em cache"),
+						"422": errorContent("Ticker, tipo ou símbolo inválido"),
 					},
 				},
 			},
 			"/users/me/recent-assets": {
 				get: {
-					summary: "List recent asset selections for the authenticated user",
+					summary: "Listar seleções recentes de ativos do usuário autenticado",
 					tags: ["Assets"],
 					security: [{ bearerAuth: [] }],
 					responses: {
 						"200": {
-							description: "Recent selections",
+							description: "Seleções recentes",
 							content: {
 								"application/json": {
 									schema: {
@@ -221,11 +221,11 @@ export function createOpenApiDocument(baseUrl: string) {
 								},
 							},
 						},
-						"401": errorContent("Missing, invalid or expired bearer token"),
+						"401": errorContent("Token bearer ausente, inválido ou expirado"),
 					},
 				},
 				post: {
-					summary: "Store a recent asset selection for the authenticated user",
+					summary: "Salvar uma seleção recente de ativo do usuário autenticado",
 					tags: ["Assets"],
 					security: [{ bearerAuth: [] }],
 					requestBody: {
@@ -240,10 +240,10 @@ export function createOpenApiDocument(baseUrl: string) {
 					},
 					responses: {
 						"204": {
-							description: "Recent selection stored",
+							description: "Seleção recente salva",
 						},
-						"401": errorContent("Missing, invalid or expired bearer token"),
-						"422": errorContent("Invalid request body"),
+						"401": errorContent("Token bearer ausente, inválido ou expirado"),
+						"422": errorContent("Corpo da requisição inválido"),
 					},
 				},
 			},
@@ -490,9 +490,9 @@ function buildAuthResponses(successStatus: "200", successDescription: string) {
 				},
 			},
 		},
-		"400": errorContent("Malformed JSON body"),
-		"401": errorContent("Invalid credentials"),
-		"415": errorContent("Unsupported media type"),
-		"422": errorContent("Validation error"),
+		"400": errorContent("Corpo JSON malformado"),
+		"401": errorContent("Credenciais inválidas"),
+		"415": errorContent("Tipo de mídia não suportado"),
+		"422": errorContent("Erro de validação"),
 	};
 }
