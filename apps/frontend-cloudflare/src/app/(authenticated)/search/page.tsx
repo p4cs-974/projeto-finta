@@ -1,11 +1,10 @@
 import type { QuoteWithCacheMeta } from "@finta/price-query";
 import type { RecentAssetSelection } from "@finta/user-assets";
-import { ArrowUpRight, Clock3, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowUpRight, Clock3 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
 import { SearchControls } from "@/components/search/search-controls";
-import { RecordAssetView } from "@/components/search/record-asset-view";
 import {
   formatMoney,
   formatRelativeTime,
@@ -19,7 +18,13 @@ import {
   normalizeSearchInput,
   type SearchMode,
 } from "@/features/price-query/presentation";
-import { getCachedQuoteServer, getLiveQuoteServer, getRecentSelectionsServer, searchCachedQuotesServer } from "@/lib/backend-server";
+import { AssetDetailsClient } from "@/features/price-query/components/AssetDetailsClient";
+import {
+  getCachedQuoteServer,
+  getLiveQuoteServer,
+  getRecentSelectionsServer,
+  searchCachedQuotesServer,
+} from "@/lib/backend-server";
 import { ApiRequestError } from "@/lib/http-client";
 
 interface SearchPageProps {
@@ -76,17 +81,6 @@ function ErrorState({
         {body}
       </p>
     </section>
-  );
-}
-
-function StatChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="px-3 py-2">
-      <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-medium text-foreground">{value}</p>
-    </div>
   );
 }
 
@@ -157,82 +151,6 @@ function RecentListItem({ item }: { item: RecentAssetSelection }) {
         </p>
       </div>
     </Link>
-  );
-}
-
-function AssetDetails({ quote }: { quote: QuoteWithCacheMeta }) {
-  const isStock = isStockQuoteWithCache(quote);
-  const delta = quote.data.change;
-  const positive = delta >= 0;
-  const symbol = getQuoteSymbol(quote);
-  const logoUrl = getQuoteLogoUrl(quote);
-
-  return (
-    <section className="relative flex-1 overflow-hidden border border-border bg-card p-6 md:p-8">
-      <RecordAssetView
-        symbol={symbol}
-        assetType={isStock ? "stock" : "crypto"}
-        label={getQuoteLabel(quote)}
-        market={isStock ? quote.data.market : null}
-        currency={quote.data.currency}
-        logoUrl={logoUrl}
-      />
-      <div className="relative flex flex-col gap-8">
-        <div className="flex items-start gap-4">
-          <AssetLogo symbol={symbol} logoUrl={logoUrl} className="size-14" />
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-              {symbol}
-            </h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-              {getQuoteLabel(quote)}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-end gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Preço</p>
-            <p className="text-4xl font-semibold tracking-tight text-foreground">
-              {formatMoney(quote.data.currency, quote.data.price)}
-            </p>
-          </div>
-          <div
-            className={`flex items-center gap-2 border px-3 py-2 text-sm font-medium ${
-              positive
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                : "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300"
-            }`}
-          >
-            {positive ? (
-              <TrendingUp className="size-4" />
-            ) : (
-              <TrendingDown className="size-4" />
-            )}
-            <span>
-              {formatMoney(quote.data.currency, delta)} (
-              {quote.data.changePercent.toFixed(2)}%)
-            </span>
-          </div>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-4">
-          <StatChip label="Moeda" value={quote.data.currency} />
-          <StatChip
-            label={isStock ? "Mercado" : "Categoria"}
-            value={isStock ? quote.data.market : "Cripto"}
-          />
-          <StatChip
-            label="Cotado"
-            value={formatRelativeTime(quote.data.quotedAt)}
-          />
-          <StatChip
-            label="Cache"
-            value={formatRelativeTime(quote.cache.updatedAt)}
-          />
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -319,10 +237,7 @@ async function SearchListPane({
   return (
     <div className="space-y-2">
       {visibleMatches.map((quote) => (
-        <MatchListItem
-          key={`${mode}:${getQuoteSymbol(quote)}`}
-          quote={quote}
-        />
+        <MatchListItem key={`${mode}:${getQuoteSymbol(quote)}`} quote={quote} />
       ))}
     </div>
   );
@@ -362,7 +277,10 @@ async function SearchDetailsPane({
   let cachedQuote: QuoteWithCacheMeta | null = null;
 
   try {
-    cachedQuote = await getCachedQuoteServer(normalizedQuery, getModeAssetType(mode));
+    cachedQuote = await getCachedQuoteServer(
+      normalizedQuery,
+      getModeAssetType(mode),
+    );
   } catch (error) {
     if (
       !(error instanceof ApiRequestError) ||
@@ -396,16 +314,31 @@ async function SearchDetailsPane({
   const shouldFetchLive = !cachedQuote || cachedQuote.cache.stale;
 
   if (!shouldFetchLive && cachedQuote) {
-    return <AssetDetails quote={cachedQuote} />;
+    return (
+      <AssetDetailsClient
+        symbol={normalizedQuery}
+        assetType={getModeAssetType(mode)}
+        initialQuote={cachedQuote}
+      />
+    );
   }
 
   let liveQuote: QuoteWithCacheMeta;
 
   try {
-    liveQuote = await getLiveQuoteServer(normalizedQuery, getModeAssetType(mode));
+    liveQuote = await getLiveQuoteServer(
+      normalizedQuery,
+      getModeAssetType(mode),
+    );
   } catch (error) {
     if (cachedQuote) {
-      return <AssetDetails quote={cachedQuote} />;
+      return (
+        <AssetDetailsClient
+          symbol={normalizedQuery}
+          assetType={getModeAssetType(mode)}
+          initialQuote={cachedQuote}
+        />
+      );
     }
 
     if (error instanceof ApiRequestError && error.status === 404) {
@@ -451,7 +384,13 @@ async function SearchDetailsPane({
     throw error;
   }
 
-  return <AssetDetails quote={liveQuote} />;
+  return (
+    <AssetDetailsClient
+      symbol={normalizedQuery}
+      assetType={getModeAssetType(mode)}
+      initialQuote={liveQuote}
+    />
+  );
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
@@ -466,7 +405,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <aside className="flex min-h-0 flex-col border-b border-border p-5 lg:border-r lg:border-b-0 lg:p-7">
             <div className="flex min-h-0 flex-1 flex-col gap-5">
               <SearchControls
-                key={`${initialMode}:${initialQuery}`}
                 initialMode={initialMode}
                 initialQuery={initialQuery}
               />

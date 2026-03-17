@@ -3,6 +3,7 @@ import { handleLogin } from "./adapters/http/identity-access/login";
 import { handleRegister } from "./adapters/http/identity-access/register";
 import { handleGetCachedQuote } from "./adapters/http/price-query/get-cached-quote";
 import { handleGetLiveQuote } from "./adapters/http/price-query/get-live-quote";
+import { handleStreamQuote } from "./adapters/http/price-query/stream-quote";
 import { handleSearchCachedQuotes } from "./adapters/http/price-query/search-cached-quotes";
 import { handleListRecentSelections } from "./adapters/http/user-assets/list-recent-selections";
 import { handleRecordRecentSelection } from "./adapters/http/user-assets/record-recent-selection";
@@ -56,6 +57,15 @@ async function routeRequest(
   ) {
     const rawTicker = url.pathname.slice("/ativos/".length, -"/cache".length);
     return handleGetCachedQuote(request, env, rawTicker);
+  }
+
+  if (
+    request.method === "GET" &&
+    url.pathname.startsWith("/ativos/") &&
+    url.pathname.endsWith("/stream")
+  ) {
+    const rawTicker = url.pathname.slice("/ativos/".length, -"/stream".length);
+    return handleStreamQuote(request, env, ctx, rawTicker);
   }
 
   if (request.method === "GET" && url.pathname.startsWith("/ativos/")) {
