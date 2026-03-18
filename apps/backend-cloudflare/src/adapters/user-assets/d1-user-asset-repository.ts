@@ -1,4 +1,5 @@
 import type {
+  IUserFavoriteRepository,
   IUserAssetRepository,
   RecentAssetSelection,
   TrackedAssetRef,
@@ -16,7 +17,9 @@ interface RecentAssetSelectionRecord {
   last_selected_at: string;
 }
 
-export class D1UserAssetRepository implements IUserAssetRepository {
+export class D1UserAssetRepository
+  implements IUserAssetRepository, IUserFavoriteRepository
+{
   constructor(private readonly db: D1Database) {}
 
   async listRecentSelections(userId: number, limit: number) {
@@ -93,6 +96,52 @@ export class D1UserAssetRepository implements IUserAssetRepository {
         ].join(" "),
       )
       .bind(userId, userId, keep)
+      .run();
+  }
+
+  async hasFavorite(input: {
+    userId: number;
+    symbol: string;
+    assetType: TrackedAssetRef["assetType"];
+  }) {
+    const result = await this.db
+      .prepare(
+        [
+          "SELECT id",
+          "FROM favorite_assets",
+          "WHERE user_id = ? AND symbol = ? AND asset_type = ?",
+          "LIMIT 1",
+        ].join(" "),
+      )
+      .bind(input.userId, input.symbol, input.assetType)
+      .first<{ id: number }>();
+
+    return result !== null;
+  }
+
+  async createFavorite(input: {
+    userId: number;
+    asset: TrackedAssetRef;
+    createdAt: Date;
+  }) {
+    await this.db
+      .prepare(
+        [
+          "INSERT OR IGNORE INTO favorite_assets",
+          "(user_id, symbol, asset_type, label, market, currency, logo_url, created_at)",
+          "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        ].join(" "),
+      )
+      .bind(
+        input.userId,
+        input.asset.symbol,
+        input.asset.assetType,
+        input.asset.label,
+        input.asset.market,
+        input.asset.currency,
+        input.asset.logoUrl,
+        input.createdAt.toISOString(),
+      )
       .run();
   }
 }

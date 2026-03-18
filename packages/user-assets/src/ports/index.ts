@@ -15,3 +15,16 @@ export interface IUserAssetRepository {
   }): Promise<void>;
   trimRecentSelections(userId: number, keep: number): Promise<void>;
 }
+
+export interface IUserFavoriteRepository {
+  hasFavorite(input: {
+    userId: number;
+    symbol: string;
+    assetType: TrackedAssetRef["assetType"];
+  }): Promise<boolean>;
+  createFavorite(input: {
+    userId: number;
+    asset: TrackedAssetRef;
+    createdAt: Date;
+  }): Promise<void>;
+}
