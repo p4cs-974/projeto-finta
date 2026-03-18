@@ -13,12 +13,23 @@ export interface RecentAssetSelection extends TrackedAssetRef {
   lastSelectedAt: string;
 }
 
+export interface FavoriteAsset extends TrackedAssetRef {
+  createdAt: string;
+}
+
 export interface IRecentAssetSelectionService {
   listRecentSelections(input: {
     userId: number;
     limit: number;
   }): Promise<RecentAssetSelection[]>;
   recordSelection(input: {
+    userId: number;
+    asset: TrackedAssetRef;
+  }): Promise<void>;
+}
+
+export interface IFavoriteAssetService {
+  addFavorite(input: {
     userId: number;
     asset: TrackedAssetRef;
   }): Promise<void>;

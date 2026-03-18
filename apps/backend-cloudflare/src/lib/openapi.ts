@@ -247,6 +247,36 @@ export function createOpenApiDocument(baseUrl: string) {
 					},
 				},
 			},
+			"/users/me/favorites": {
+				post: {
+					summary: "Adicionar um favorito do usuário autenticado",
+					tags: ["Assets"],
+					security: [{ bearerAuth: [] }],
+					requestBody: {
+						required: true,
+						content: {
+							"application/json": {
+								schema: {
+									$ref: "#/components/schemas/SaveFavoriteRequest",
+								},
+								example: {
+									symbol: "PETR4",
+									type: "stock",
+								},
+							},
+						},
+					},
+					responses: {
+						"204": {
+							description: "Favorito criado ou já existente",
+						},
+						"401": errorContent("Token bearer ausente, inválido ou expirado"),
+						"404": errorContent("Ativo não encontrado"),
+						"422": errorContent("Corpo da requisição inválido"),
+						"502": errorContent("Erro ou timeout no provedor de ativos"),
+					},
+				},
+			},
 		},
 		components: {
 			securitySchemes: {
@@ -420,6 +450,15 @@ export function createOpenApiDocument(baseUrl: string) {
 						market: { type: ["string", "null"], example: "B3" },
 						currency: { type: ["string", "null"], example: "BRL" },
 						logoUrl: { type: ["string", "null"], format: "uri", example: "https://example.com/petr4.png" },
+					},
+				},
+				SaveFavoriteRequest: {
+					type: "object",
+					additionalProperties: false,
+					required: ["symbol", "type"],
+					properties: {
+						symbol: { type: "string", example: "PETR4" },
+						type: { type: "string", enum: ["stock", "crypto"] },
 					},
 				},
 				ErrorResponse: {
