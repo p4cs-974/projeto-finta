@@ -1,0 +1,3 @@
+WRN 2026-03-17T23:10:11.994 ?.48296    server_start:199: Failed to start server: operation not permitted: /var/folders/7d/wqht_db92n928n_07r6_d_xh0000gn/T/nvim.pedro/xhvdy3/nvim.48296.0
+WRN 2026-03-17T23:10:11.994 ?.48295    server_start:199: Failed to start server: operation not permitted: /var/folders/7d/wqht_db92n928n_07r6_d_xh0000gn/T/nvim.pedro/6F7BJY/nvim.48295.0
+WRN 2026-03-17T23:23:51.675 ?.56362    server_start:199: Failed to start server: operation not permitted: /var/folders/7d/wqht_db92n928n_07r6_d_xh0000gn/T/nvim.pedro/MKDHjX/nvim.56362.0

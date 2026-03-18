@@ -1,0 +1,125 @@
+@startuml componentes-price-query-lab4
+top to bottom direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam titleFontSize 22
+skinparam titleFontColor #16324F
+skinparam packageTitleFontSize 17
+skinparam packageTitleFontColor #16324F
+skinparam packageBorderColor #7A8A99
+skinparam packageBackgroundColor #F5F7F9
+skinparam component {
+  FontSize 15
+  FontColor #102A43
+  BorderColor #486581
+  BorderThickness 1.2
+  BackgroundColor #FFFFFF
+}
+skinparam interface {
+  FontSize 14
+  FontColor #102A43
+  BorderColor #486581
+  BackgroundColor #F8FBFF
+}
+skinparam database {
+  FontSize 15
+  FontColor #102A43
+  BorderColor #7C5E10
+  BackgroundColor #FFF7DB
+}
+skinparam cloud {
+  FontSize 15
+  FontColor #102A43
+  BorderColor #0F6D7A
+  BackgroundColor #E9FBFF
+}
+skinparam actor {
+  FontSize 16
+  FontColor #102A43
+  BorderColor #486581
+}
+skinparam ArrowColor #425466
+skinparam ArrowThickness 1.3
+skinparam nodesep 60
+skinparam ranksep 85
+
+title FINTA - Lab 4\nComunicacao entre componentes por interfaces
+
+actor "Usuario" as User
+
+package "Camada de Interacao" {
+  component "frontend-cloudflare\nNext.js + rotas BFF" as Front #EAF2FF
+}
+
+package "Camada de API e Composicao" {
+  component "backend-cloudflare\nhandlers HTTP" as Back #EAF2FF
+}
+
+package "Componente de Dominio" {
+  component "@finta/price-query\nPriceQueryService" as PriceQuery #EEF8EE
+
+  interface "IPriceQueryService" as IPriceQuery
+  interface "IMarketDataGateway" as IMarketDataGateway
+  interface "IQuoteSnapshotStore" as IQuoteSnapshotStore
+}
+
+package "Adapters de Infraestrutura" {
+  component "createMarketDataGateway\nCompositeMarketDataGateway" as CompositeGateway #FFFDF7
+  component "BrapiMarketDataGateway" as BrapiGateway #FFFDF7
+  component "CoinCapMarketDataGateway" as CoinCapGateway #FFFDF7
+  component "CloudflareKvQuoteSnapshotStore" as KvStore #FFFDF7
+}
+
+package "Infraestrutura Externa" {
+  database "Cloudflare KV\nASSET_CACHE" as KV
+  cloud "Brapi" as Brapi
+  cloud "CoinCap" as CoinCap
+}
+
+User --> Front : usa a interface web
+Front --> Back : /api/assets/*
+Back --> IPriceQuery : usa servico de cotacao
+IPriceQuery - PriceQuery
+
+PriceQuery --> IMarketDataGateway : requer
+PriceQuery --> IQuoteSnapshotStore : requer
+
+Back --> CompositeGateway : injeta dependencia
+Back --> KvStore : injeta dependencia
+
+IMarketDataGateway - CompositeGateway
+IQuoteSnapshotStore - KvStore
+
+CompositeGateway --> BrapiGateway : stock
+CompositeGateway --> CoinCapGateway : crypto
+
+BrapiGateway --> Brapi
+CoinCapGateway --> CoinCap
+KvStore --> KV
+
+note right of PriceQuery
+O servico de dominio conhece apenas
+as interfaces requeridas.
+Nao depende diretamente de KV,
+Brapi ou CoinCap.
+end note
+
+note right of Back
+O backend faz a composicao:
+instancia o PriceQueryService e
+fornece as implementacoes concretas
+via injecao de dependencia.
+end note
+
+note bottom of Front
+O frontend consome apenas as rotas HTTP
+do backend, sem acessar providers
+ou armazenamento diretamente.
+end note
+
+@enduml
