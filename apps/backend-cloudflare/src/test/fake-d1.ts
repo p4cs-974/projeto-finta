@@ -38,6 +38,18 @@ interface RecentAssetSelectionRecord {
   last_selected_at: string;
 }
 
+interface FavoriteAssetRecord {
+  id: number;
+  user_id: number;
+  symbol: string;
+  asset_type: "stock" | "crypto";
+  label: string;
+  market: string | null;
+  currency: string | null;
+  logo_url: string | null;
+  favorited_at: string;
+}
+
 function sqliteNow(): string {
   return new Date().toISOString().replace("T", " ").slice(0, 19);
 }
@@ -45,8 +57,10 @@ function sqliteNow(): string {
 export function createFakeD1Database() {
   let nextId = 1;
   let nextRecentId = 1;
+  let nextFavoriteId = 1;
   const users = new Map<number, UserRecord>();
   const recentSelections = new Map<number, RecentAssetSelectionRecord>();
+  const favoriteAssets = new Map<number, FavoriteAssetRecord>();
 
   class FakePreparedStatement {
     constructor(
@@ -99,6 +113,31 @@ export function createFakeD1Database() {
             return timeDiff !== 0 ? timeDiff : right.id - left.id;
           })
           .slice(0, limit) as T[];
+
+        return {
+          results,
+          success: true,
+          meta: {},
+        };
+      }
+
+      if (
+        sql ===
+        [
+          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, favorited_at",
+          "FROM favorite_assets",
+          "WHERE user_id = ?",
+          "ORDER BY favorited_at DESC, id DESC",
+        ].join(" ")
+      ) {
+        const userId = Number(values[0]);
+        const results = Array.from(favoriteAssets.values())
+          .filter((item) => item.user_id === userId)
+          .sort((left, right) => {
+            const timeDiff =
+              Date.parse(right.favorited_at) - Date.parse(left.favorited_at);
+            return timeDiff !== 0 ? timeDiff : right.id - left.id;
+          }) as T[];
 
         return {
           results,
@@ -306,6 +345,9 @@ export function createFakeD1Database() {
     getRecentSelections() {
       return Array.from(recentSelections.values());
     },
+    getFavoriteAssets() {
+      return Array.from(favoriteAssets.values());
+    },
     seedUser(input: Pick<UserRecord, "name" | "email" | "password_hash">) {
       const id = nextId;
       nextId += 1;
@@ -317,6 +359,19 @@ export function createFakeD1Database() {
       });
 
       return users.get(id)!;
+    },
+    seedFavoriteAsset(
+      input: Omit<FavoriteAssetRecord, "id"> & { id?: number },
+    ): FavoriteAssetRecord {
+      const id = input.id ?? nextFavoriteId;
+      nextFavoriteId = Math.max(nextFavoriteId, id + 1);
+      const record: FavoriteAssetRecord = {
+        id,
+        ...input,
+      };
+      favoriteAssets.set(id, record);
+
+      return record;
     },
   };
 }

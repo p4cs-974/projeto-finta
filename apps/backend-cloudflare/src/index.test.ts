@@ -1856,3 +1856,158 @@ describe("recent asset selections", () => {
     expect(payload.error.details?.fieldErrors).toBeTruthy();
   });
 });
+
+describe("favorite assets", () => {
+  it("returns an empty array for a user without favorites", async () => {
+    const fakeDb = createFakeD1Database();
+    const token = await createAccessToken();
+
+    const response = await worker.fetch(
+      createAssetRequest("/users/me/favorites", token),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{ data: unknown[] }>();
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual([]);
+  });
+
+  it("returns favorites ordered by descending favoritedAt", async () => {
+    const fakeDb = createFakeD1Database();
+    const token = await createAccessToken();
+
+    fakeDb.seedFavoriteAsset({
+      user_id: 1,
+      symbol: "PETR4",
+      asset_type: "stock",
+      label: "Petrobras PN",
+      market: "B3",
+      currency: "BRL",
+      logo_url: "https://example.com/petr4.png",
+      favorited_at: "2026-03-18T12:00:00.000Z",
+    });
+    fakeDb.seedFavoriteAsset({
+      user_id: 1,
+      symbol: "BTC",
+      asset_type: "crypto",
+      label: "Bitcoin",
+      market: null,
+      currency: "USD",
+      logo_url: null,
+      favorited_at: "2026-03-18T12:05:00.000Z",
+    });
+
+    const response = await worker.fetch(
+      createAssetRequest("/users/me/favorites", token),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{
+      data: Array<{
+        symbol: string;
+      }>;
+    }>();
+
+    expect(response.status).toBe(200);
+    expect(payload.data.map((item) => item.symbol)).toEqual(["BTC", "PETR4"]);
+  });
+
+  it("isolates favorites by user", async () => {
+    const fakeDb = createFakeD1Database();
+    const env = createEnv(fakeDb);
+    const firstToken = await createAccessToken({ sub: "1" });
+    const secondToken = await createAccessToken({
+      sub: "2",
+      email: "maria@example.com",
+      name: "Maria",
+    });
+
+    fakeDb.seedFavoriteAsset({
+      user_id: 1,
+      symbol: "PETR4",
+      asset_type: "stock",
+      label: "Petrobras PN",
+      market: "B3",
+      currency: "BRL",
+      logo_url: "https://example.com/petr4.png",
+      favorited_at: "2026-03-18T12:00:00.000Z",
+    });
+    fakeDb.seedFavoriteAsset({
+      user_id: 2,
+      symbol: "BTC",
+      asset_type: "crypto",
+      label: "Bitcoin",
+      market: null,
+      currency: "USD",
+      logo_url: null,
+      favorited_at: "2026-03-18T12:01:00.000Z",
+    });
+
+    const firstResponse = await worker.fetch(
+      createAssetRequest("/users/me/favorites", firstToken),
+      env,
+    );
+    const secondResponse = await worker.fetch(
+      createAssetRequest("/users/me/favorites", secondToken),
+      env,
+    );
+    const firstPayload = await firstResponse.json<{
+      data: Array<{ symbol: string }>;
+    }>();
+    const secondPayload = await secondResponse.json<{
+      data: Array<{ symbol: string }>;
+    }>();
+
+    expect(firstPayload.data.map((item) => item.symbol)).toEqual(["PETR4"]);
+    expect(secondPayload.data.map((item) => item.symbol)).toEqual(["BTC"]);
+  });
+
+  it("serializes type, logoUrl and favoritedAt correctly", async () => {
+    const fakeDb = createFakeD1Database();
+    const token = await createAccessToken();
+
+    fakeDb.seedFavoriteAsset({
+      user_id: 1,
+      symbol: "BTC",
+      asset_type: "crypto",
+      label: "Bitcoin",
+      market: null,
+      currency: "USD",
+      logo_url: null,
+      favorited_at: "2026-03-18T12:00:00.000Z",
+    });
+
+    const response = await worker.fetch(
+      createAssetRequest("/users/me/favorites", token),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{
+      data: Array<{
+        symbol: string;
+        type: string;
+        logoUrl: string | null;
+        favoritedAt: string;
+      }>;
+    }>();
+
+    expect(response.status).toBe(200);
+    expect(payload.data[0]).toMatchObject({
+      symbol: "BTC",
+      type: "crypto",
+      logoUrl: null,
+      favoritedAt: "2026-03-18T12:00:00.000Z",
+    });
+  });
+
+  it("returns 401 without authentication", async () => {
+    const fakeDb = createFakeD1Database();
+
+    const response = await worker.fetch(
+      createAssetRequest("/users/me/favorites"),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{ error: { code: string } }>();
+
+    expect(response.status).toBe(401);
+    expect(payload.error.code).toBe("INVALID_TOKEN");
+  });
+});

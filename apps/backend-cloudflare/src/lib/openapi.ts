@@ -247,6 +247,35 @@ export function createOpenApiDocument(baseUrl: string) {
 					},
 				},
 			},
+			"/users/me/favorites": {
+				get: {
+					summary: "Listar favoritos do usuário autenticado",
+					tags: ["Favorites"],
+					security: [{ bearerAuth: [] }],
+					responses: {
+						"200": {
+							description: "Favoritos do usuário",
+							content: {
+								"application/json": {
+									schema: {
+										type: "object",
+										required: ["data"],
+										properties: {
+											data: {
+												type: "array",
+												items: {
+													$ref: "#/components/schemas/FavoriteAsset",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"401": errorContent("Token bearer ausente, inválido ou expirado"),
+					},
+				},
+			},
 		},
 		components: {
 			securitySchemes: {
@@ -407,6 +436,27 @@ export function createOpenApiDocument(baseUrl: string) {
 						currency: { type: ["string", "null"], example: "BRL" },
 						logoUrl: { type: ["string", "null"], format: "uri", example: "https://example.com/petr4.png" },
 						lastSelectedAt: { type: "string", format: "date-time" },
+					},
+				},
+				FavoriteAsset: {
+					type: "object",
+					required: [
+						"symbol",
+						"type",
+						"label",
+						"market",
+						"currency",
+						"logoUrl",
+						"favoritedAt",
+					],
+					properties: {
+						symbol: { type: "string", example: "PETR4" },
+						type: { type: "string", enum: ["stock", "crypto"] },
+						label: { type: "string", example: "Petrobras PN" },
+						market: { type: ["string", "null"], example: "B3" },
+						currency: { type: ["string", "null"], example: "BRL" },
+						logoUrl: { type: ["string", "null"], format: "uri", example: "https://example.com/petr4.png" },
+						favoritedAt: { type: "string", format: "date-time" },
 					},
 				},
 				SaveRecentAssetSelectionRequest: {

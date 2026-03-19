@@ -5,6 +5,7 @@ import { handleGetCachedQuote } from "./adapters/http/price-query/get-cached-quo
 import { handleGetLiveQuote } from "./adapters/http/price-query/get-live-quote";
 import { handleStreamQuote } from "./adapters/http/price-query/stream-quote";
 import { handleSearchCachedQuotes } from "./adapters/http/price-query/search-cached-quotes";
+import { handleListFavorites } from "./adapters/http/favorites/list-favorites";
 import { handleListRecentSelections } from "./adapters/http/user-assets/list-recent-selections";
 import { handleRecordRecentSelection } from "./adapters/http/user-assets/record-recent-selection";
 import { apiError, errorResponse, json } from "./lib/http";
@@ -40,6 +41,10 @@ async function routeRequest(
 
   if (request.method === "GET" && url.pathname === "/users/me/recent-assets") {
     return handleListRecentSelections(request, env);
+  }
+
+  if (request.method === "GET" && url.pathname === "/users/me/favorites") {
+    return handleListFavorites(request, env);
   }
 
   if (request.method === "POST" && url.pathname === "/users/me/recent-assets") {
