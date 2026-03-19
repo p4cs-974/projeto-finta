@@ -47,7 +47,7 @@ interface FavoriteAssetRecord {
   market: string | null;
   currency: string | null;
   logo_url: string | null;
-  favorited_at: string;
+  created_at: string;
 }
 
 function sqliteNow(): string {
@@ -124,10 +124,10 @@ export function createFakeD1Database() {
       if (
         sql ===
         [
-          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, favorited_at",
+          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, created_at",
           "FROM favorite_assets",
           "WHERE user_id = ?",
-          "ORDER BY favorited_at DESC, id DESC",
+          "ORDER BY created_at DESC, id DESC",
         ].join(" ")
       ) {
         const userId = Number(values[0]);
@@ -135,7 +135,7 @@ export function createFakeD1Database() {
           .filter((item) => item.user_id === userId)
           .sort((left, right) => {
             const timeDiff =
-              Date.parse(right.favorited_at) - Date.parse(left.favorited_at);
+              Date.parse(right.created_at) - Date.parse(left.created_at);
             return timeDiff !== 0 ? timeDiff : right.id - left.id;
           }) as T[];
 

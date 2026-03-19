@@ -1884,7 +1884,7 @@ describe("favorite assets", () => {
       market: "B3",
       currency: "BRL",
       logo_url: "https://example.com/petr4.png",
-      favorited_at: "2026-03-18T12:00:00.000Z",
+      created_at: "2026-03-18T12:00:00.000Z",
     });
     fakeDb.seedFavoriteAsset({
       user_id: 1,
@@ -1894,7 +1894,7 @@ describe("favorite assets", () => {
       market: null,
       currency: "USD",
       logo_url: null,
-      favorited_at: "2026-03-18T12:05:00.000Z",
+      created_at: "2026-03-18T12:05:00.000Z",
     });
 
     const response = await worker.fetch(
@@ -1929,7 +1929,7 @@ describe("favorite assets", () => {
       market: "B3",
       currency: "BRL",
       logo_url: "https://example.com/petr4.png",
-      favorited_at: "2026-03-18T12:00:00.000Z",
+      created_at: "2026-03-18T12:00:00.000Z",
     });
     fakeDb.seedFavoriteAsset({
       user_id: 2,
@@ -1939,7 +1939,7 @@ describe("favorite assets", () => {
       market: null,
       currency: "USD",
       logo_url: null,
-      favorited_at: "2026-03-18T12:01:00.000Z",
+      created_at: "2026-03-18T12:01:00.000Z",
     });
 
     const firstResponse = await worker.fetch(
@@ -1973,7 +1973,7 @@ describe("favorite assets", () => {
       market: null,
       currency: "USD",
       logo_url: null,
-      favorited_at: "2026-03-18T12:00:00.000Z",
+      created_at: "2026-03-18T12:00:00.000Z",
     });
 
     const response = await worker.fetch(

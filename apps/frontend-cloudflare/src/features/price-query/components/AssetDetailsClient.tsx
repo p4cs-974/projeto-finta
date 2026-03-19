@@ -13,6 +13,7 @@ import {
   isStockQuoteWithCache,
 } from "@/features/price-query/presentation";
 import { useQuoteStream } from "@/features/price-query/hooks/use-quote-stream";
+import { FavoriteButton } from "@/features/price-query/components/FavoriteButton";
 
 function AssetLogo({
   symbol,
@@ -112,11 +113,14 @@ export function AssetDetailsClient({
         <div className="flex items-start gap-4">
           <AssetLogo symbol={symbol} logoUrl={logoUrl} className="size-14" />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
                 {symbol}
               </h1>
-              <ConnectionIndicator status={status} />
+              <div className="ml-auto flex items-center gap-3">
+                <ConnectionIndicator status={status} />
+                <FavoriteButton symbol={symbol} assetType={assetType} />
+              </div>
             </div>
             <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
               {getQuoteLabel(quote)}
