@@ -124,7 +124,7 @@ export function createFakeD1Database() {
       if (
         sql ===
         [
-          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, created_at",
+          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, created_at AS favorited_at",
           "FROM favorite_assets",
           "WHERE user_id = ?",
           "ORDER BY created_at DESC, id DESC",
@@ -137,7 +137,11 @@ export function createFakeD1Database() {
             const timeDiff =
               Date.parse(right.created_at) - Date.parse(left.created_at);
             return timeDiff !== 0 ? timeDiff : right.id - left.id;
-          }) as T[];
+          })
+          .map((item) => ({
+            ...item,
+            favorited_at: item.created_at,
+          })) as T[];
 
         return {
           results,

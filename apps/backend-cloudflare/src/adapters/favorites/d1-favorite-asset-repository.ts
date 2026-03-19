@@ -1,7 +1,4 @@
-import type {
-  FavoriteAsset,
-  IFavoriteAssetRepository,
-} from "@finta/favorites";
+import type { FavoriteAsset, IFavoriteAssetRepository } from "@finta/favorites";
 
 interface FavoriteAssetRecord {
   id: number;
@@ -12,7 +9,7 @@ interface FavoriteAssetRecord {
   market: string | null;
   currency: string | null;
   logo_url: string | null;
-  created_at: string;
+  favorited_at: string;
 }
 
 export class D1FavoriteAssetRepository implements IFavoriteAssetRepository {
@@ -22,7 +19,7 @@ export class D1FavoriteAssetRepository implements IFavoriteAssetRepository {
     const result = await this.db
       .prepare(
         [
-          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, created_at",
+          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, created_at AS favorited_at",
           "FROM favorite_assets",
           "WHERE user_id = ?",
           "ORDER BY created_at DESC, id DESC",
@@ -38,7 +35,7 @@ export class D1FavoriteAssetRepository implements IFavoriteAssetRepository {
       market: item.market,
       currency: item.currency,
       logoUrl: item.logo_url,
-      favoritedAt: item.created_at,
+      favoritedAt: item.favorited_at,
     }));
   }
 }
