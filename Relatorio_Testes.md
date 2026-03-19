@@ -41,6 +41,18 @@ Como pode ser visto nos testes acima, a busca por um nome inválido de ativo ret
 
 ### Teste de Unidade
 
-### Teste de Integração
+Os testes focaram em garantir o seguimento correto das regras de negócio nos dois principais componentes de backend responsáveis pelo fluxo: o PriceQueryService (que é responsável pela consulta e cache de cotações em tempo real) e o RecentAssetSelectionService (que é responsável pela persistência do histórico do usuário).
 
-Testes de ponta a ponta da tarefa "Visualizar detalhes de indicadores de ativos" registrados.
+A arquitetura foi testada em um ambiente isolado através do padrão de injeção de dependência. As chamadas reais ao banco de dados foram susbtituídas por implementações "fake" operando exclusivamente na memória RAM (InMemoryQuoteSnapshotStore e InMemoryUserAssetRepository).
+
+**PriceQueryService**
+Para o PriceQueryService, foram validados os seguintes cenários: Retorno correto de cotação com cache vazio. Retorno imediato com o cache preenchido. Identificação de cache expirado, verificando se aciona corretamente a rotina de atualização em segundo plano (scheduleTask). Tratamento adequado quando o provedor não retorna dados para um ticker inválido. Retorno de estrutura com dados nulos quando o ativo não é encontrado. Captura (catch) e tratamento de erros técnicos padronizados quando há algum timeout ou indisponibilidade da API externa.
+
+<img width="1472" height="669" alt="image" src="https://github.com/user-attachments/assets/3fea9351-c4bb-4f4a-851b-c3b8b92a1439" />
+
+**RecentAssetSelectionService**
+Para o RecentAssetSelectionService, foram validados os seguintes cenários: Persistência correta de novos ativos selecionados no histórico do usuário. Atualização inteligente, modificando apenas o horário de acesso para ativos que já existem, evitando que duplique os registros. Ordenação cronológica reversa (do acesso mais recente para o mais antigo). Limitação automática do armazenamento, eliminando registros antigos e mantendo apenas as 5 consultas mais recentes no banco.
+
+<img width="1437" height="513" alt="image" src="https://github.com/user-attachments/assets/5353757d-00fa-43c8-8e2d-dd93637066c3" />
+
+OBS: Os códigos utilizados para os testes estão disponíveis no repositório.
