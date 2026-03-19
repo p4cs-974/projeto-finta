@@ -4,59 +4,7 @@ import Link from "next/link";
 
 import { getFavoritesServer } from "@/lib/backend-server";
 import { ApiRequestError } from "@/lib/http-client";
-
-function buildSearchHref(assetType: "stock" | "crypto", symbol: string) {
-  const mode = assetType === "stock" ? "stocks" : "crypto";
-  return `/search?mode=${mode}&q=${encodeURIComponent(symbol)}`;
-}
-
-function AssetLogo({
-  symbol,
-  logoUrl,
-}: {
-  symbol: string;
-  logoUrl: string | null;
-}) {
-  if (logoUrl) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={logoUrl} alt="" className="size-10 object-contain" />;
-  }
-
-  return (
-    <div className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-xs font-semibold text-muted-foreground">
-      {symbol.slice(0, 3)}
-    </div>
-  );
-}
-
-function FavoriteItem({ item }: { item: FavoriteAsset }) {
-  return (
-    <li>
-      <Link
-        href={buildSearchHref(item.assetType, item.symbol)}
-        className="group flex items-center gap-4 border border-border bg-background px-4 py-4 transition-colors hover:bg-muted/45"
-      >
-        <AssetLogo symbol={item.symbol} logoUrl={item.logoUrl} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-foreground">
-              {item.symbol}
-            </p>
-            <span className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              {item.assetType === "stock" ? item.market : "cripto"}
-            </span>
-          </div>
-          <p className="mt-1 truncate text-xs text-muted-foreground">
-            {item.label}
-          </p>
-        </div>
-        <span className="shrink-0 text-xs text-muted-foreground">
-          {item.currency}
-        </span>
-      </Link>
-    </li>
-  );
-}
+import { FavoritesFilter } from "@/features/favorites/components/FavoritesFilter";
 
 export default async function FavoritosPage() {
   let favorites: FavoriteAsset[];
@@ -118,14 +66,7 @@ export default async function FavoritosPage() {
             </Link>
           </div>
         ) : (
-          <ul className="space-y-2">
-            {favorites.map((item) => (
-              <FavoriteItem
-                key={`${item.assetType}:${item.symbol}`}
-                item={item}
-              />
-            ))}
-          </ul>
+          <FavoritesFilter favorites={favorites} />
         )}
       </div>
     </main>

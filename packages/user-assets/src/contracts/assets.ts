@@ -33,4 +33,9 @@ export interface IFavoriteAssetService {
     userId: number;
     asset: TrackedAssetRef;
   }): Promise<void>;
+  removeFavorite(input: {
+    userId: number;
+    symbol: string;
+    assetType: AssetType;
+  }): Promise<void>;
 }
