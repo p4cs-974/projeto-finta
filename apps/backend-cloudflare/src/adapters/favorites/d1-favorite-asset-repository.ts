@@ -22,10 +22,10 @@ export class D1FavoriteAssetRepository implements IFavoriteAssetRepository {
     const result = await this.db
       .prepare(
         [
-          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, favorited_at",
+          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, created_at AS favorited_at",
           "FROM favorite_assets",
           "WHERE user_id = ?",
-          "ORDER BY favorited_at DESC, id DESC",
+          "ORDER BY created_at DESC, id DESC",
         ].join(" "),
       )
       .bind(userId)
