@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { FavoriteAsset } from "@finta/favorites";
 import type {
   QuoteWithCacheMeta,
   CachedQuoteSearchResponse,
@@ -26,6 +27,16 @@ interface RecentAssetSelectionPayload {
   lastSelectedAt: string;
 }
 
+interface FavoriteAssetPayload {
+  symbol: string;
+  type: "stock" | "crypto";
+  label: string;
+  market: string | null;
+  currency: string | null;
+  logoUrl: string | null;
+  favoritedAt: string;
+}
+
 function toDomainSelection(
   payload: RecentAssetSelectionPayload,
 ): RecentAssetSelection {
@@ -37,6 +48,18 @@ function toDomainSelection(
     currency: payload.currency,
     logoUrl: payload.logoUrl,
     lastSelectedAt: payload.lastSelectedAt,
+  };
+}
+
+function toDomainFavorite(payload: FavoriteAssetPayload): FavoriteAsset {
+  return {
+    symbol: payload.symbol,
+    assetType: payload.type,
+    label: payload.label,
+    market: payload.market,
+    currency: payload.currency,
+    logoUrl: payload.logoUrl,
+    favoritedAt: payload.favoritedAt,
   };
 }
 
@@ -128,6 +151,14 @@ const getRecentSelectionsCached = cache(async () => {
   return payload.data.map(toDomainSelection);
 });
 
+const getFavoritesCached = cache(async () => {
+  const payload = await requestBackendJson<{
+    data: FavoriteAssetPayload[];
+  }>("/users/me/favorites");
+
+  return payload.data.map(toDomainFavorite);
+});
+
 const searchCachedQuotesCached = cache(
   async (query: string, assetType: AssetType) => {
     const payload = await requestBackendJson<CachedQuoteSearchResponse>(
@@ -146,6 +177,10 @@ const getCachedQuoteCached = cache(async (symbol: string, assetType: AssetType) 
 
 export function getRecentSelectionsServer() {
   return getRecentSelectionsCached();
+}
+
+export function getFavoritesServer() {
+  return getFavoritesCached();
 }
 
 export function searchCachedQuotesServer(query: string, assetType: AssetType) {

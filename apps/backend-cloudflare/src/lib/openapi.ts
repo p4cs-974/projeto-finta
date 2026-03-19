@@ -439,6 +439,27 @@ export function createOpenApiDocument(baseUrl: string) {
 						lastSelectedAt: { type: "string", format: "date-time" },
 					},
 				},
+				FavoriteAsset: {
+					type: "object",
+					required: [
+						"symbol",
+						"type",
+						"label",
+						"market",
+						"currency",
+						"logoUrl",
+						"favoritedAt",
+					],
+					properties: {
+						symbol: { type: "string", example: "PETR4" },
+						type: { type: "string", enum: ["stock", "crypto"] },
+						label: { type: "string", example: "Petrobras PN" },
+						market: { type: ["string", "null"], example: "B3" },
+						currency: { type: ["string", "null"], example: "BRL" },
+						logoUrl: { type: ["string", "null"], format: "uri", example: "https://example.com/petr4.png" },
+						favoritedAt: { type: "string", format: "date-time" },
+					},
+				},
 				SaveRecentAssetSelectionRequest: {
 					type: "object",
 					additionalProperties: false,

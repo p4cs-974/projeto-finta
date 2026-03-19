@@ -43,6 +43,10 @@ async function routeRequest(
     return handleListRecentSelections(request, env);
   }
 
+  if (request.method === "GET" && url.pathname === "/users/me/favorites") {
+    return handleListFavorites(request, env);
+  }
+
   if (request.method === "POST" && url.pathname === "/users/me/recent-assets") {
     return handleRecordRecentSelection(request, env);
   }

@@ -59,6 +59,40 @@ Observações:
 - cotações de `crypto` usam CoinCap
 - `GET /ativos/cache-search` continua somente em KV, sem consultar providers
 
+`GET /users/me/favorites`
+
+Lista os favoritos do usuário autenticado. Exige `Authorization: Bearer <jwt>`.
+
+Exemplo:
+
+```bash
+curl --request GET \
+  --url http://localhost:8787/users/me/favorites \
+  --header "Authorization: Bearer <jwt>"
+```
+
+Resposta `200 OK`:
+
+```json
+{
+  "data": [
+    {
+      "symbol": "PETR4",
+      "type": "stock",
+      "label": "Petrobras PN",
+      "market": "B3",
+      "currency": "BRL",
+      "logoUrl": "https://example.com/petr4.png",
+      "favoritedAt": "2026-03-18T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+Erro relevante:
+
+- `401 INVALID_TOKEN`: bearer ausente, inválido ou expirado
+
 `POST /auth/register`
 
 Body JSON:

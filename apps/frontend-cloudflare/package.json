@@ -12,6 +12,7 @@
     "publish": true
   },
   "dependencies": {
+    "@finta/favorites": "workspace:*",
     "@finta/identity-access": "workspace:*",
     "@opennextjs/cloudflare": "1.14.0",
     "@finta/price-query": "workspace:*",
@@ -55,6 +56,7 @@
     "lint": "eslint .",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "start": "next start",
+    "test": "vitest run",
     "type-check": "tsc --noEmit"
   }
 }
