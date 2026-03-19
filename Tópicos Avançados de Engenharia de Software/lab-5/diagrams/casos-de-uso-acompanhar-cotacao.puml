@@ -1,0 +1,63 @@
+@startuml casos-de-uso-acompanhar-cotacao
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 16
+skinparam titleFontSize 24
+skinparam titleFontColor #16324F
+skinparam packageTitleFontSize 18
+skinparam packageTitleFontColor #16324F
+skinparam packageBorderColor #7A8A99
+skinparam packageBackgroundColor #F2F5F7
+skinparam rectangleBorderColor #7A8A99
+skinparam rectangleBackgroundColor #F8FAFB
+skinparam noteFontSize 14
+skinparam noteBackgroundColor #FFF5D6
+skinparam noteBorderColor #C88A12
+skinparam ArrowColor #425466
+skinparam ArrowThickness 1.3
+skinparam usecase {
+  FontSize 16
+  FontColor #102A43
+  BackgroundColor #FFFFFF
+  BorderColor #486581
+  BorderThickness 1.2
+}
+skinparam actor {
+  FontSize 16
+  FontColor #102A43
+  BorderColor #486581
+}
+
+title FINTA - Casos de Uso do Processo "Acompanhar cotacao de um ativo"
+
+actor "Usuario" as User
+actor "Brapi" as Brapi
+actor "CoinCap" as CoinCap
+
+rectangle "Sistema FINTA" {
+  package "Acesso" {
+    usecase "UC3 - Realizar\ncadastro" as UC3
+    usecase "UC4 - Realizar\nlogin" as UC4
+  }
+
+  package "Consulta de ativos" {
+    usecase "UC6 - Visualizar detalhes\nde ativos" as UC6
+    usecase "UC8 - Consultar cotacoes\nem tempo real" as UC8
+  }
+}
+
+User -- UC3
+User -- UC4
+User -- UC6
+
+UC6 .> UC8 : <<include>>
+
+Brapi -- UC8
+CoinCap -- UC8
+
+@enduml
