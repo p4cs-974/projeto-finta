@@ -7,6 +7,7 @@ import { Button } from "./ui/button";
 import { LogoutIcon } from "./ui/logout";
 import type { AuthSessionPayload } from "@/lib/auth";
 import { logoutAction } from "@/app/actions/auth";
+import { StarIcon } from "lucide-react";
 
 interface HeaderProps {
   session: AuthSessionPayload;
@@ -30,6 +31,13 @@ export default function Header({ session }: HeaderProps) {
         >
           <SearchIcon size={14} />
           Buscar
+        </Link>
+        <Link
+          href="/favoritos"
+          className="group inline-flex items-center gap-2 border border-transparent px-2 py-1 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-muted/50"
+        >
+          <StarIcon size={14} />
+          Favoritos
         </Link>
       </nav>
 

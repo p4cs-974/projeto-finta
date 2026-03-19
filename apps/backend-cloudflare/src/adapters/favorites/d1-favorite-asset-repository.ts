@@ -1,7 +1,4 @@
-import type {
-  FavoriteAsset,
-  IFavoriteAssetRepository,
-} from "@finta/favorites";
+import type { FavoriteAsset, IFavoriteAssetRepository } from "@finta/favorites";
 
 interface FavoriteAssetRecord {
   id: number;
