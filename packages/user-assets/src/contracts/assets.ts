@@ -22,6 +22,7 @@ export interface IRecentAssetSelectionService {
     userId: number;
     limit: number;
   }): Promise<RecentAssetSelection[]>;
+  countTodaySelections(input: { userId: number }): Promise<number>;
   recordSelection(input: {
     userId: number;
     asset: TrackedAssetRef;

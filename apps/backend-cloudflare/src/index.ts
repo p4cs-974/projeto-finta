@@ -9,6 +9,8 @@ import { handleAddFavorite } from "./adapters/http/user-assets/add-favorite";
 import { handleListFavorites } from "./adapters/http/favorites/list-favorites";
 import { handleListRecentSelections } from "./adapters/http/user-assets/list-recent-selections";
 import { handleRecordRecentSelection } from "./adapters/http/user-assets/record-recent-selection";
+import { handleCountTodaySearches } from "./adapters/http/user-assets/count-today-searches";
+import { handleMarketOverview } from "./adapters/http/price-query/market-overview";
 import { apiError, errorResponse, json } from "./lib/http";
 import { renderSwaggerUiHtml } from "./lib/docs";
 import { createOpenApiDocument } from "./lib/openapi";
@@ -54,6 +56,14 @@ async function routeRequest(
 
   if (request.method === "POST" && url.pathname === "/users/me/favorites") {
     return handleAddFavorite(request, env);
+  }
+
+  if (request.method === "GET" && url.pathname === "/users/me/recent-assets/today-count") {
+    return handleCountTodaySearches(request, env);
+  }
+
+  if (request.method === "GET" && url.pathname === "/ativos/market-overview") {
+    return handleMarketOverview(request, env);
   }
 
   if (request.method === "GET" && url.pathname === "/ativos/cache-search") {

@@ -27,6 +27,14 @@ export class RecentAssetSelectionService implements IRecentAssetSelectionService
     );
   }
 
+  countTodaySelections(input: { userId: number }) {
+    const today = this.now().toISOString().slice(0, 10);
+    return this.options.userAssetRepository.countTodaySelections(
+      input.userId,
+      today,
+    );
+  }
+
   async recordSelection(input: {
     userId: number;
     asset: TrackedAssetRef;

@@ -196,3 +196,38 @@ export function getLiveQuoteServer(symbol: string, assetType: AssetType) {
     cache: "no-store",
   });
 }
+
+const getTodaySearchCountCached = cache(async () => {
+  const payload = await requestBackendJson<{
+    data: { count: number };
+  }>("/users/me/recent-assets/today-count");
+
+  return payload.data.count;
+});
+
+export function getTodaySearchCountServer() {
+  return getTodaySearchCountCached();
+}
+
+interface MarketOverviewAsset {
+  symbol: string;
+  assetType: "stock";
+  initialQuote: QuoteWithCacheMeta;
+}
+
+interface MarketOverviewData {
+  gainers: MarketOverviewAsset[];
+  losers: MarketOverviewAsset[];
+}
+
+const getMarketOverviewCached = cache(async () => {
+  const payload = await requestBackendJson<{
+    data: MarketOverviewData;
+  }>("/ativos/market-overview", { cache: "no-store" });
+
+  return payload.data;
+});
+
+export function getMarketOverviewServer() {
+  return getMarketOverviewCached();
+}

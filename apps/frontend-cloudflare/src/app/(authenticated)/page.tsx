@@ -1,5 +1,3 @@
-import type { QuoteWithCacheMeta } from "@finta/price-query";
-import type { AssetType } from "@finta/shared-kernel";
 import { Suspense } from "react";
 
 import {
@@ -10,233 +8,40 @@ import {
 } from "@/components/dashboard";
 import {
   getFavoritesServer,
+  getMarketOverviewServer,
   getRecentSelectionsServer,
+  getTodaySearchCountServer,
 } from "@/lib/backend-server";
 import { ApiRequestError } from "@/lib/http-client";
 
-interface MarketAsset {
-  symbol: string;
-  assetType: AssetType;
-  initialQuote: QuoteWithCacheMeta;
-}
-
-interface MockMarketData {
-  gainers: MarketAsset[];
-  losers: MarketAsset[];
-}
-
-const now = new Date().toISOString();
-
-const mockMarketData: MockMarketData = {
-  gainers: [
-    {
-      symbol: "PETR4",
-      assetType: "stock",
-      initialQuote: {
-        data: {
-          ticker: "PETR4",
-          name: "Petrobras PN N2",
-          price: 38.45,
-          change: 1.23,
-          changePercent: 3.31,
-          currency: "BRL",
-          market: "B3",
-          quotedAt: now,
-          logoUrl: null,
-        },
-        cache: {
-          key: "stock:PETR4",
-          updatedAt: now,
-          stale: false,
-          source: "live",
-        },
-      },
-    },
-    {
-      symbol: "BTC",
-      assetType: "crypto",
-      initialQuote: {
-        data: {
-          symbol: "BTC",
-          name: "Bitcoin",
-          price: 67432.18,
-          change: 1245.67,
-          changePercent: 1.88,
-          currency: "USD",
-          quotedAt: now,
-        },
-        cache: {
-          key: "crypto:BTC",
-          updatedAt: now,
-          stale: false,
-          source: "live",
-        },
-      },
-    },
-    {
-      symbol: "BBDC4",
-      assetType: "stock",
-      initialQuote: {
-        data: {
-          ticker: "BBDC4",
-          name: "Bradesco PN N2",
-          price: 14.82,
-          change: 0.41,
-          changePercent: 2.85,
-          currency: "BRL",
-          market: "B3",
-          quotedAt: now,
-          logoUrl: null,
-        },
-        cache: {
-          key: "stock:BBDC4",
-          updatedAt: now,
-          stale: false,
-          source: "live",
-        },
-      },
-    },
-    {
-      symbol: "ETH",
-      assetType: "crypto",
-      initialQuote: {
-        data: {
-          symbol: "ETH",
-          name: "Ethereum",
-          price: 3421.56,
-          change: 89.23,
-          changePercent: 2.68,
-          currency: "USD",
-          quotedAt: now,
-        },
-        cache: {
-          key: "crypto:ETH",
-          updatedAt: now,
-          stale: false,
-          source: "live",
-        },
-      },
-    },
-  ],
-  losers: [
-    {
-      symbol: "VALE3",
-      assetType: "stock",
-      initialQuote: {
-        data: {
-          ticker: "VALE3",
-          name: "Vale ON N2",
-          price: 62.14,
-          change: -2.31,
-          changePercent: -3.59,
-          currency: "BRL",
-          market: "B3",
-          quotedAt: now,
-          logoUrl: null,
-        },
-        cache: {
-          key: "stock:VALE3",
-          updatedAt: now,
-          stale: false,
-          source: "live",
-        },
-      },
-    },
-    {
-      symbol: "ITUB4",
-      assetType: "stock",
-      initialQuote: {
-        data: {
-          ticker: "ITUB4",
-          name: "Itaú Unibanco PN N2",
-          price: 32.78,
-          change: -1.12,
-          changePercent: -3.3,
-          currency: "BRL",
-          market: "B3",
-          quotedAt: now,
-          logoUrl: null,
-        },
-        cache: {
-          key: "stock:ITUB4",
-          updatedAt: now,
-          stale: false,
-          source: "live",
-        },
-      },
-    },
-    {
-      symbol: "ABEV3",
-      assetType: "stock",
-      initialQuote: {
-        data: {
-          ticker: "ABEV3",
-          name: "Ambev S/A ON N2",
-          price: 12.45,
-          change: -0.34,
-          changePercent: -2.66,
-          currency: "BRL",
-          market: "B3",
-          quotedAt: now,
-          logoUrl: null,
-        },
-        cache: {
-          key: "stock:ABEV3",
-          updatedAt: now,
-          stale: false,
-          source: "live",
-        },
-      },
-    },
-    {
-      symbol: "WDOFUT",
-      assetType: "stock",
-      initialQuote: {
-        data: {
-          ticker: "WDOFUT",
-          name: "Mini Dólar Futuro",
-          price: 5.421,
-          change: -0.087,
-          changePercent: -1.58,
-          currency: "BRL",
-          market: "B3",
-          quotedAt: now,
-          logoUrl: null,
-        },
-        cache: {
-          key: "stock:WDOFUT",
-          updatedAt: now,
-          stale: false,
-          source: "live",
-        },
-      },
-    },
-  ],
-};
-
 async function DashboardStats() {
   let favoritesCount = 0;
-  let searchesToday = 8;
-  let liveQuotes = 3;
-  let recentsLength = 0;
+  let searchesToday = 0;
+  let liveQuotes = 0;
 
   try {
     const favorites = await getFavoritesServer();
     favoritesCount = favorites.length;
   } catch (error) {
-    if (error instanceof ApiRequestError && error.status === 401) {
-    } else {
+    if (!(error instanceof ApiRequestError && error.status === 401)) {
       console.error("Failed to fetch favorites:", error);
     }
   }
 
   try {
-    const recents = await getRecentSelectionsServer();
-    recentsLength = recents.length;
+    searchesToday = await getTodaySearchCountServer();
   } catch (error) {
-    if (error instanceof ApiRequestError && error.status === 401) {
-    } else {
-      console.error("Failed to fetch recent selections:", error);
+    if (!(error instanceof ApiRequestError && error.status === 401)) {
+      console.error("Failed to fetch today search count:", error);
+    }
+  }
+
+  try {
+    const marketData = await getMarketOverviewServer();
+    liveQuotes = marketData.gainers.length + marketData.losers.length;
+  } catch (error) {
+    if (!(error instanceof ApiRequestError && error.status === 401)) {
+      console.error("Failed to fetch market overview:", error);
     }
   }
 
@@ -314,6 +119,24 @@ function RecentSkeleton() {
   );
 }
 
+async function DashboardMarketOverview() {
+  try {
+    const marketData = await getMarketOverviewServer();
+    return <MarketOverviewClient data={marketData} />;
+  } catch (error) {
+    const errorMessage =
+      error instanceof ApiRequestError && error.status === 401
+        ? "Sua sessão expirou. Faça login novamente."
+        : "Não foi possível carregar o panorama de mercado.";
+
+    return (
+      <div className="border border-dashed border-rose-500/40 bg-rose-500/8 p-4 text-sm text-rose-700 dark:text-rose-300">
+        {errorMessage}
+      </div>
+    );
+  }
+}
+
 function MarketSkeleton() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -365,7 +188,7 @@ export default function DashboardPage() {
 
             <div className="space-y-3">
               <Suspense fallback={<MarketSkeleton />}>
-                <MarketOverviewClient data={mockMarketData} />
+                <DashboardMarketOverview />
               </Suspense>
             </div>
           </div>

@@ -8,6 +8,7 @@ export interface IUserAssetRepository {
     userId: number,
     limit: number,
   ): Promise<RecentAssetSelection[]>;
+  countTodaySelections(userId: number, today: string): Promise<number>;
   upsertRecentSelection(input: {
     userId: number;
     asset: TrackedAssetRef;

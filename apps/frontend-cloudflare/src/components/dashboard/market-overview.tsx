@@ -19,7 +19,7 @@ interface MarketAsset {
   initialQuote: QuoteWithCacheMeta;
 }
 
-interface MockMarketData {
+interface MarketData {
   gainers: MarketAsset[];
   losers: MarketAsset[];
 }
@@ -112,7 +112,7 @@ function MarketAssetRow({
 }
 
 interface MarketOverviewClientProps {
-  data: MockMarketData;
+  data: MarketData;
 }
 
 export function MarketOverviewClient({ data }: MarketOverviewClientProps) {

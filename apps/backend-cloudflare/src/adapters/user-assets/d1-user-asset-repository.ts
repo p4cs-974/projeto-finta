@@ -49,6 +49,22 @@ export class D1UserAssetRepository
     );
   }
 
+  async countTodaySelections(userId: number, today: string): Promise<number> {
+    const result = await this.db
+      .prepare(
+        [
+          "SELECT COUNT(*) as count",
+          "FROM recent_asset_selections",
+          "WHERE user_id = ?",
+          "AND last_selected_at >= ?",
+        ].join(" "),
+      )
+      .bind(userId, `${today}T00:00:00.000Z`)
+      .first<{ count: number }>();
+
+    return result?.count ?? 0;
+  }
+
   async upsertRecentSelection(input: {
     userId: number;
     asset: TrackedAssetRef;

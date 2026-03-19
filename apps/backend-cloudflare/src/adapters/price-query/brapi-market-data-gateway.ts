@@ -171,4 +171,20 @@ export class BrapiMarketDataGateway implements IMarketDataGateway {
 
     return adaptBrapiQuote(result, input.symbol);
   }
+
+  async fetchMultipleQuotes(symbols: string[]): Promise<StockQuote[]> {
+    const results = await Promise.allSettled(
+      symbols.map((symbol) =>
+        fetchQuoteResult(symbol, this.brapiToken, this.fetchImpl).then(
+          (result) => adaptBrapiQuote(result, symbol),
+        ),
+      ),
+    );
+
+    return results
+      .filter(
+        (r): r is PromiseFulfilledResult<StockQuote> => r.status === "fulfilled",
+      )
+      .map((r) => r.value);
+  }
 }
