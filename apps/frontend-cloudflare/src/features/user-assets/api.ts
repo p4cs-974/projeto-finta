@@ -1,3 +1,4 @@
+import type { AssetType } from "@finta/shared-kernel";
 import type { RecentAssetSelection, TrackedAssetRef } from "@finta/user-assets";
 
 import { requestJson } from "@/lib/http-client";
@@ -47,6 +48,22 @@ export function recordRecentSelection(asset: TrackedAssetRef) {
       market: asset.market,
       currency: asset.currency,
       logoUrl: asset.logoUrl,
+    }),
+  });
+}
+
+export function addFavorite(input: {
+  symbol: string;
+  assetType: AssetType;
+}) {
+  return requestJson<void>("/api/users/me/favorites", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+    },
+    body: JSON.stringify({
+      symbol: input.symbol,
+      type: input.assetType,
     }),
   });
 }
