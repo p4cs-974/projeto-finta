@@ -166,9 +166,9 @@
 
 ## Diagrama de Casos de Uso
 
-Espaco reservado para inserir o diagrama de casos de uso em UML.
+![Diagrama de casos de uso do processo acompanhar cotacao de um ativo](./diagrams/casos-de-uso-acompanhar-cotacao.svg)
 
-<!-- Inserir imagem, link ou descricao do diagrama de casos de uso aqui -->
+Arquivo fonte PlantUML: [./diagrams/casos-de-uso-acompanhar-cotacao.puml](./diagrams/casos-de-uso-acompanhar-cotacao.puml)
 
 
 ## Casos de Uso Relacionados ao Processo
