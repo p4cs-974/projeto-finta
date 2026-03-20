@@ -1,0 +1,23 @@
+diff --git a/dist/cli/build/patches/plugins/load-manifest.js b/dist/cli/build/patches/plugins/load-manifest.js
+index 4db9fee730b01e9442f5e8b001d182c2a73bd655..ab33483593693cdfde0f84d2f77ddacbba255707 100644
+--- a/dist/cli/build/patches/plugins/load-manifest.js
++++ b/dist/cli/build/patches/plugins/load-manifest.js
+@@ -50,7 +50,8 @@ function loadManifest($PATH, $$$ARGS) {
+     return process.env.NEXT_BUILD_ID;
+ 	}
+   ${returnManifests}
+-  throw new Error(\`Unexpected loadManifest(\${$PATH}) call!\`);
++  // Fall back for optional or newly-added manifests that may not exist during the build scan.
++  return {};
+ }`,
+     };
+ }
+@@ -87,7 +88,7 @@ function evalManifest($PATH, $$$ARGS) {
+ function evalManifest($PATH, $$$ARGS) {
+   $PATH = $PATH.replaceAll(${JSON.stringify(sep)}, ${JSON.stringify(posix.sep)});
+   ${returnManifests}
+-  throw new Error(\`Unexpected evalManifest(\${$PATH}) call!\`);
++  return {};
+ }`,
+     };
+ }
