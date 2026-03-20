@@ -328,6 +328,7 @@ async function SearchDetailsPane({
   if (!shouldFetchLive && cachedQuote) {
     return (
       <AssetDetailsClient
+        key={`${assetType}:${normalizedQuery}`}
         symbol={normalizedQuery}
         assetType={assetType}
         initialQuote={cachedQuote}
@@ -347,6 +348,7 @@ async function SearchDetailsPane({
     if (cachedQuote) {
       return (
         <AssetDetailsClient
+          key={`${assetType}:${normalizedQuery}`}
           symbol={normalizedQuery}
           assetType={assetType}
           initialQuote={cachedQuote}
@@ -400,6 +402,7 @@ async function SearchDetailsPane({
 
   return (
     <AssetDetailsClient
+      key={`${assetType}:${normalizedQuery}`}
       symbol={normalizedQuery}
       assetType={assetType}
       initialQuote={liveQuote}
