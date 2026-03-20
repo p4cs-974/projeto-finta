@@ -1,5 +1,9 @@
 import { proxyBackendRequest } from "@/lib/backend-proxy";
 
+export async function GET() {
+  return proxyBackendRequest("/users/me/favorites");
+}
+
 export async function POST(request: Request) {
   return proxyBackendRequest("/users/me/favorites", {
     method: "POST",
