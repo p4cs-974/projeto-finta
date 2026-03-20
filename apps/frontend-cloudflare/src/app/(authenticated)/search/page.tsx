@@ -420,6 +420,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <aside className="flex min-h-0 flex-col border-b border-border p-5 lg:border-r lg:border-b-0 lg:p-7">
             <div className="flex min-h-0 flex-1 flex-col gap-5">
               <SearchControls
+                key={`${initialMode}:${initialQuery}`}
                 initialMode={initialMode}
                 initialQuery={initialQuery}
               />

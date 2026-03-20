@@ -1,0 +1,9 @@
+export { ChartLineIcon } from "./chart-line";
+export { ClockIcon } from "./clock";
+export { HeartIcon } from "./heart";
+export { RefreshCWIcon } from "./refresh-cw";
+export { SearchIcon } from "./search";
+export { TrendingDownIcon } from "./trending-down";
+export { TrendingUpIcon } from "./trending-up";
+export { WifiIcon } from "./wifi";
+export { WifiOffIcon } from "./wifi-off";

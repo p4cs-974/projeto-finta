@@ -1,3 +1,6 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+patchedDependencies:
+  '@opennextjs/cloudflare@1.17.1': patches/@opennextjs__cloudflare@1.17.1.patch
