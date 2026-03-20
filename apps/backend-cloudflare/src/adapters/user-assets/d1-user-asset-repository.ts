@@ -54,15 +54,38 @@ export class D1UserAssetRepository
       .prepare(
         [
           "SELECT COUNT(*) as count",
-          "FROM recent_asset_selections",
+          "FROM search_events",
           "WHERE user_id = ?",
-          "AND last_selected_at >= ?",
+          "AND searched_at >= ?",
         ].join(" "),
       )
       .bind(userId, `${today}T00:00:00.000Z`)
       .first<{ count: number }>();
 
     return result?.count ?? 0;
+  }
+
+  async recordSearchEvent(input: {
+    userId: number;
+    symbol: string;
+    assetType: TrackedAssetRef["assetType"];
+    searchedAt: Date;
+  }) {
+    await this.db
+      .prepare(
+        [
+          "INSERT INTO search_events",
+          "(user_id, symbol, asset_type, searched_at)",
+          "VALUES (?, ?, ?, ?)",
+        ].join(" "),
+      )
+      .bind(
+        input.userId,
+        input.symbol,
+        input.assetType,
+        input.searchedAt.toISOString(),
+      )
+      .run();
   }
 
   async upsertRecentSelection(input: {

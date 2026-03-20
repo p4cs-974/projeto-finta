@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 
 import {
@@ -6,6 +8,7 @@ import {
   QuickStatCard,
   RecentAssetsList,
 } from "@/components/dashboard";
+import { SearchCountCard } from "@/components/dashboard/search-count-card";
 import {
   getFavoritesServer,
   getMarketOverviewServer,
@@ -48,7 +51,7 @@ async function DashboardStats() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <QuickStatCard label="Favoritos" value={favoritesCount} icon="heart" />
-      <QuickStatCard label="Buscas Hoje" value={searchesToday} icon="search" />
+      <SearchCountCard initialCount={searchesToday} />
       <QuickStatCard
         label="Cotações Ativas"
         value={liveQuotes}
@@ -117,6 +120,25 @@ function RecentSkeleton() {
       ))}
     </div>
   );
+}
+
+async function DashboardActivityTimeline() {
+  let recents: Awaited<ReturnType<typeof getRecentSelectionsServer>> = [];
+  let favorites: Awaited<ReturnType<typeof getFavoritesServer>> = [];
+
+  try {
+    recents = await getRecentSelectionsServer();
+  } catch {
+    // silently fail
+  }
+
+  try {
+    favorites = await getFavoritesServer();
+  } catch {
+    // silently fail
+  }
+
+  return <ActivityTimeline recentSelections={recents} favorites={favorites} />;
 }
 
 async function DashboardMarketOverview() {
@@ -194,7 +216,26 @@ export default function DashboardPage() {
           </div>
 
           <aside className="border border-border bg-card p-5 lg:p-6">
-            <ActivityTimeline />
+            <Suspense
+              fallback={
+                <div className="space-y-4">
+                  <div className="h-3 w-24 rounded bg-muted" />
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex animate-pulse items-start gap-3">
+                        <div className="size-7 rounded bg-muted" />
+                        <div className="flex-1 space-y-1 pt-1">
+                          <div className="h-3 w-32 rounded bg-muted" />
+                          <div className="h-2 w-16 rounded bg-muted" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              }
+            >
+              <DashboardActivityTimeline />
+            </Suspense>
           </aside>
         </section>
       </div>

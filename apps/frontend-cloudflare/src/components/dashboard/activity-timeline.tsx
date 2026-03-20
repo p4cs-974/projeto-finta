@@ -1,59 +1,53 @@
-import { Heart, Search, TrendingUp } from "lucide-react";
+import type { FavoriteAsset } from "@finta/favorites";
+import type { RecentAssetSelection } from "@finta/user-assets";
+import { Heart, Search } from "lucide-react";
 
-interface Activity {
-  type: "favorite" | "search" | "view";
+interface ActivityEntry {
+  type: "favorite" | "search";
   symbol: string;
   label: string;
   timestamp: string;
 }
 
-const mockActivities: Activity[] = [
-  {
-    type: "favorite",
-    symbol: "PETR4",
-    label: "Petrobras PN",
-    timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-  },
-  {
-    type: "search",
-    symbol: "VALE3",
-    label: "Vale ON",
-    timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-  },
-  {
-    type: "view",
-    symbol: "BTC-USD",
-    label: "Bitcoin",
-    timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-  },
-  {
-    type: "favorite",
-    symbol: "ETH-USD",
-    label: "Ethereum",
-    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-  },
-];
+function buildTimeline(
+  recentSelections: RecentAssetSelection[],
+  favorites: FavoriteAsset[],
+): ActivityEntry[] {
+  const entries: ActivityEntry[] = [];
 
-function getActivityIcon(type: Activity["type"]) {
-  switch (type) {
-    case "favorite":
-      return Heart;
-    case "search":
-      return Search;
-    case "view":
-      return TrendingUp;
+  for (const item of recentSelections) {
+    entries.push({
+      type: "search",
+      symbol: item.symbol,
+      label: item.label,
+      timestamp: item.lastSelectedAt,
+    });
   }
+
+  for (const item of favorites) {
+    entries.push({
+      type: "favorite",
+      symbol: item.symbol,
+      label: item.label,
+      timestamp: item.favoritedAt,
+    });
+  }
+
+  entries.sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+  );
+
+  return entries.slice(0, 8);
 }
 
-function getActivityText(activity: Activity) {
-  switch (activity.type) {
-    case "favorite":
-      return `Adicionou ${activity.symbol} aos favoritos`;
-    case "search":
-      return `Buscou por ${activity.symbol}`;
-    case "view":
-      return `Visualizou ${activity.symbol}`;
-  }
+function getActivityIcon(type: ActivityEntry["type"]) {
+  return type === "favorite" ? Heart : Search;
+}
+
+function getActivityText(activity: ActivityEntry) {
+  return activity.type === "favorite"
+    ? `Adicionou ${activity.symbol} aos favoritos`
+    : `Buscou por ${activity.symbol}`;
 }
 
 function formatRelativeTime(timestamp: string): string {
@@ -70,23 +64,46 @@ function formatRelativeTime(timestamp: string): string {
   return `${diffDays}d atrás`;
 }
 
-export function ActivityTimeline() {
+interface ActivityTimelineProps {
+  recentSelections: RecentAssetSelection[];
+  favorites: FavoriteAsset[];
+}
+
+export function ActivityTimeline({
+  recentSelections,
+  favorites,
+}: ActivityTimelineProps) {
+  const entries = buildTimeline(recentSelections, favorites);
+
+  if (entries.length === 0) {
+    return (
+      <div className="space-y-4">
+        <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+          Atividade Recente
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Nenhuma atividade ainda. Comece buscando um ativo.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
         Atividade Recente
       </p>
       <ul className="space-y-3">
-        {mockActivities.map((activity, index) => {
+        {entries.map((activity, index) => {
           const Icon = getActivityIcon(activity.type);
 
           return (
-            <li key={index} className="flex items-start gap-3">
+            <li key={`${activity.type}:${activity.symbol}:${activity.timestamp}`} className="flex items-start gap-3">
               <div className="relative">
                 <div className="flex size-7 items-center justify-center border border-border bg-card">
                   <Icon className="size-3.5 text-muted-foreground" />
                 </div>
-                {index < mockActivities.length - 1 && (
+                {index < entries.length - 1 && (
                   <div className="absolute top-7 left-1/2 h-full w-px -translate-x-1/2 bg-border" />
                 )}
               </div>

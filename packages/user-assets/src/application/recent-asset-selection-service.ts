@@ -39,14 +39,22 @@ export class RecentAssetSelectionService implements IRecentAssetSelectionService
     userId: number;
     asset: TrackedAssetRef;
   }): Promise<void> {
+    const now = this.now();
+
     await this.options.userAssetRepository.upsertRecentSelection({
       userId: input.userId,
       asset: input.asset,
-      selectedAt: this.now(),
+      selectedAt: now,
     });
     await this.options.userAssetRepository.trimRecentSelections(
       input.userId,
       this.keep,
     );
+    await this.options.userAssetRepository.recordSearchEvent({
+      userId: input.userId,
+      symbol: input.asset.symbol,
+      assetType: input.asset.assetType,
+      searchedAt: now,
+    });
   }
 }

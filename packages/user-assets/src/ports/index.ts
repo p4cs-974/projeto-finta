@@ -15,6 +15,12 @@ export interface IUserAssetRepository {
     selectedAt: Date;
   }): Promise<void>;
   trimRecentSelections(userId: number, keep: number): Promise<void>;
+  recordSearchEvent(input: {
+    userId: number;
+    symbol: string;
+    assetType: TrackedAssetRef["assetType"];
+    searchedAt: Date;
+  }): Promise<void>;
 }
 
 export interface IUserFavoriteRepository {
