@@ -1,3 +1,4 @@
+import type { AssetType } from "@finta/shared-kernel";
 import type {
   IFavoriteAssetService,
   TrackedAssetRef,
@@ -34,6 +35,18 @@ export class FavoriteAssetService implements IFavoriteAssetService {
       userId: input.userId,
       asset: input.asset,
       createdAt: this.now(),
+    });
+  }
+
+  async removeFavorite(input: {
+    userId: number;
+    symbol: string;
+    assetType: AssetType;
+  }): Promise<void> {
+    await this.options.userFavoriteRepository.removeFavorite({
+      userId: input.userId,
+      symbol: input.symbol,
+      assetType: input.assetType,
     });
   }
 }

@@ -27,4 +27,9 @@ export interface IUserFavoriteRepository {
     asset: TrackedAssetRef;
     createdAt: Date;
   }): Promise<void>;
+  removeFavorite(input: {
+    userId: number;
+    symbol: string;
+    assetType: TrackedAssetRef["assetType"];
+  }): Promise<void>;
 }

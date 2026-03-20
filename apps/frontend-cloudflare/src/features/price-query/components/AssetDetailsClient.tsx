@@ -81,12 +81,14 @@ interface AssetDetailsClientProps {
   symbol: string;
   assetType: AssetType;
   initialQuote: QuoteWithCacheMeta;
+  initialFavorited?: boolean;
 }
 
 export function AssetDetailsClient({
   symbol,
   assetType,
   initialQuote,
+  initialFavorited = false,
 }: AssetDetailsClientProps) {
   const { quote, status } = useQuoteStream({
     symbol,
@@ -119,7 +121,7 @@ export function AssetDetailsClient({
               </h1>
               <div className="ml-auto flex items-center gap-3">
                 <ConnectionIndicator status={status} />
-                <FavoriteButton symbol={symbol} assetType={assetType} />
+                <FavoriteButton symbol={symbol} assetType={assetType} initialFavorited={initialFavorited} />
               </div>
             </div>
             <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">

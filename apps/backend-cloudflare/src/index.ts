@@ -7,7 +7,7 @@ import { handleStreamQuote } from "./adapters/http/price-query/stream-quote";
 import { handleSearchCachedQuotes } from "./adapters/http/price-query/search-cached-quotes";
 import { handleListFavorites } from "./adapters/http/favorites/list-favorites";
 import { handleAddFavorite } from "./adapters/http/user-assets/add-favorite";
-import { handleListFavorites } from "./adapters/http/favorites/list-favorites";
+import { handleRemoveFavorite } from "./adapters/http/user-assets/remove-favorite";
 import { handleListRecentSelections } from "./adapters/http/user-assets/list-recent-selections";
 import { handleRecordRecentSelection } from "./adapters/http/user-assets/record-recent-selection";
 import { apiError, errorResponse, json } from "./lib/http";
@@ -55,6 +55,10 @@ async function routeRequest(
 
   if (request.method === "POST" && url.pathname === "/users/me/favorites") {
     return handleAddFavorite(request, env);
+  }
+
+  if (request.method === "DELETE" && url.pathname === "/users/me/favorites") {
+    return handleRemoveFavorite(request, env);
   }
 
   if (request.method === "GET" && url.pathname === "/ativos/cache-search") {

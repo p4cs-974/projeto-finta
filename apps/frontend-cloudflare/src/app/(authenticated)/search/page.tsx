@@ -21,6 +21,7 @@ import {
 import { AssetDetailsClient } from "@/features/price-query/components/AssetDetailsClient";
 import {
   getCachedQuoteServer,
+  getFavoritesServer,
   getLiveQuoteServer,
   getRecentSelectionsServer,
   searchCachedQuotesServer,
@@ -250,6 +251,15 @@ async function SearchDetailsPane({
   mode: SearchMode;
   normalizedQuery: string;
 }) {
+  let favoriteSymbols: Set<string>;
+  try {
+    const favorites = await getFavoritesServer();
+    favoriteSymbols = new Set(
+      favorites.map((f) => `${f.assetType}:${f.symbol}`),
+    );
+  } catch {
+    favoriteSymbols = new Set();
+  }
   if (normalizedQuery.length === 0) {
     return (
       <ErrorState
@@ -311,14 +321,17 @@ async function SearchDetailsPane({
     }
   }
 
+  const assetType = getModeAssetType(mode);
+  const isFavorited = favoriteSymbols.has(`${assetType}:${normalizedQuery}`);
   const shouldFetchLive = !cachedQuote || cachedQuote.cache.stale;
 
   if (!shouldFetchLive && cachedQuote) {
     return (
       <AssetDetailsClient
         symbol={normalizedQuery}
-        assetType={getModeAssetType(mode)}
+        assetType={assetType}
         initialQuote={cachedQuote}
+        initialFavorited={isFavorited}
       />
     );
   }
@@ -335,8 +348,9 @@ async function SearchDetailsPane({
       return (
         <AssetDetailsClient
           symbol={normalizedQuery}
-          assetType={getModeAssetType(mode)}
+          assetType={assetType}
           initialQuote={cachedQuote}
+          initialFavorited={isFavorited}
         />
       );
     }
@@ -387,8 +401,9 @@ async function SearchDetailsPane({
   return (
     <AssetDetailsClient
       symbol={normalizedQuery}
-      assetType={getModeAssetType(mode)}
+      assetType={assetType}
       initialQuote={liveQuote}
+      initialFavorited={isFavorited}
     />
   );
 }

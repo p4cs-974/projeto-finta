@@ -67,3 +67,19 @@ export function addFavorite(input: {
     }),
   });
 }
+
+export function removeFavorite(input: {
+  symbol: string;
+  assetType: AssetType;
+}) {
+  return requestJson<void>("/api/users/me/favorites", {
+    method: "DELETE",
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+    },
+    body: JSON.stringify({
+      symbol: input.symbol,
+      type: input.assetType,
+    }),
+  });
+}

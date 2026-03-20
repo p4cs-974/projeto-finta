@@ -5,35 +5,38 @@ import { Star } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { addFavorite } from "@/features/user-assets/api";
+import { addFavorite, removeFavorite } from "@/features/user-assets/api";
 
 interface FavoriteButtonProps {
   symbol: string;
   assetType: AssetType;
+  initialFavorited?: boolean;
 }
 
-type Status = "idle" | "loading" | "done" | "error";
+type Status = "idle" | "loading" | "error";
 
-export function FavoriteButton({ symbol, assetType }: FavoriteButtonProps) {
+export function FavoriteButton({
+  symbol,
+  assetType,
+  initialFavorited = false,
+}: FavoriteButtonProps) {
+  const [favorited, setFavorited] = useState(initialFavorited);
   const [status, setStatus] = useState<Status>("idle");
 
-  async function handleClick() {
+  async function handleToggle() {
     setStatus("loading");
     try {
-      await addFavorite({ symbol, assetType });
-      setStatus("done");
+      if (favorited) {
+        await removeFavorite({ symbol, assetType });
+        setFavorited(false);
+      } else {
+        await addFavorite({ symbol, assetType });
+        setFavorited(true);
+      }
+      setStatus("idle");
     } catch {
       setStatus("error");
     }
-  }
-
-  if (status === "done") {
-    return (
-      <Button variant="outline" size="sm" disabled>
-        <Star className="size-3.5 fill-current" />
-        Favoritado
-      </Button>
-    );
   }
 
   if (status === "error") {
@@ -41,7 +44,7 @@ export function FavoriteButton({ symbol, assetType }: FavoriteButtonProps) {
       <Button
         variant="outline"
         size="sm"
-        onClick={handleClick}
+        onClick={handleToggle}
         className="border-rose-500/30 text-rose-700 dark:text-rose-300"
       >
         <Star className="size-3.5" />
@@ -50,11 +53,26 @@ export function FavoriteButton({ symbol, assetType }: FavoriteButtonProps) {
     );
   }
 
+  if (favorited) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleToggle}
+        disabled={status === "loading"}
+        className="border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+      >
+        <Star className="size-3.5 fill-current" />
+        {status === "loading" ? "Removendo..." : "Favoritado"}
+      </Button>
+    );
+  }
+
   return (
     <Button
       variant="outline"
       size="sm"
-      onClick={handleClick}
+      onClick={handleToggle}
       disabled={status === "loading"}
     >
       <Star className="size-3.5" />

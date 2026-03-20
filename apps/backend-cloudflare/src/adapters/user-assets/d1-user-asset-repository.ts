@@ -144,4 +144,20 @@ export class D1UserAssetRepository
       )
       .run();
   }
+
+  async removeFavorite(input: {
+    userId: number;
+    symbol: string;
+    assetType: TrackedAssetRef["assetType"];
+  }) {
+    await this.db
+      .prepare(
+        [
+          "DELETE FROM favorite_assets",
+          "WHERE user_id = ? AND symbol = ? AND asset_type = ?",
+        ].join(" "),
+      )
+      .bind(input.userId, input.symbol, input.assetType)
+      .run();
+  }
 }
