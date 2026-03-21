@@ -67,7 +67,7 @@ export function RecentAssetsList({ assets }: RecentAssetsListProps) {
             <li key={`${item.assetType}:${item.symbol}`} className="min-w-0">
               <Link
                 href={href}
-                className="group flex w-full min-w-0 overflow-hidden border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted/50"
+                className="group flex w-full min-w-0 items-center gap-3 overflow-hidden border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted/50"
               >
                 <AssetLogo
                   symbol={item.symbol}
