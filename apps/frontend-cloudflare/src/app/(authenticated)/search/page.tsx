@@ -420,7 +420,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     <main className="flex min-h-0 flex-1 px-4 pb-4 md:px-6">
       <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col">
         <section className="grid min-h-0 flex-1 border border-border bg-card lg:grid-cols-[minmax(320px,0.92fr)_minmax(0,1.08fr)]">
-          <aside className="flex min-h-0 flex-col border-b border-border p-5 lg:border-r lg:border-b-0 lg:p-7">
+          <aside className="flex min-h-0 min-w-0 flex-col border-b border-border p-5 lg:border-r lg:border-b-0 lg:p-7">
             <div className="flex min-h-0 flex-1 flex-col gap-5">
               <Suspense
                 fallback={
@@ -452,8 +452,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </div>
           </aside>
 
-          <div className="flex min-h-0 flex-col bg-background/60 p-5 lg:p-7">
-            <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 min-w-0 flex-col bg-background/60 p-5 lg:p-7">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <Suspense
                 fallback={
                   <ErrorState

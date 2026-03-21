@@ -50,8 +50,8 @@ export function DashboardContent({
   const hasPersonalData = hasDashboardPersonalData(dashboard);
 
   return (
-    <main className="flex flex-1 flex-col px-4 pb-4 md:px-6">
-      <div className="mx-auto w-full max-w-7xl space-y-8 py-6">
+    <main className="flex min-w-0 flex-1 flex-col px-4 pb-4 md:px-6">
+      <div className="mx-auto min-w-0 w-full max-w-7xl space-y-8 py-6">
         <section className="space-y-4">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Dashboard
@@ -80,8 +80,8 @@ export function DashboardContent({
           </div>
         </section>
 
-        <section className="grid gap-8 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-6">
+        <section className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0 space-y-6">
             {hasPersonalData ? (
               <RecentAssetsList assets={dashboard.recentSelections} />
             ) : (
@@ -103,7 +103,7 @@ export function DashboardContent({
             </section>
           </div>
 
-          <aside className="border border-border bg-card p-5 lg:p-6">
+          <aside className="min-w-0 border border-border bg-card p-5 lg:p-6">
             <ActivityTimeline activities={dashboard.activityTimeline} />
           </aside>
         </section>

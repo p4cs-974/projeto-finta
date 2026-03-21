@@ -102,7 +102,7 @@ export function AssetDetailsClient({
   const logoUrl = getQuoteLogoUrl(quote);
 
   return (
-    <section className="relative flex-1 overflow-hidden border border-border bg-card p-6 md:p-8">
+    <section className="relative flex min-w-0 flex-1 flex-col overflow-hidden border border-border bg-card p-6 md:p-8">
       <RecordAssetView
         symbol={symbol}
         assetType={isStock ? "stock" : "crypto"}
@@ -115,16 +115,16 @@ export function AssetDetailsClient({
         <div className="flex items-start gap-4">
           <AssetLogo symbol={symbol} logoUrl={logoUrl} className="size-14" />
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
                 {symbol}
               </h1>
-              <div className="ml-auto flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 sm:ml-auto sm:justify-end">
                 <ConnectionIndicator status={status} />
                 <FavoriteButton symbol={symbol} assetType={assetType} initialFavorited={initialFavorited} />
               </div>
             </div>
-            <p className="mt-2 max-w-xl overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted-foreground md:whitespace-normal md:leading-6">
+            <p className="mt-2 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted-foreground md:max-w-xl md:whitespace-normal md:leading-6">
               {getQuoteLabel(quote)}
             </p>
           </div>
