@@ -124,7 +124,7 @@ export function AssetDetailsClient({
                 <FavoriteButton symbol={symbol} assetType={assetType} initialFavorited={initialFavorited} />
               </div>
             </div>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+            <p className="mt-2 max-w-xl overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted-foreground md:whitespace-normal md:leading-6">
               {getQuoteLabel(quote)}
             </p>
           </div>

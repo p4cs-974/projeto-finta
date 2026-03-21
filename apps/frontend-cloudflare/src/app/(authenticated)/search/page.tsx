@@ -107,7 +107,7 @@ function MatchListItem({ quote }: { quote: QuoteWithCacheMeta }) {
             {isStockQuoteWithCache(quote) ? quote.data.market : "cripto"}
           </span>
         </div>
-        <p className="mt-1 truncate text-xs text-muted-foreground">
+        <p className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted-foreground">
           {getQuoteLabel(quote)}
         </p>
       </div>
@@ -139,7 +139,7 @@ function RecentListItem({ item }: { item: RecentAssetSelection }) {
       />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-foreground">{item.symbol}</p>
-        <p className="mt-1 truncate text-xs text-muted-foreground">
+        <p className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted-foreground">
           {item.label}
         </p>
       </div>
