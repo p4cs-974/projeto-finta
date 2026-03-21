@@ -6,10 +6,12 @@ import { handleGetLiveQuote } from "./adapters/http/price-query/get-live-quote";
 import { handleStreamQuote } from "./adapters/http/price-query/stream-quote";
 import { handleSearchCachedQuotes } from "./adapters/http/price-query/search-cached-quotes";
 import { handleListFavorites } from "./adapters/http/favorites/list-favorites";
+import { handleGetDashboard } from "./adapters/http/dashboard/get-dashboard";
 import { handleAddFavorite } from "./adapters/http/user-assets/add-favorite";
 import { handleRemoveFavorite } from "./adapters/http/user-assets/remove-favorite";
 import { handleListRecentSelections } from "./adapters/http/user-assets/list-recent-selections";
 import { handleRecordRecentSelection } from "./adapters/http/user-assets/record-recent-selection";
+import { handleRecordSearchActivity } from "./adapters/http/user-activity/record-search";
 import { apiError, errorResponse, json } from "./lib/http";
 import { renderSwaggerUiHtml } from "./lib/docs";
 import { createOpenApiDocument } from "./lib/openapi";
@@ -49,6 +51,10 @@ async function routeRequest(
     return handleListFavorites(request, env);
   }
 
+  if (request.method === "GET" && url.pathname === "/users/me/dashboard") {
+    return handleGetDashboard(request, env);
+  }
+
   if (request.method === "POST" && url.pathname === "/users/me/recent-assets") {
     return handleRecordRecentSelection(request, env);
   }
@@ -59,6 +65,13 @@ async function routeRequest(
 
   if (request.method === "DELETE" && url.pathname === "/users/me/favorites") {
     return handleRemoveFavorite(request, env);
+  }
+
+  if (
+    request.method === "POST" &&
+    url.pathname === "/users/me/activity/searches"
+  ) {
+    return handleRecordSearchActivity(request, env);
   }
 
   if (request.method === "GET" && url.pathname === "/ativos/cache-search") {

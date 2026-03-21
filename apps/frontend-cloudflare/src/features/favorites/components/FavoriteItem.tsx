@@ -1,8 +1,8 @@
 import type { FavoriteAsset } from "@finta/favorites";
-import { Star } from "lucide-react";
+import { StarOff } from "lucide-react";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function buildSearchHref(assetType: "stock" | "crypto", symbol: string) {
   const mode = assetType === "stock" ? "stocks" : "crypto";
@@ -28,6 +28,44 @@ function AssetLogo({
   );
 }
 
+interface RemoveButtonProps {
+  onRemove: () => void;
+  disabled?: boolean;
+  ariaLabel: string;
+}
+
+function RemoveButton({ onRemove, disabled, ariaLabel }: RemoveButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      className={cn(
+        "group/remove relative flex shrink-0 items-center justify-start overflow-hidden rounded-none border border-transparent",
+        "h-7 w-7 transition-all duration-200 ease-[cubic-bezier(0.25,1,0.5,1)]",
+        "text-muted-foreground hover:border-border hover:bg-muted hover:text-rose-600",
+        "dark:hover:text-rose-400",
+        "focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 focus-visible:outline-none",
+        "disabled:pointer-events-none disabled:opacity-50",
+        "hover:w-[84px] focus-within:w-[84px]",
+        "max-[767px]:hover:w-7 max-[767px]:active:w-[84px] max-[767px]:focus-within:w-[84px]",
+      )}
+    >
+      <StarOff className="ml-[7px] size-3.5 shrink-0 fill-current transition-colors" />
+      <span
+        className={cn(
+          "ml-1.5 whitespace-nowrap pr-2.5 text-xs font-medium opacity-0 transition-opacity",
+          "group-hover/remove:opacity-100",
+          "max-[767px]:group-active/remove:opacity-100",
+        )}
+      >
+        Remover
+      </span>
+    </button>
+  );
+}
+
 interface FavoriteItemProps {
   item: FavoriteAsset;
   onRemove?: (item: FavoriteAsset) => void;
@@ -36,7 +74,7 @@ interface FavoriteItemProps {
 
 export function FavoriteItem({ item, onRemove, removing }: FavoriteItemProps) {
   return (
-    <li className="group flex items-center gap-4 border border-border bg-background px-4 py-4 transition-colors hover:bg-muted/45">
+    <li className="flex items-center gap-4 border border-border bg-background px-4 py-4 transition-colors hover:bg-muted/45">
       <Link
         href={buildSearchHref(item.assetType, item.symbol)}
         className="flex min-w-0 flex-1 items-center gap-4"
@@ -60,16 +98,11 @@ export function FavoriteItem({ item, onRemove, removing }: FavoriteItemProps) {
         </span>
       </Link>
       {onRemove && (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => onRemove(item)}
+        <RemoveButton
+          onRemove={() => onRemove(item)}
           disabled={removing}
-          className="shrink-0 text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400"
-          aria-label={`Remover ${item.symbol} dos favoritos`}
-        >
-          <Star className="size-3.5 fill-current" />
-        </Button>
+          ariaLabel={`Remover ${item.symbol} dos favoritos`}
+        />
       )}
     </li>
   );

@@ -32,11 +32,33 @@ export function createFakeKvNamespace(startTime = Date.now()): KVNamespace & {
 	}
 
 	const fakeKv = {
-		async get(key: string, typeOrOptions?: string | { type?: string }) {
+		async get(
+			key: string | string[],
+			typeOrOptions?: string | { type?: string },
+		) {
 			const type =
 				typeof typeOrOptions === "string"
 					? typeOrOptions
 					: typeOrOptions?.type;
+
+			if (Array.isArray(key)) {
+				return new Map(
+					key.map((item) => {
+						const value = readValue(item);
+
+						if (!value) {
+							return [item, null];
+						}
+
+						if (type === "json") {
+							return [item, JSON.parse(value.value) as unknown];
+						}
+
+						return [item, value.value];
+					}),
+				);
+			}
+
 			const value = readValue(key);
 
 			if (!value) {
@@ -49,7 +71,10 @@ export function createFakeKvNamespace(startTime = Date.now()): KVNamespace & {
 
 			return value.value;
 		},
-		async getWithMetadata(key: string, typeOrOptions?: string | { type?: string }) {
+		async getWithMetadata(
+			key: string | string[],
+			typeOrOptions?: string | { type?: string },
+		) {
 			const value = await fakeKv.get(key, typeOrOptions);
 			return {
 				value,
@@ -82,25 +107,29 @@ export function createFakeKvNamespace(startTime = Date.now()): KVNamespace & {
 		},
 		async list(options?: KVNamespaceListOptions) {
 			const prefix = options?.prefix ?? "";
-			const limit = options?.limit ?? Number.POSITIVE_INFINITY;
-			const keys = [...store.keys()]
+			const limit = Number(options?.limit ?? 1000);
+			const cursor = options?.cursor ? Number.parseInt(options.cursor, 10) : 0;
+			const matchingKeys = [...store.keys()]
 				.map((key) => {
 					purgeExpired(key);
 					return key;
 				})
 				.filter((key) => store.has(key) && key.startsWith(prefix))
-				.sort()
-				.slice(0, limit)
+				.sort();
+			const keys = matchingKeys
+				.slice(cursor, cursor + limit)
 				.map((key) => ({
 					name: key,
 					expiration: undefined,
 					metadata: undefined,
 				}));
+			const nextCursor = cursor + keys.length;
+			const listComplete = nextCursor >= matchingKeys.length;
 
 			return {
 				keys,
-				list_complete: true as const,
-				cursor: "",
+				list_complete: listComplete,
+				cursor: listComplete ? "" : String(nextCursor),
 				cacheStatus: null,
 			};
 		},

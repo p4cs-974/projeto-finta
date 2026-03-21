@@ -145,6 +145,48 @@ export class D1UserAssetRepository
       .run();
   }
 
+  async getFavorite(input: {
+    userId: number;
+    symbol: string;
+    assetType: TrackedAssetRef["assetType"];
+  }) {
+    const result = await this.db
+      .prepare(
+        [
+          "SELECT id, user_id, symbol, asset_type, label, market, currency, logo_url, created_at",
+          "FROM favorite_assets",
+          "WHERE user_id = ? AND symbol = ? AND asset_type = ?",
+          "LIMIT 1",
+        ].join(" "),
+      )
+      .bind(input.userId, input.symbol, input.assetType)
+      .first<{
+        id: number;
+        user_id: number;
+        symbol: string;
+        asset_type: "stock" | "crypto";
+        label: string;
+        market: string | null;
+        currency: string | null;
+        logo_url: string | null;
+        created_at: string;
+      }>();
+
+    if (!result) {
+      return null;
+    }
+
+    return {
+      symbol: result.symbol,
+      assetType: result.asset_type,
+      label: result.label,
+      market: result.market,
+      currency: result.currency,
+      logoUrl: result.logo_url,
+      createdAt: result.created_at,
+    };
+  }
+
   async removeFavorite(input: {
     userId: number;
     symbol: string;

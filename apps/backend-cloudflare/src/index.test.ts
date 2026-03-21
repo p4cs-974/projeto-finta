@@ -134,7 +134,7 @@ function createAssetRequest(pathname: string, token?: string) {
 
 function createJsonRequest(
   pathname: string,
-  method: "POST",
+  method: "POST" | "DELETE",
   body: unknown,
   token?: string,
 ) {
@@ -150,6 +150,66 @@ function createJsonRequest(
     },
     body: JSON.stringify(body),
   });
+}
+
+async function seedCachedQuote(
+  env: ReturnType<typeof createEnv>,
+  input:
+    | {
+        assetType: "stock";
+        symbol: string;
+        updatedAt: string;
+        data: {
+          ticker: string;
+          name: string;
+          market: "B3";
+          currency: string;
+          price: number;
+          change: number;
+          changePercent: number;
+          quotedAt: string;
+          logoUrl: string | null;
+        };
+      }
+    | {
+        assetType: "crypto";
+        symbol: string;
+        updatedAt: string;
+        data: {
+          symbol: string;
+          name: string;
+          currency: string;
+          price: number;
+          change: number;
+          changePercent: number;
+          quotedAt: string;
+        };
+      },
+) {
+  const key =
+    input.assetType === "stock"
+      ? buildAssetQuoteCacheKey(input.symbol)
+      : buildCryptoQuoteCacheKey(input.symbol);
+
+  await env.ASSET_CACHE.put(
+    key,
+    JSON.stringify({
+      request: {
+        assetType: input.assetType,
+        symbol: input.symbol,
+      },
+      key,
+      updatedAt: input.updatedAt,
+      data: input.data,
+      ...(input.assetType === "stock"
+        ? {
+            ticker: input.symbol,
+          }
+        : {
+            symbol: input.symbol,
+          }),
+    }),
+  );
 }
 
 function createExecutionContext() {
@@ -171,6 +231,7 @@ function createExecutionContext() {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -1655,6 +1716,13 @@ describe("recent asset selections", () => {
       asset_type: "stock",
       logo_url: "https://example.com/petr4.png",
     });
+    expect(fakeDb.getUserActivityEvents()).toHaveLength(1);
+    expect(fakeDb.getUserActivityEvents()[0]).toMatchObject({
+      event_type: "asset_viewed",
+      symbol: "PETR4",
+      asset_type: "stock",
+      label: "Petroleo Brasileiro S.A. Petrobras",
+    });
   });
 
   it("updates timestamp instead of duplicating a repeated selection", async () => {
@@ -2009,5 +2077,418 @@ describe("favorite assets", () => {
 
     expect(response.status).toBe(401);
     expect(payload.error.code).toBe("INVALID_TOKEN");
+  });
+
+  it("stores a new favorite and records the corresponding activity", async () => {
+    const fakeDb = createFakeD1Database();
+    const token = await createAccessToken();
+    const env = createEnv(fakeDb);
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          results: [
+            {
+              symbol: "PETR4",
+              longName: "Petrobras PN",
+              regularMarketPrice: 38.42,
+              regularMarketChange: 0.52,
+              regularMarketChangePercent: 1.37,
+              regularMarketTime: 1_742_483_400,
+              logourl: "https://example.com/petr4.png",
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const response = await worker.fetch(
+      createJsonRequest(
+        "/users/me/favorites",
+        "POST",
+        {
+          symbol: "PETR4",
+          type: "stock",
+        },
+        token,
+      ),
+      env,
+    );
+
+    expect(response.status).toBe(204);
+    expect(fakeDb.getFavoriteAssets()).toHaveLength(1);
+    expect(fakeDb.getFavoriteAssets()[0]).toMatchObject({
+      symbol: "PETR4",
+      asset_type: "stock",
+      label: "Petrobras PN",
+    });
+    expect(fakeDb.getUserActivityEvents()).toContainEqual(
+      expect.objectContaining({
+        event_type: "favorite_added",
+        symbol: "PETR4",
+        asset_type: "stock",
+        label: "Petrobras PN",
+      }),
+    );
+  });
+
+  it("removes an existing favorite and records the removal activity", async () => {
+    const fakeDb = createFakeD1Database();
+    const token = await createAccessToken();
+    const env = createEnv(fakeDb);
+
+    fakeDb.seedFavoriteAsset({
+      user_id: 1,
+      symbol: "PETR4",
+      asset_type: "stock",
+      label: "Petrobras PN",
+      market: "B3",
+      currency: "BRL",
+      logo_url: "https://example.com/petr4.png",
+      created_at: "2026-03-18T12:00:00.000Z",
+    });
+
+    const response = await worker.fetch(
+      createJsonRequest(
+        "/users/me/favorites",
+        "DELETE",
+        {
+          symbol: "petr4",
+          type: "stock",
+        },
+        token,
+      ),
+      env,
+    );
+
+    expect(response.status).toBe(204);
+    expect(fakeDb.getFavoriteAssets()).toEqual([]);
+    expect(fakeDb.getUserActivityEvents()).toContainEqual(
+      expect.objectContaining({
+        event_type: "favorite_removed",
+        symbol: "PETR4",
+        asset_type: "stock",
+        label: "Petrobras PN",
+      }),
+    );
+  });
+});
+
+describe("user activity", () => {
+  it("records debounced searches with normalized query and type", async () => {
+    const fakeDb = createFakeD1Database();
+    const token = await createAccessToken();
+
+    const response = await worker.fetch(
+      createJsonRequest(
+        "/users/me/activity/searches",
+        "POST",
+        {
+          query: " petr ",
+          type: "stock",
+        },
+        token,
+      ),
+      createEnv(fakeDb),
+    );
+
+    expect(response.status).toBe(204);
+    expect(fakeDb.getUserActivityEvents()).toContainEqual(
+      expect.objectContaining({
+        event_type: "search_performed",
+        asset_type: "stock",
+        search_query: "PETR",
+      }),
+    );
+  });
+
+  it("rejects invalid search activity payloads", async () => {
+    const fakeDb = createFakeD1Database();
+    const token = await createAccessToken();
+
+    const response = await worker.fetch(
+      createJsonRequest(
+        "/users/me/activity/searches",
+        "POST",
+        {
+          query: "",
+          type: "bond",
+        },
+        token,
+      ),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{
+      error: {
+        code: string;
+      };
+    }>();
+
+    expect(response.status).toBe(422);
+    expect(payload.error.code).toBe("VALIDATION_ERROR");
+  });
+});
+
+describe("GET /users/me/dashboard", () => {
+  it("returns stats, recent activity, recent selections and fresh cache movers", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-20T15:00:00.000Z"));
+
+    const fakeDb = createFakeD1Database();
+    const token = await createAccessToken();
+    const env = createEnv(fakeDb);
+
+    fakeDb.seedFavoriteAsset({
+      user_id: 1,
+      symbol: "PETR4",
+      asset_type: "stock",
+      label: "Petrobras PN",
+      market: "B3",
+      currency: "BRL",
+      logo_url: "https://example.com/petr4.png",
+      created_at: "2026-03-20T14:15:00.000Z",
+    });
+    fakeDb.seedRecentSelection({
+      user_id: 1,
+      symbol: "BTC",
+      asset_type: "crypto",
+      label: "Bitcoin",
+      market: null,
+      currency: "USD",
+      logo_url: null,
+      last_selected_at: "2026-03-20T14:45:00.000Z",
+    });
+    fakeDb.seedUserActivityEvent({
+      user_id: 1,
+      event_type: "search_performed",
+      symbol: null,
+      asset_type: "stock",
+      label: null,
+      search_query: "PETR",
+      created_at: "2026-03-20T03:05:00.000Z",
+    });
+    fakeDb.seedUserActivityEvent({
+      user_id: 1,
+      event_type: "search_performed",
+      symbol: null,
+      asset_type: "crypto",
+      label: null,
+      search_query: "BTC",
+      created_at: "2026-03-20T14:00:00.000Z",
+    });
+    fakeDb.seedUserActivityEvent({
+      user_id: 1,
+      event_type: "search_performed",
+      symbol: null,
+      asset_type: "stock",
+      label: null,
+      search_query: "VALE",
+      created_at: "2026-03-20T02:59:59.000Z",
+    });
+    fakeDb.seedUserActivityEvent({
+      user_id: 1,
+      event_type: "asset_viewed",
+      symbol: "PETR4",
+      asset_type: "stock",
+      label: "Petrobras PN",
+      search_query: null,
+      created_at: "2026-03-20T03:10:00.000Z",
+    });
+    fakeDb.seedUserActivityEvent({
+      user_id: 1,
+      event_type: "asset_viewed",
+      symbol: "BTC",
+      asset_type: "crypto",
+      label: "Bitcoin",
+      search_query: null,
+      created_at: "2026-03-20T14:30:00.000Z",
+    });
+    fakeDb.seedUserActivityEvent({
+      user_id: 1,
+      event_type: "favorite_added",
+      symbol: "PETR4",
+      asset_type: "stock",
+      label: "Petrobras PN",
+      search_query: null,
+      created_at: "2026-03-20T14:35:00.000Z",
+    });
+
+    await seedCachedQuote(env, {
+      assetType: "stock",
+      symbol: "PETR4",
+      updatedAt: "2026-03-20T14:59:00.000Z",
+      data: {
+        ticker: "PETR4",
+        name: "Petrobras PN",
+        market: "B3",
+        currency: "BRL",
+        price: 38.42,
+        change: 1.5,
+        changePercent: 4.1,
+        quotedAt: "2026-03-20T14:59:00.000Z",
+        logoUrl: "https://example.com/petr4.png",
+      },
+    });
+    await seedCachedQuote(env, {
+      assetType: "crypto",
+      symbol: "BTC",
+      updatedAt: "2026-03-20T14:58:00.000Z",
+      data: {
+        symbol: "BTC",
+        name: "Bitcoin",
+        currency: "USD",
+        price: 67432.18,
+        change: 1245.67,
+        changePercent: 1.88,
+        quotedAt: "2026-03-20T14:58:00.000Z",
+      },
+    });
+    await seedCachedQuote(env, {
+      assetType: "stock",
+      symbol: "VALE3",
+      updatedAt: "2026-03-20T14:57:00.000Z",
+      data: {
+        ticker: "VALE3",
+        name: "Vale ON",
+        market: "B3",
+        currency: "BRL",
+        price: 62.14,
+        change: -2.31,
+        changePercent: -3.59,
+        quotedAt: "2026-03-20T14:57:00.000Z",
+        logoUrl: null,
+      },
+    });
+    await seedCachedQuote(env, {
+      assetType: "crypto",
+      symbol: "ETH",
+      updatedAt: "2026-03-20T14:56:00.000Z",
+      data: {
+        symbol: "ETH",
+        name: "Ethereum",
+        currency: "USD",
+        price: 3421.56,
+        change: -89.23,
+        changePercent: -2.68,
+        quotedAt: "2026-03-20T14:56:00.000Z",
+      },
+    });
+    await seedCachedQuote(env, {
+      assetType: "stock",
+      symbol: "ABEV3",
+      updatedAt: "2026-03-20T14:40:00.000Z",
+      data: {
+        ticker: "ABEV3",
+        name: "Ambev",
+        market: "B3",
+        currency: "BRL",
+        price: 12.45,
+        change: 1.34,
+        changePercent: 9.0,
+        quotedAt: "2026-03-20T14:40:00.000Z",
+        logoUrl: null,
+      },
+    });
+
+    const response = await worker.fetch(
+      createAssetRequest("/users/me/dashboard", token),
+      env,
+    );
+    const payload = await response.json<{
+      data: {
+        stats: {
+          favoritesCount: number;
+          searchesToday: number;
+          viewsToday: number;
+        };
+        recentSelections: Array<{ symbol: string }>;
+        activityTimeline: Array<{
+          type: string;
+          symbol: string | null;
+          searchQuery: string | null;
+        }>;
+        marketMovers: {
+          gainers: Array<{ symbol: string; type: string }>;
+          losers: Array<{ symbol: string; type: string }>;
+        };
+        generatedAt: string;
+      };
+    }>();
+
+    expect(response.status).toBe(200);
+    expect(payload.data.stats).toEqual({
+      favoritesCount: 1,
+      searchesToday: 2,
+      viewsToday: 2,
+    });
+    expect(payload.data.recentSelections).toEqual([
+      expect.objectContaining({ symbol: "BTC" }),
+    ]);
+    expect(payload.data.activityTimeline[0]).toEqual(
+      expect.objectContaining({
+        type: "favorite_added",
+        symbol: "PETR4",
+      }),
+    );
+    expect(payload.data.activityTimeline).toContainEqual(
+      expect.objectContaining({
+        type: "search_performed",
+        searchQuery: "BTC",
+      }),
+    );
+    expect(payload.data.marketMovers.gainers).toEqual([
+      expect.objectContaining({ symbol: "PETR4", type: "stock" }),
+      expect.objectContaining({ symbol: "BTC", type: "crypto" }),
+    ]);
+    expect(payload.data.marketMovers.losers).toEqual([
+      expect.objectContaining({ symbol: "VALE3", type: "stock" }),
+      expect.objectContaining({ symbol: "ETH", type: "crypto" }),
+    ]);
+    expect(
+      payload.data.marketMovers.gainers.some((item) => item.symbol === "ABEV3"),
+    ).toBe(false);
+    expect(payload.data.generatedAt).toBe("2026-03-20T15:00:00.000Z");
+  });
+
+  it("returns empty sections when the user has no persisted data", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-20T15:00:00.000Z"));
+
+    const fakeDb = createFakeD1Database();
+    const token = await createAccessToken();
+
+    const response = await worker.fetch(
+      createAssetRequest("/users/me/dashboard", token),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{
+      data: {
+        stats: {
+          favoritesCount: number;
+          searchesToday: number;
+          viewsToday: number;
+        };
+        recentSelections: unknown[];
+        activityTimeline: unknown[];
+        marketMovers: {
+          gainers: unknown[];
+          losers: unknown[];
+        };
+      };
+    }>();
+
+    expect(response.status).toBe(200);
+    expect(payload.data.stats).toEqual({
+      favoritesCount: 0,
+      searchesToday: 0,
+      viewsToday: 0,
+    });
+    expect(payload.data.recentSelections).toEqual([]);
+    expect(payload.data.activityTimeline).toEqual([]);
+    expect(payload.data.marketMovers).toEqual({
+      gainers: [],
+      losers: [],
+    });
   });
 });

@@ -46,3 +46,16 @@ export async function searchCachedQuotes(query: string, assetType: AssetType) {
 
   return payload.data;
 }
+
+export function recordSearchActivity(query: string, assetType: AssetType) {
+  return requestJson<void>("/api/users/me/activity/searches", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+    },
+    body: JSON.stringify({
+      query,
+      type: assetType,
+    }),
+  });
+}

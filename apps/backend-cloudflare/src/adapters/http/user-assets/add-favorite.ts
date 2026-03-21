@@ -1,3 +1,4 @@
+import { DashboardActivityService } from "@finta/dashboard";
 import {
   FavoriteAssetService,
   type TrackedAssetRef,
@@ -13,6 +14,7 @@ import { z } from "zod";
 import type { AppEnv } from "../../../app-env";
 import { requireAuth } from "../../../lib/auth";
 import { parseJsonRequest } from "../../../lib/http";
+import { D1UserActivityEventRepository } from "../../dashboard/d1-user-activity-event-repository";
 import { CloudflareKvQuoteSnapshotStore } from "../../price-query/cloudflare-kv-quote-snapshot-store";
 import { createMarketDataGateway } from "../../price-query/create-market-data-gateway";
 import { D1UserAssetRepository } from "../../user-assets/d1-user-asset-repository";
@@ -64,16 +66,18 @@ function toTrackedAssetRef(
     };
   }
 
-  if (isStockQuote) {
+  if ("ticker" in quote.data) {
     throw new Error("A cotação de criptoativo retornada não é do tipo crypto");
   }
 
+  const cryptoQuote = quote.data;
+
   return {
-    symbol: quote.data.symbol,
+    symbol: cryptoQuote.symbol,
     assetType,
-    label: quote.data.name,
+    label: cryptoQuote.name,
     market: null,
-    currency: quote.data.currency,
+    currency: cryptoQuote.currency,
     logoUrl: null,
   };
 }
@@ -88,6 +92,7 @@ export async function handleAddFavorite(
   const assetType = payload.type;
   const symbol = validateQuoteSymbol(assetType, payload.symbol);
   const repository = new D1UserAssetRepository(env.DB);
+  const now = new Date();
 
   if (
     await repository.hasFavorite({
@@ -109,11 +114,21 @@ export async function handleAddFavorite(
   });
   const service = new FavoriteAssetService({
     userFavoriteRepository: repository,
+    now: () => now,
   });
+  const activityService = new DashboardActivityService({
+    activityEventRepository: new D1UserActivityEventRepository(env.DB),
+    now: () => now,
+  });
+  const trackedAsset = toTrackedAssetRef(quote, assetType);
 
   await service.addFavorite({
     userId,
-    asset: toTrackedAssetRef(quote, assetType),
+    asset: trackedAsset,
+  });
+  await activityService.recordFavoriteAdded({
+    userId,
+    asset: trackedAsset,
   });
 
   return new Response(null, { status: 204 });

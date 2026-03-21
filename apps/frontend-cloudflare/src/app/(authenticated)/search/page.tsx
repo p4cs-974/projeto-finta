@@ -422,11 +422,19 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <section className="grid min-h-0 flex-1 border border-border bg-card lg:grid-cols-[minmax(320px,0.92fr)_minmax(0,1.08fr)]">
           <aside className="flex min-h-0 flex-col border-b border-border p-5 lg:border-r lg:border-b-0 lg:p-7">
             <div className="flex min-h-0 flex-1 flex-col gap-5">
-              <SearchControls
-                key={`${initialMode}:${initialQuery}`}
-                initialMode={initialMode}
-                initialQuery={initialQuery}
-              />
+              <Suspense
+                fallback={
+                  <div className="border border-border bg-background p-2">
+                    <div className="h-11 animate-pulse bg-muted" />
+                  </div>
+                }
+              >
+                <SearchControls
+                  key={`${initialMode}:${initialQuery}`}
+                  initialMode={initialMode}
+                  initialQuery={initialQuery}
+                />
+              </Suspense>
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <Suspense
                   fallback={
