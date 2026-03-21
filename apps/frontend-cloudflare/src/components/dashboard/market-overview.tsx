@@ -1,7 +1,6 @@
 "use client";
 
 import type { QuoteWithCacheMeta } from "@finta/price-query";
-import type { AssetType } from "@finta/shared-kernel";
 import { TrendingDown, TrendingUp, Wifi, WifiOff } from "lucide-react";
 import { useMemo } from "react";
 
@@ -13,16 +12,9 @@ import {
   isStockQuoteWithCache,
 } from "@/features/price-query/presentation";
 
-interface MarketAsset {
-  symbol: string;
-  assetType: AssetType;
-  initialQuote: QuoteWithCacheMeta;
-}
+import type { DashboardMarketAsset, DashboardMarketMovers } from "./types";
 
-interface MockMarketData {
-  gainers: MarketAsset[];
-  losers: MarketAsset[];
-}
+type MarketAsset = DashboardMarketAsset;
 
 function AssetLogo({
   symbol,
@@ -112,7 +104,7 @@ function MarketAssetRow({
 }
 
 interface MarketOverviewClientProps {
-  data: MockMarketData;
+  data: DashboardMarketMovers;
 }
 
 export function MarketOverviewClient({ data }: MarketOverviewClientProps) {
@@ -145,6 +137,15 @@ export function MarketOverviewClient({ data }: MarketOverviewClientProps) {
     enabled: true,
   });
 
+  if (allAssets.length === 0) {
+    return (
+      <div className="border border-dashed border-border bg-muted/30 p-6 text-sm text-muted-foreground">
+        Ainda não há cotações frescas suficientes no cache para montar os
+        movers.
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-3">
@@ -155,17 +156,23 @@ export function MarketOverviewClient({ data }: MarketOverviewClientProps) {
           </p>
         </div>
         <ul className="space-y-2">
-          {data.gainers.map((asset) => {
-            const key = `${asset.assetType}:${asset.symbol}`;
-            const quote = quotes.get(key) ?? asset.initialQuote;
-            const status = statuses.get(key) ?? "connecting";
+          {data.gainers.length === 0 ? (
+            <li className="border border-dashed border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+              Nenhuma alta fresca no cache.
+            </li>
+          ) : (
+            data.gainers.map((asset) => {
+              const key = `${asset.assetType}:${asset.symbol}`;
+              const quote = quotes.get(key) ?? asset.initialQuote;
+              const status = statuses.get(key) ?? "connecting";
 
-            return (
-              <li key={key}>
-                <MarketAssetRow asset={asset} quote={quote} status={status} />
-              </li>
-            );
-          })}
+              return (
+                <li key={key}>
+                  <MarketAssetRow asset={asset} quote={quote} status={status} />
+                </li>
+              );
+            })
+          )}
         </ul>
       </div>
 
@@ -177,17 +184,23 @@ export function MarketOverviewClient({ data }: MarketOverviewClientProps) {
           </p>
         </div>
         <ul className="space-y-2">
-          {data.losers.map((asset) => {
-            const key = `${asset.assetType}:${asset.symbol}`;
-            const quote = quotes.get(key) ?? asset.initialQuote;
-            const status = statuses.get(key) ?? "connecting";
+          {data.losers.length === 0 ? (
+            <li className="border border-dashed border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+              Nenhuma baixa fresca no cache.
+            </li>
+          ) : (
+            data.losers.map((asset) => {
+              const key = `${asset.assetType}:${asset.symbol}`;
+              const quote = quotes.get(key) ?? asset.initialQuote;
+              const status = statuses.get(key) ?? "connecting";
 
-            return (
-              <li key={key}>
-                <MarketAssetRow asset={asset} quote={quote} status={status} />
-              </li>
-            );
-          })}
+              return (
+                <li key={key}>
+                  <MarketAssetRow asset={asset} quote={quote} status={status} />
+                </li>
+              );
+            })
+          )}
         </ul>
       </div>
     </div>

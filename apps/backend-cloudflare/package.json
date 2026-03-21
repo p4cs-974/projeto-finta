@@ -22,6 +22,7 @@
     "wrangler": "4.71.0"
   },
   "dependencies": {
+    "@finta/dashboard": "workspace:*",
     "@finta/favorites": "workspace:*",
     "@finta/identity-access": "workspace:*",
     "@finta/price-query": "workspace:*",

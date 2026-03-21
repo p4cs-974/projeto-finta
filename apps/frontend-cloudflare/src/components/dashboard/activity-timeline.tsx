@@ -1,107 +1,81 @@
-import { Heart, Search, TrendingUp } from "lucide-react";
+import { Eye, Heart, Search, StarOff } from "lucide-react";
 
-interface Activity {
-  type: "favorite" | "search" | "view";
-  symbol: string;
-  label: string;
-  timestamp: string;
-}
+import { formatRelativeTime } from "@/features/price-query/presentation";
 
-const mockActivities: Activity[] = [
-  {
-    type: "favorite",
-    symbol: "PETR4",
-    label: "Petrobras PN",
-    timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-  },
-  {
-    type: "search",
-    symbol: "VALE3",
-    label: "Vale ON",
-    timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-  },
-  {
-    type: "view",
-    symbol: "BTC-USD",
-    label: "Bitcoin",
-    timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-  },
-  {
-    type: "favorite",
-    symbol: "ETH-USD",
-    label: "Ethereum",
-    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-  },
-];
+import type { DashboardActivityItem } from "./types";
 
-function getActivityIcon(type: Activity["type"]) {
+function getActivityIcon(type: DashboardActivityItem["type"]) {
   switch (type) {
-    case "favorite":
+    case "favorite_added":
       return Heart;
-    case "search":
+    case "favorite_removed":
+      return StarOff;
+    case "search_performed":
       return Search;
-    case "view":
-      return TrendingUp;
+    case "asset_viewed":
+      return Eye;
   }
 }
 
-function getActivityText(activity: Activity) {
+function getActivityText(activity: DashboardActivityItem) {
   switch (activity.type) {
-    case "favorite":
-      return `Adicionou ${activity.symbol} aos favoritos`;
-    case "search":
-      return `Buscou por ${activity.symbol}`;
-    case "view":
-      return `Visualizou ${activity.symbol}`;
+    case "favorite_added":
+      return `Adicionou ${activity.symbol ?? activity.label ?? "o ativo"} aos favoritos`;
+    case "favorite_removed":
+      return `Removeu ${activity.symbol ?? activity.label ?? "o ativo"} dos favoritos`;
+    case "search_performed":
+      return `Buscou por ${activity.searchQuery ?? activity.symbol ?? "um ativo"}`;
+    case "asset_viewed":
+      return `Visualizou ${activity.symbol ?? activity.label ?? "o ativo"}`;
   }
 }
 
-function formatRelativeTime(timestamp: string): string {
-  const now = new Date();
-  const date = new Date(timestamp);
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMins < 1) return "Agora";
-  if (diffMins < 60) return `${diffMins} min atrás`;
-  if (diffHours < 24) return `${diffHours}h atrás`;
-  return `${diffDays}d atrás`;
-}
-
-export function ActivityTimeline() {
+export function ActivityTimeline({
+  activities,
+}: {
+  activities: DashboardActivityItem[];
+}) {
   return (
     <div className="space-y-4">
       <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
         Atividade Recente
       </p>
-      <ul className="space-y-3">
-        {mockActivities.map((activity, index) => {
-          const Icon = getActivityIcon(activity.type);
 
-          return (
-            <li key={index} className="flex items-start gap-3">
-              <div className="relative">
-                <div className="flex size-7 items-center justify-center border border-border bg-card">
-                  <Icon className="size-3.5 text-muted-foreground" />
+      {activities.length === 0 ? (
+        <div className="border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+          Nenhuma atividade recente registrada ainda.
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {activities.map((activity, index) => {
+            const Icon = getActivityIcon(activity.type);
+
+            return (
+              <li
+                key={`${activity.type}:${activity.createdAt}:${activity.symbol ?? activity.searchQuery ?? index}`}
+                className="flex items-start gap-3"
+              >
+                <div className="relative">
+                  <div className="flex size-7 items-center justify-center border border-border bg-card">
+                    <Icon className="size-3.5 text-muted-foreground" />
+                  </div>
+                  {index < activities.length - 1 && (
+                    <div className="absolute top-7 left-1/2 h-full w-px -translate-x-1/2 bg-border" />
+                  )}
                 </div>
-                {index < mockActivities.length - 1 && (
-                  <div className="absolute top-7 left-1/2 h-full w-px -translate-x-1/2 bg-border" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1 pt-1">
-                <p className="text-sm text-foreground">
-                  {getActivityText(activity)}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {formatRelativeTime(activity.timestamp)}
-                </p>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+                <div className="min-w-0 flex-1 pt-1">
+                  <p className="text-sm text-foreground">
+                    {getActivityText(activity)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {formatRelativeTime(activity.createdAt)}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

@@ -1,11 +1,21 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bitcoin, Search, TrendingUp } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import type { SearchMode } from "@/features/price-query/presentation";
+import { recordSearchActivity } from "@/features/price-query/api";
+import {
+  getModeAssetType,
+  normalizeSearchInput,
+  type SearchMode,
+} from "@/features/price-query/presentation";
+
+import {
+  buildSearchUrl,
+  shouldRecordSearchActivity,
+} from "./search-controls.helpers";
 
 interface SearchControlsProps {
   initialMode: SearchMode;
@@ -21,48 +31,69 @@ export function SearchControls({
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<SearchMode>(initialMode);
   const [query, setQuery] = useState(initialQuery);
-
-  const replaceUrl = useCallback(
-    (nextMode: SearchMode, nextQuery: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("mode", nextMode);
-
-      if (nextQuery.trim()) {
-        params.set("q", nextQuery.trim().toUpperCase());
-      } else {
-        params.delete("q");
-      }
-
-      const next = params.toString();
-      const nextUrl = next ? `${pathname}?${next}` : pathname;
-      const currentUrl = searchParams.toString()
-        ? `${pathname}?${searchParams.toString()}`
-        : pathname;
-
-      if (nextUrl === currentUrl) {
-        return;
-      }
-
-      startTransition(() => {
-        router.replace(nextUrl, {
-          scroll: false,
-        });
-      });
-    },
-    [pathname, router, searchParams],
+  const lastTrackedQueryRef = useRef<string | null>(
+    initialQuery ? normalizeSearchInput(initialQuery) : null,
   );
+
+  function navigateIfNeeded(nextMode: SearchMode, nextQuery: string) {
+    const normalizedQuery = normalizeSearchInput(nextQuery);
+    const nextUrl = buildSearchUrl(
+      pathname,
+      searchParams.toString(),
+      nextMode,
+      normalizedQuery,
+    );
+    const currentUrl = searchParams.toString()
+      ? `${pathname}?${searchParams.toString()}`
+      : pathname;
+
+    if (nextUrl === currentUrl) {
+      return {
+        currentUrl,
+        nextUrl,
+        normalizedQuery,
+      };
+    }
+
+    startTransition(() => {
+      router.replace(nextUrl, {
+        scroll: false,
+      });
+    });
+
+    return {
+      currentUrl,
+      nextUrl,
+      normalizedQuery,
+    };
+  }
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      replaceUrl(mode, query);
+      const navigation = navigateIfNeeded(mode, query);
+
+      if (
+        shouldRecordSearchActivity({
+          currentUrl: navigation.currentUrl,
+          nextUrl: navigation.nextUrl,
+          normalizedQuery: navigation.normalizedQuery,
+          lastTrackedQuery: lastTrackedQueryRef.current,
+        })
+      ) {
+        lastTrackedQueryRef.current = navigation.normalizedQuery;
+        void recordSearchActivity(
+          navigation.normalizedQuery,
+          getModeAssetType(mode),
+        ).catch(() => undefined);
+      }
     }, 500);
 
     return () => window.clearTimeout(timeoutId);
-  }, [mode, query, replaceUrl]);
+  }, [mode, pathname, query, router, searchParams]);
 
   function handleModeChange(nextMode: SearchMode) {
     setMode(nextMode);
-    replaceUrl(nextMode, query);
+    navigateIfNeeded(nextMode, query);
   }
 
   return (

@@ -12,6 +12,7 @@
     "publish": true
   },
   "dependencies": {
+    "@finta/dashboard": "workspace:*",
     "@finta/favorites": "workspace:*",
     "@finta/identity-access": "workspace:*",
     "@opennextjs/cloudflare": "1.17.1",

@@ -1,3 +1,5 @@
+"use client";
+
 import { forwardRef, useImperativeHandle, useCallback } from "react";
 import type { AnimatedIconHandle, AnimatedIconProps } from "./types";
 import { motion, useAnimate } from "motion/react";
@@ -43,8 +45,6 @@ const StarIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
     return (
       <motion.svg
         ref={scope}
-        onHoverStart={start}
-        onHoverEnd={stop}
         xmlns="http://www.w3.org/2000/svg"
         width={size}
         height={size}
@@ -54,7 +54,7 @@ const StarIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={`cursor-pointer ${className}`}
+        className={className}
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <motion.path

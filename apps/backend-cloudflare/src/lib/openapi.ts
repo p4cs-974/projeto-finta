@@ -277,6 +277,54 @@ export function createOpenApiDocument(baseUrl: string) {
 					},
 				},
 			},
+			"/users/me/dashboard": {
+				get: {
+					summary: "Obter o payload agregado do dashboard do usuário autenticado",
+					tags: ["Dashboard"],
+					security: [{ bearerAuth: [] }],
+					responses: {
+						"200": {
+							description: "Snapshot do dashboard",
+							content: {
+								"application/json": {
+									schema: {
+										$ref: "#/components/schemas/DashboardResponse",
+									},
+								},
+							},
+						},
+						"401": errorContent("Token bearer ausente, inválido ou expirado"),
+					},
+				},
+			},
+			"/users/me/activity/searches": {
+				post: {
+					summary: "Registrar uma busca debounced do usuário autenticado",
+					tags: ["Dashboard"],
+					security: [{ bearerAuth: [] }],
+					requestBody: {
+						required: true,
+						content: {
+							"application/json": {
+								schema: {
+									$ref: "#/components/schemas/RecordSearchActivityRequest",
+								},
+								example: {
+									query: "PETR",
+									type: "stock",
+								},
+							},
+						},
+					},
+					responses: {
+						"204": {
+							description: "Busca registrada",
+						},
+						"401": errorContent("Token bearer ausente, inválido ou expirado"),
+						"422": errorContent("Corpo da requisição inválido"),
+					},
+				},
+			},
 		},
 		components: {
 			securitySchemes: {
@@ -480,6 +528,115 @@ export function createOpenApiDocument(baseUrl: string) {
 					properties: {
 						symbol: { type: "string", example: "PETR4" },
 						type: { type: "string", enum: ["stock", "crypto"] },
+					},
+				},
+				RecordSearchActivityRequest: {
+					type: "object",
+					additionalProperties: false,
+					required: ["query", "type"],
+					properties: {
+						query: { type: "string", example: "PETR" },
+						type: { type: "string", enum: ["stock", "crypto"] },
+					},
+				},
+				DashboardStats: {
+					type: "object",
+					required: ["favoritesCount", "searchesToday", "viewsToday"],
+					properties: {
+						favoritesCount: { type: "integer", example: 3 },
+						searchesToday: { type: "integer", example: 5 },
+						viewsToday: { type: "integer", example: 4 },
+					},
+				},
+				DashboardActivityEvent: {
+					type: "object",
+					required: [
+						"type",
+						"symbol",
+						"assetType",
+						"label",
+						"searchQuery",
+						"createdAt",
+					],
+					properties: {
+						type: {
+							type: "string",
+							enum: [
+								"search_performed",
+								"asset_viewed",
+								"favorite_added",
+								"favorite_removed",
+							],
+						},
+						symbol: { type: ["string", "null"], example: "PETR4" },
+						assetType: { type: ["string", "null"], enum: ["stock", "crypto", null] },
+						label: { type: ["string", "null"], example: "Petrobras PN" },
+						searchQuery: { type: ["string", "null"], example: "PETR" },
+						createdAt: { type: "string", format: "date-time" },
+					},
+				},
+				DashboardMarketMover: {
+					type: "object",
+					required: ["symbol", "type", "initialQuote"],
+					properties: {
+						symbol: { type: "string", example: "PETR4" },
+						type: { type: "string", enum: ["stock", "crypto"] },
+						initialQuote: {
+							oneOf: [
+								{ $ref: "#/components/schemas/AssetQuoteWithCacheResponse" },
+								{ $ref: "#/components/schemas/CryptoAssetQuoteResponse" },
+							],
+						},
+					},
+				},
+				DashboardResponse: {
+					type: "object",
+					required: ["data"],
+					properties: {
+						data: {
+							type: "object",
+							required: [
+								"stats",
+								"recentSelections",
+								"activityTimeline",
+								"marketMovers",
+								"generatedAt",
+							],
+							properties: {
+								stats: { $ref: "#/components/schemas/DashboardStats" },
+								recentSelections: {
+									type: "array",
+									items: {
+										$ref: "#/components/schemas/RecentAssetSelection",
+									},
+								},
+								activityTimeline: {
+									type: "array",
+									items: {
+										$ref: "#/components/schemas/DashboardActivityEvent",
+									},
+								},
+								marketMovers: {
+									type: "object",
+									required: ["gainers", "losers"],
+									properties: {
+										gainers: {
+											type: "array",
+											items: {
+												$ref: "#/components/schemas/DashboardMarketMover",
+											},
+										},
+										losers: {
+											type: "array",
+											items: {
+												$ref: "#/components/schemas/DashboardMarketMover",
+											},
+										},
+									},
+								},
+								generatedAt: { type: "string", format: "date-time" },
+							},
+						},
 					},
 				},
 				ErrorResponse: {

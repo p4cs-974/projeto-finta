@@ -1,42 +1,66 @@
+"use client";
+
+import { useRef } from "react";
 import Link from "next/link";
 
-import { ChartLineIcon } from "./ui/chart-line";
-import { SearchIcon } from "./ui/search";
+import { ChartLineIcon, type ChartLineIconHandle } from "./ui/chart-line";
+import { SearchIcon, type SearchIconHandle } from "./ui/search";
 import { SessionAvatar } from "./session-avatar";
-import { Button } from "./ui/button";
-import { LogoutIcon } from "./ui/logout";
+import { LogoutIcon, type LogoutIconHandle } from "./ui/logout";
 import type { AuthSessionPayload } from "@/lib/auth";
 import { logoutAction } from "@/app/actions/auth";
-import { StarIcon } from "lucide-react";
+import StarIcon from "./ui/star-icon";
+import type { AnimatedIconHandle } from "./ui/types";
+import LayoutDashboardIcon from "./ui/layout-dashboard-icon";
 
 interface HeaderProps {
   session: AuthSessionPayload;
 }
 
 export default function Header({ session }: HeaderProps) {
+  const searchIconRef = useRef<SearchIconHandle>(null);
+  const starIconRef = useRef<AnimatedIconHandle>(null);
+  const dashboardIconRef = useRef<AnimatedIconHandle>(null);
+  const logoutIconRef = useRef<LogoutIconHandle>(null);
+  const logoIconRef = useRef<ChartLineIconHandle>(null);
   return (
     <header className="mx-4 my-4 flex flex-row items-center gap-4 border border-border bg-card px-4 py-4 place-content-between">
       <Link
         href="/"
         className="flex flex-row items-center gap-2 text-2xl font-medium transition-opacity hover:opacity-80"
+        onMouseEnter={() => logoIconRef.current?.startAnimation()}
+        onMouseLeave={() => logoIconRef.current?.stopAnimation()}
       >
-        <ChartLineIcon size={26} autoPlay />
+        <ChartLineIcon ref={logoIconRef} size={26} />
         Finta
       </Link>
 
       <nav className="hidden items-center gap-2 md:flex">
         <Link
+          href="/"
+          className="group inline-flex items-center gap-2 border border-transparent px-2 py-1 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-muted/50"
+          onMouseEnter={() => dashboardIconRef.current?.startAnimation()}
+          onMouseLeave={() => dashboardIconRef.current?.stopAnimation()}
+        >
+          <LayoutDashboardIcon ref={dashboardIconRef} size={14} />
+          Dashboard
+        </Link>
+        <Link
           href="/search"
           className="group inline-flex items-center gap-2 border border-transparent px-2 py-1 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-muted/50"
+          onMouseEnter={() => searchIconRef.current?.startAnimation()}
+          onMouseLeave={() => searchIconRef.current?.stopAnimation()}
         >
-          <SearchIcon size={14} />
+          <SearchIcon ref={searchIconRef} size={14} />
           Buscar
         </Link>
         <Link
           href="/favoritos"
           className="group inline-flex items-center gap-2 border border-transparent px-2 py-1 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-muted/50"
+          onMouseEnter={() => starIconRef.current?.startAnimation()}
+          onMouseLeave={() => starIconRef.current?.stopAnimation()}
         >
-          <StarIcon size={14} />
+          <StarIcon ref={starIconRef} size={14} />
           Favoritos
         </Link>
       </nav>
@@ -50,10 +74,15 @@ export default function Header({ session }: HeaderProps) {
           <p className="text-xs text-muted-foreground">{session.email}</p>
         </div>
         <form action={logoutAction}>
-          <Button type="submit" variant="ghost">
-            <LogoutIcon size={18} />
+          <button
+            type="submit"
+            className="group inline-flex items-center gap-2 border border-transparent px-2 py-1 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-muted/50"
+            onMouseEnter={() => logoutIconRef.current?.startAnimation()}
+            onMouseLeave={() => logoutIconRef.current?.stopAnimation()}
+          >
+            <LogoutIcon ref={logoutIconRef} size={14} />
             Sair
-          </Button>
+          </button>
         </form>
       </div>
     </header>

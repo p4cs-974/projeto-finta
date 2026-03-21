@@ -1,0 +1,6 @@
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+
+# External API Keys
+COINCAP_API_KEY=
+BRAPI_API_KEY=

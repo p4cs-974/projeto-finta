@@ -2,14 +2,15 @@ import "server-only";
 
 import type { FavoriteAsset } from "@finta/favorites";
 import type {
-  QuoteWithCacheMeta,
   CachedQuoteSearchResponse,
+  QuoteWithCacheMeta,
 } from "@finta/price-query";
-import type { AssetType, ApiErrorBody } from "@finta/shared-kernel";
+import type { ApiErrorBody, AssetType } from "@finta/shared-kernel";
 import type { RecentAssetSelection } from "@finta/user-assets";
 import { cache } from "react";
 import { cookies } from "next/headers";
 
+import type { DashboardSnapshot } from "@/components/dashboard/types";
 import {
   AUTH_COOKIE_NAME,
   getBackendBaseUrl,
@@ -37,6 +38,38 @@ interface FavoriteAssetPayload {
   favoritedAt: string;
 }
 
+interface DashboardPayload {
+  data: {
+    stats: {
+      favoritesCount: number;
+      searchesToday: number;
+      viewsToday: number;
+    };
+    recentSelections: RecentAssetSelectionPayload[];
+    activityTimeline: Array<{
+      type: DashboardSnapshot["activityTimeline"][number]["type"];
+      symbol: string | null;
+      assetType: AssetType | null;
+      label: string | null;
+      searchQuery: string | null;
+      createdAt: string;
+    }>;
+    marketMovers: {
+      gainers: Array<{
+        symbol: string;
+        type: AssetType;
+        initialQuote: QuoteWithCacheMeta;
+      }>;
+      losers: Array<{
+        symbol: string;
+        type: AssetType;
+        initialQuote: QuoteWithCacheMeta;
+      }>;
+    };
+    generatedAt: string;
+  };
+}
+
 function toDomainSelection(
   payload: RecentAssetSelectionPayload,
 ): RecentAssetSelection {
@@ -60,6 +93,27 @@ function toDomainFavorite(payload: FavoriteAssetPayload): FavoriteAsset {
     currency: payload.currency,
     logoUrl: payload.logoUrl,
     favoritedAt: payload.favoritedAt,
+  };
+}
+
+function toDashboardSnapshot(payload: DashboardPayload): DashboardSnapshot {
+  return {
+    stats: payload.data.stats,
+    recentSelections: payload.data.recentSelections.map(toDomainSelection),
+    activityTimeline: payload.data.activityTimeline,
+    marketMovers: {
+      gainers: payload.data.marketMovers.gainers.map((item) => ({
+        symbol: item.symbol,
+        assetType: item.type,
+        initialQuote: item.initialQuote,
+      })),
+      losers: payload.data.marketMovers.losers.map((item) => ({
+        symbol: item.symbol,
+        assetType: item.type,
+        initialQuote: item.initialQuote,
+      })),
+    },
+    generatedAt: payload.data.generatedAt,
   };
 }
 
@@ -159,6 +213,17 @@ const getFavoritesCached = cache(async () => {
   return payload.data.map(toDomainFavorite);
 });
 
+const getDashboardCached = cache(async () => {
+  const payload = await requestBackendJson<DashboardPayload>(
+    "/users/me/dashboard",
+    {
+      cache: "no-store",
+    },
+  );
+
+  return toDashboardSnapshot(payload);
+});
+
 const searchCachedQuotesCached = cache(
   async (query: string, assetType: AssetType) => {
     const payload = await requestBackendJson<CachedQuoteSearchResponse>(
@@ -169,11 +234,13 @@ const searchCachedQuotesCached = cache(
   },
 );
 
-const getCachedQuoteCached = cache(async (symbol: string, assetType: AssetType) => {
-  return requestBackendJson<QuoteWithCacheMeta>(
-    buildAssetPath(symbol, assetType, "/cache"),
-  );
-});
+const getCachedQuoteCached = cache(
+  async (symbol: string, assetType: AssetType) => {
+    return requestBackendJson<QuoteWithCacheMeta>(
+      buildAssetPath(symbol, assetType, "/cache"),
+    );
+  },
+);
 
 export function getRecentSelectionsServer() {
   return getRecentSelectionsCached();
@@ -181,6 +248,10 @@ export function getRecentSelectionsServer() {
 
 export function getFavoritesServer() {
   return getFavoritesCached();
+}
+
+export function getDashboardServer() {
+  return getDashboardCached();
 }
 
 export function searchCachedQuotesServer(query: string, assetType: AssetType) {
