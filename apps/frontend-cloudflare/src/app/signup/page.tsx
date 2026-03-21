@@ -8,10 +8,12 @@ export default function SignupPage() {
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a
           href="#"
-          className="flex items-baseline gap-2 self-center font-medium text-3xl"
+          className="flex items-baseline gap-2 self-center font-medium text-5xl"
         >
-          <ChartLineIcon size={27} />
-          Finta
+          <ChartLineIcon size={40} />
+          <span className="font-[family-name:var(--font-geist-pixel-triangle)]">
+            Finta
+          </span>
         </a>
         <SignupForm className="border-border border" />
       </div>

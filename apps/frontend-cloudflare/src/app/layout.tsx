@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
+import { GeistPixelTriangle } from "geist/font/pixel";
 import "./globals.css";
 
 const systemThemeScript = `
@@ -69,7 +70,7 @@ export default async function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${GeistPixelTriangle.variable}`}
       suppressHydrationWarning
     >
       <head>

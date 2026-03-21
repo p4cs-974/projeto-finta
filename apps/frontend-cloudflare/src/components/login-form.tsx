@@ -14,10 +14,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { ChartLineIcon } from "./ui/chart-line";
-import {
-  loginAction,
-} from "@/app/actions/auth";
+import { loginAction } from "@/app/actions/auth";
 import { initialLoginFormState } from "@/components/auth/auth-form-state";
 
 function SubmitButton() {
@@ -37,7 +34,10 @@ export function LoginForm({
 }: React.ComponentProps<"div"> & {
   redirectTo?: string;
 }) {
-  const [state, formAction] = useActionState(loginAction, initialLoginFormState);
+  const [state, formAction] = useActionState(
+    loginAction,
+    initialLoginFormState,
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -46,13 +46,6 @@ export function LoginForm({
       <form action={formAction}>
         <input type="hidden" name="redirectTo" value={redirectTo ?? "/"} />
         <FieldGroup>
-          <div className="flex flex-col items-center gap-2 text-center">
-            <ChartLineIcon size={48} />
-            <h1 className="text-xl font-bold">Entrar na Finta</h1>
-            <FieldDescription>
-              Use seu e-mail e sua senha para acessar sua conta.
-            </FieldDescription>
-          </div>
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
@@ -77,16 +70,22 @@ export function LoginForm({
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              aria-invalid={state.fieldErrors.password?.length ? true : undefined}
+              aria-invalid={
+                state.fieldErrors.password?.length ? true : undefined
+              }
               required
             />
             <FieldError
-              errors={state.fieldErrors.password?.map((message) => ({ message }))}
+              errors={state.fieldErrors.password?.map((message) => ({
+                message,
+              }))}
             />
           </Field>
           <Field>
             <SubmitButton />
-            {state.formError ? <FieldError>{state.formError}</FieldError> : null}
+            {state.formError ? (
+              <FieldError>{state.formError}</FieldError>
+            ) : null}
             <FieldDescription className="text-center">
               Ainda não tem conta? <Link href="/signup">Cadastre-se</Link>
             </FieldDescription>

@@ -32,7 +32,9 @@ export default function Header({ session }: HeaderProps) {
         onMouseLeave={() => logoIconRef.current?.stopAnimation()}
       >
         <ChartLineIcon ref={logoIconRef} size={26} />
-        Finta
+        <span className="font-[family-name:var(--font-geist-pixel-triangle)]">
+          Finta
+        </span>
       </Link>
 
       <nav className="hidden items-center gap-2 md:flex">
