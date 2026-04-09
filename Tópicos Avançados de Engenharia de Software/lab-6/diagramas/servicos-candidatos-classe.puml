@@ -1,9 +1,13 @@
 @startuml
 skinparam classAttributeIconSize 0
 hide empty members
+top to bottom direction
 
 class "Serviço de Autenticação" as ServicoAutenticacao <<Serviço Utilitário>> {
+  + realizarCadastro(nome, email, senha): UsuarioCadastrado
+  + realizarLogin(email, senha): TokenJWT
   + validarAutenticacao(tokenBearer): UsuarioAutenticado
+  + permitirAcesso(usuarioAutenticado): AcessoPermitido
 }
 
 class "Serviço de Cotação de Ativo" as ServicoCotacaoAtivo <<Serviço de Entidade>> {
@@ -19,12 +23,23 @@ class "Serviço de Integração com Provedores de Mercado" as ServicoIntegracaoM
   + consultarCotacaoExterna(tipoAtivo, simbolo): CotacaoBruta
 }
 
+class "Serviço de Resposta de Erro" as ServicoRespostaErro <<Serviço Utilitário>> {
+  + retornarErroConsulta(codigoErro, mensagem): ErroDTO
+}
+
 class "Serviço de Consulta de Cotação" as ServicoConsultaCotacao <<Serviço de Tarefa>> {
+  + receberSolicitacaoConsulta(tipoAtivo, simboloInformado, tokenBearer): SolicitacaoConsulta
   + consultarCotacaoAtivo(tipoAtivo, simbolo, tokenBearer): CotacaoDTO
 }
 
-ServicoConsultaCotacao ..> ServicoAutenticacao : valida usuário
+ServicoConsultaCotacao ..> ServicoAutenticacao : autentica e autoriza usuário
 ServicoConsultaCotacao ..> ServicoCotacaoAtivo : valida ativo
 ServicoConsultaCotacao ..> ServicoCacheCotacoes : consulta/atualiza cache
 ServicoConsultaCotacao ..> ServicoIntegracaoMercado : obtém cotação externa
+ServicoConsultaCotacao ..> ServicoRespostaErro : retorna falhas da consulta
+
+ServicoAutenticacao -[hidden]down-> ServicoCotacaoAtivo
+ServicoCotacaoAtivo -[hidden]down-> ServicoCacheCotacoes
+ServicoCacheCotacoes -[hidden]down-> ServicoIntegracaoMercado
+ServicoIntegracaoMercado -[hidden]down-> ServicoRespostaErro
 @enduml
