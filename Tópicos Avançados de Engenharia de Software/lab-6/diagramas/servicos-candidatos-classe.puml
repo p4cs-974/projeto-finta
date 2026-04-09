@@ -1,0 +1,30 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide empty members
+
+class "Serviço de Autenticação" as ServicoAutenticacao <<Serviço Utilitário>> {
+  + validarAutenticacao(tokenBearer): UsuarioAutenticado
+}
+
+class "Serviço de Cotação de Ativo" as ServicoCotacaoAtivo <<Serviço de Entidade>> {
+  + validarAtivoConsulta(tipoAtivo, simboloInformado): ConsultaAtivoValida
+}
+
+class "Serviço de Cache de Cotações" as ServicoCacheCotacoes <<Serviço Utilitário>> {
+  + consultarCotacaoCache(tipoAtivo, simbolo): CotacaoCache?
+  + atualizarCotacaoCache(tipoAtivo, simbolo, cotacao): void
+}
+
+class "Serviço de Integração com Provedores de Mercado" as ServicoIntegracaoMercado <<Serviço Utilitário>> {
+  + consultarCotacaoExterna(tipoAtivo, simbolo): CotacaoBruta
+}
+
+class "Serviço de Consulta de Cotação" as ServicoConsultaCotacao <<Serviço de Tarefa>> {
+  + consultarCotacaoAtivo(tipoAtivo, simbolo, tokenBearer): CotacaoDTO
+}
+
+ServicoConsultaCotacao ..> ServicoAutenticacao : valida usuário
+ServicoConsultaCotacao ..> ServicoCotacaoAtivo : valida ativo
+ServicoConsultaCotacao ..> ServicoCacheCotacoes : consulta/atualiza cache
+ServicoConsultaCotacao ..> ServicoIntegracaoMercado : obtém cotação externa
+@enduml
