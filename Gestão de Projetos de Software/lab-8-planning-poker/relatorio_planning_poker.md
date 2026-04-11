@@ -60,7 +60,7 @@ Justificativa:
 - A história **ROBERTO-51** recebeu **1 ponto** por representar um fluxo mais simples e direto, com escopo menor e menor risco técnico.
 - O conjunto da sprint ficou, portanto, concentrado em histórias de complexidade média, com apenas uma entrega claramente pequena.
 
-## 4. Breve reflexão do time
+## 4. reflexão do time
 
 ### Dificuldades encontradas
 
