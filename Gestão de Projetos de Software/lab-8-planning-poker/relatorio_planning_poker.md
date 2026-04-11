@@ -18,7 +18,7 @@ Estimativa: **5 pontos**.
 
 Observação: houve divergência entre os votos, com registros em **3, 5 e 8**, mas a discussão convergiu para uma complexidade média, consolidada em **5 pontos** no ticket.
 
-![Planning poker ROBERTO-43](/Users/pedro/agent-sandbox/jira_evidencias/roberto43_modal.png)
+![Planning poker ROBERTO-43](./jira_evidencias/roberto43_modal.png)
 
 ### Evidência 2: ROBERTO-49
 
