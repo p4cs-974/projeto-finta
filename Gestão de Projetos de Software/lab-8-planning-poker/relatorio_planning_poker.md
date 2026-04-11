@@ -28,11 +28,11 @@ Observação: este foi um caso claro de divergência e discussão. Na primeira r
 
 **Round 1**
 
-![Planning poker ROBERTO-49 round 1](/Users/pedro/agent-sandbox/jira_evidencias/roberto-49_1.png)
+![Planning poker ROBERTO-49 round 1](./jira_evidencias/roberto-49_1.png)
 
 **Round 2**
 
-![Planning poker ROBERTO-49 round 2](/Users/pedro/agent-sandbox/jira_evidencias/roberto-49_2.png)
+![Planning poker ROBERTO-49 round 2](./jira_evidencias/roberto-49_2.png)
 
 ### Evidência 3: ROBERTO-51
 
@@ -40,7 +40,7 @@ Estimativa registrada no ticket: **1 ponto**.
 
 Observação: houve consenso total do grupo, com todos os participantes votando **1**, o que indica entendimento comum de que se tratava de uma história simples e de baixa complexidade.
 
-![Planning poker ROBERTO-51](/Users/pedro/agent-sandbox/jira_evidencias/roberto-51_1.png)
+![Planning poker ROBERTO-51](./jira_evidencias/roberto-51_1.png)
 
 ## 3. Total de pontos da sprint e justificativa
 
