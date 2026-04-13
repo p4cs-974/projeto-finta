@@ -1,4 +1,6 @@
 export type ApplicationErrorCode =
+  | "API_KEY_LIMIT_REACHED"
+  | "API_KEY_NOT_FOUND"
   | "ASSET_CACHE_MISS"
   | "ASSET_NOT_FOUND"
   | "EMAIL_ALREADY_IN_USE"

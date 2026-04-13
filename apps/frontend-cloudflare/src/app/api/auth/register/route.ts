@@ -1,4 +1,4 @@
-import type { AuthSessionResponseBody } from "@finta/identity-access";
+import type { BearerAuthSessionResponseBody } from "@finta/identity-access";
 import { NextResponse } from "next/server";
 
 import { AUTH_COOKIE_NAME, getBackendBaseUrl } from "@/lib/auth";
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const successPayload = payload as AuthSessionResponseBody;
+    const successPayload = payload as BearerAuthSessionResponseBody;
     const nextResponse = NextResponse.json(successPayload, {
       status: response.status,
       headers: {

@@ -11,7 +11,7 @@ export async function handleListRecentSelections(
   request: Request,
   env: AppEnv,
 ): Promise<Response> {
-  const auth = await requireAuth(request, env.JWT_SECRET);
+  const auth = await requireAuth(request, env.JWT_SECRET, env.DB);
   const service = new RecentAssetSelectionService({
     userAssetRepository: new D1UserAssetRepository(env.DB),
   });

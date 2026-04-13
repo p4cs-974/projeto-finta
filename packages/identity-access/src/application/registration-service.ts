@@ -6,6 +6,7 @@ import {
 import type {
   AuthSessionResult,
   IRegistrationService,
+  PublicUser,
   RegisterUserInput,
 } from "../contracts/auth";
 import type { IPasswordHasher, ITokenService, IUserRepository } from "../ports";
@@ -19,7 +20,7 @@ export interface RegistrationServiceOptions {
 export class RegistrationService implements IRegistrationService {
   constructor(private readonly options: RegistrationServiceOptions) {}
 
-  async register(input: RegisterUserInput): Promise<AuthSessionResult> {
+  async createUser(input: RegisterUserInput): Promise<PublicUser> {
     const emailAlreadyExists = await this.options.userRepository.existsByEmail(
       input.email,
     );
@@ -59,6 +60,12 @@ export class RegistrationService implements IRegistrationService {
         "Não foi possível carregar o usuário criado",
       );
     }
+
+    return user;
+  }
+
+  async register(input: RegisterUserInput): Promise<AuthSessionResult> {
+    const user = await this.createUser(input);
 
     const token = await this.options.tokenService.issueAccessToken({
       sub: String(user.id),

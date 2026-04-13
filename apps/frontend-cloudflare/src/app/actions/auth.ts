@@ -3,7 +3,7 @@
 import type {
   LoginInput,
   RegisterUserInput,
-  AuthSessionResponseBody,
+  BearerAuthSessionResponseBody,
 } from "@finta/identity-access";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -27,7 +27,7 @@ async function requestAuth<TInput extends LoginInput | RegisterUserInput>(
 
   const text = await response.text();
   const payload = text
-    ? (JSON.parse(text) as ApiErrorBody | AuthSessionResponseBody)
+    ? (JSON.parse(text) as ApiErrorBody | BearerAuthSessionResponseBody)
     : null;
 
   return {
@@ -67,7 +67,7 @@ export async function loginAction(
       };
     }
 
-    const payload = result.payload as AuthSessionResponseBody;
+    const payload = result.payload as BearerAuthSessionResponseBody;
     const cookieStore = await cookies();
     cookieStore.set(AUTH_COOKIE_NAME, payload.data.token, {
       httpOnly: true,
@@ -125,7 +125,7 @@ export async function registerAction(
       };
     }
 
-    const payload = result.payload as AuthSessionResponseBody;
+    const payload = result.payload as BearerAuthSessionResponseBody;
     const cookieStore = await cookies();
     cookieStore.set(AUTH_COOKIE_NAME, payload.data.token, {
       httpOnly: true,

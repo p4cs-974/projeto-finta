@@ -1,0 +1,35 @@
+{
+  "name": "@finta/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "finta": "./src/index.tsx"
+  },
+  "scripts": {
+    "dev": "bun run src/index.tsx",
+    "build": "bun build src/index.tsx --outdir dist --target bun",
+    "build:release": "bun run scripts/build-release.ts",
+    "check": "bun run type-check",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@finta/cli-distribution": "workspace:*",
+    "@finta/dashboard": "workspace:*",
+    "@finta/favorites": "workspace:*",
+    "@finta/identity-access": "workspace:*",
+    "@finta/price-query": "workspace:*",
+    "@finta/shared-kernel": "workspace:*",
+    "@finta/user-assets": "workspace:*",
+    "@opentui/core": "^0.1.97",
+    "@opentui/react": "^0.1.97",
+    "react": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "@types/react": "^19.2.0",
+    "typescript": "5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

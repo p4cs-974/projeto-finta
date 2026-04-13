@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildQuoteCacheKey, type QuoteRequest } from "@finta/price-query";
 
 import worker from "./index";
+import { hashApiKey } from "./lib/api-key";
 import { signJwt } from "./lib/jwt";
 import { hashPassword } from "./lib/password";
 import { createFakeD1Database } from "./test/fake-d1";
@@ -124,6 +125,21 @@ function createAuthRequest(
 function createAssetRequest(pathname: string, token?: string) {
   return new Request(`http://localhost${pathname}`, {
     method: "GET",
+    headers: token
+      ? {
+          authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  });
+}
+
+function createAuthorizedRequest(
+  pathname: string,
+  method: "GET" | "DELETE",
+  token?: string,
+) {
+  return new Request(`http://localhost${pathname}`, {
+    method,
     headers: token
       ? {
           authorization: `Bearer ${token}`,
@@ -614,6 +630,197 @@ describe("POST /auth/login", () => {
 
     expect(response.status).toBe(415);
     expect(payload.error.code).toBe("UNSUPPORTED_MEDIA_TYPE");
+  });
+});
+
+describe("CLI API key auth endpoints", () => {
+  it("returns an API key session for CLI login and stores only the hash", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-12T10:00:00.000Z"));
+
+    const fakeDb = createFakeD1Database();
+    const passwordHash = await hashPassword("SenhaSegura123");
+    fakeDb.seedUser({
+      name: "Pedro Custodio",
+      email: "pedro@example.com",
+      password_hash: passwordHash,
+    });
+
+    const response = await worker.fetch(
+      createAuthRequest(
+        "/auth/login",
+        JSON.stringify({
+          email: "pedro@example.com",
+          password: "SenhaSegura123",
+          client_type: "cli",
+          device_name: "macbook-pro",
+        }),
+      ),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{
+      data: {
+        user: {
+          id: number;
+          email: string;
+        };
+        apiKey: {
+          id: number;
+          key: string;
+          name: string;
+        };
+        tokenType: string;
+      };
+    }>();
+
+    expect(response.status).toBe(200);
+    expect(payload.data.tokenType).toBe("ApiKey");
+    expect(payload.data.apiKey.key.startsWith("finta_")).toBe(true);
+    expect(payload.data.apiKey.name).toBe("CLI - macbook-pro - 2026-04-12");
+    expect(fakeDb.getApiKeys()).toHaveLength(1);
+    expect(fakeDb.getApiKeys()[0]?.key_hash).toBe(
+      hashApiKey(payload.data.apiKey.key),
+    );
+  });
+
+  it("returns an API key session for CLI registration", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-12T10:00:00.000Z"));
+
+    const fakeDb = createFakeD1Database();
+
+    const response = await worker.fetch(
+      createAuthRequest(
+        "/auth/register",
+        JSON.stringify({
+          name: "Pedro Custodio",
+          email: "pedro@example.com",
+          password: "SenhaSegura123",
+          client_type: "cli",
+          device_name: "ci-runner",
+        }),
+      ),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{
+      data: {
+        apiKey: {
+          key: string;
+          name: string;
+        };
+        tokenType: string;
+      };
+    }>();
+
+    expect(response.status).toBe(201);
+    expect(payload.data.tokenType).toBe("ApiKey");
+    expect(payload.data.apiKey.name).toBe("CLI - ci-runner - 2026-04-12");
+    expect(fakeDb.getUsers()).toHaveLength(1);
+    expect(fakeDb.getApiKeys()).toHaveLength(1);
+  });
+
+  it("returns the current user and API key metadata from GET /auth/me", async () => {
+    const fakeDb = createFakeD1Database();
+    const user = fakeDb.seedUser({
+      name: "Pedro Custodio",
+      email: "pedro@example.com",
+      password_hash: "hashed-password",
+    });
+    const rawKey = "finta_cli-auth-me";
+    const apiKey = fakeDb.seedApiKey({
+      user_id: user.id,
+      key_hash: hashApiKey(rawKey),
+      name: "CLI - host - 2026-04-12",
+      created_at: "2026-04-12 10:00:00",
+    });
+
+    const response = await worker.fetch(
+      createAuthorizedRequest("/auth/me", "GET", rawKey),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{
+      data: {
+        user: { id: number; email: string };
+        apiKey: { id: number; name: string };
+      };
+    }>();
+
+    expect(response.status).toBe(200);
+    expect(payload.data.user).toMatchObject({
+      id: user.id,
+      email: "pedro@example.com",
+    });
+    expect(payload.data.apiKey).toEqual({
+      id: apiKey.id,
+      name: apiKey.name,
+    });
+  });
+
+  it("lists the authenticated user's API keys", async () => {
+    const fakeDb = createFakeD1Database();
+    const user = fakeDb.seedUser({
+      name: "Pedro Custodio",
+      email: "pedro@example.com",
+      password_hash: "hashed-password",
+    });
+    const rawKey = "finta_cli-keys";
+    fakeDb.seedApiKey({
+      user_id: user.id,
+      key_hash: hashApiKey(rawKey),
+      name: "CLI - current - 2026-04-12",
+      created_at: "2026-04-12 10:00:00",
+    });
+    fakeDb.seedApiKey({
+      user_id: user.id,
+      key_hash: hashApiKey("finta_other"),
+      name: "CLI - other - 2026-04-11",
+      created_at: "2026-04-11 10:00:00",
+    });
+
+    const response = await worker.fetch(
+      createAuthorizedRequest("/auth/api-keys", "GET", rawKey),
+      createEnv(fakeDb),
+    );
+    const payload = await response.json<{
+      data: Array<{ id: number; name: string }>;
+    }>();
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toHaveLength(2);
+    expect(payload.data[0]?.name).toBe("CLI - current - 2026-04-12");
+  });
+
+  it("revokes an owned API key", async () => {
+    const fakeDb = createFakeD1Database();
+    const user = fakeDb.seedUser({
+      name: "Pedro Custodio",
+      email: "pedro@example.com",
+      password_hash: "hashed-password",
+    });
+    const currentKey = fakeDb.seedApiKey({
+      user_id: user.id,
+      key_hash: hashApiKey("finta_current"),
+      name: "CLI - current - 2026-04-12",
+      created_at: "2026-04-12 10:00:00",
+    });
+    const revokedKey = fakeDb.seedApiKey({
+      user_id: user.id,
+      key_hash: hashApiKey("finta_revoke"),
+      name: "CLI - revoke - 2026-04-11",
+      created_at: "2026-04-11 10:00:00",
+    });
+
+    const response = await worker.fetch(
+      createAuthorizedRequest(
+        `/auth/api-keys/${revokedKey.id}`,
+        "DELETE",
+        "finta_current",
+      ),
+      createEnv(fakeDb),
+    );
+
+    expect(response.status).toBe(204);
+    expect(fakeDb.getApiKeys().map((item) => item.id)).toEqual([currentKey.id]);
   });
 });
 

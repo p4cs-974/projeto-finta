@@ -17,7 +17,7 @@ export async function handleRecordRecentSelection(
   request: Request,
   env: AppEnv,
 ): Promise<Response> {
-  const auth = await requireAuth(request, env.JWT_SECRET);
+  const auth = await requireAuth(request, env.JWT_SECRET, env.DB);
   const payload = (await parseJsonRequest(request)) as {
     symbol?: unknown;
     type?: unknown;

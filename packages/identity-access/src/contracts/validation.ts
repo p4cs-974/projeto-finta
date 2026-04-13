@@ -26,8 +26,19 @@ const registerUserSchema = z
       })
       .pipe(z.string().min(1).max(255).email()),
     password: z.string().min(8).max(72),
+    client_type: z.enum(["web", "cli"]).optional(),
+    device_name: z
+      .string()
+      .transform(normalizeDisplayText)
+      .pipe(z.string().min(1).max(100))
+      .optional(),
   })
-  .strict();
+  .strict()
+  .transform(({ client_type, device_name, ...rest }) => ({
+    ...rest,
+    ...(client_type ? { clientType: client_type } : {}),
+    ...(device_name ? { deviceName: device_name } : {}),
+  }));
 
 const loginUserSchema = z
   .object({
@@ -39,8 +50,19 @@ const loginUserSchema = z
       })
       .pipe(z.string().min(1).max(255).email()),
     password: z.string().min(8).max(72),
+    client_type: z.enum(["web", "cli"]).optional(),
+    device_name: z
+      .string()
+      .transform(normalizeDisplayText)
+      .pipe(z.string().min(1).max(100))
+      .optional(),
   })
-  .strict();
+  .strict()
+  .transform(({ client_type, device_name, ...rest }) => ({
+    ...rest,
+    ...(client_type ? { clientType: client_type } : {}),
+    ...(device_name ? { deviceName: device_name } : {}),
+  }));
 
 function toValidationError(error: z.ZodError) {
   return createApplicationError(
