@@ -37,6 +37,8 @@ function printHelp() {
     [
       "Usage: finta [--no-ui] <command> [options]",
       "",
+      "Run finta with no arguments to open the interactive TUI.",
+      "",
       "Commands:",
       "  login [--email <email>] [--password <password>]",
       "  register [--name <name>] [--email <email>] [--password <password>]",

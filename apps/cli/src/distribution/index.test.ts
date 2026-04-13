@@ -9,7 +9,7 @@ describe("standalone distribution entrypoint", () => {
   it("prints the externally visible CLI version", async () => {
     const result = await execFile(
       "bun",
-      ["run", "src/distribution/index.ts", "--version"],
+      ["run", "src/distribution/index.tsx", "--version"],
       {
         cwd: new URL("../..", import.meta.url),
       },

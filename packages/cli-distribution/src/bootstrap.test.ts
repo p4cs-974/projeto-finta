@@ -141,7 +141,7 @@ describe("renderInstallScript", () => {
     expect(result.stdout).toContain("Finta CLI installer bootstrap");
     expect(result.stdout).toContain("Installed finta 1.2.3");
     expect(result.stdout).toContain("finta --help");
-    expect(result.stdout).toContain("finta login");
+    expect(result.stdout).toContain("\n  finta\n");
 
     const installedPath = join(installDir, "finta");
     const installedVersion = await execFile(installedPath, ["--version"]);

@@ -288,8 +288,8 @@ if [ -x "$INSTALL_PATH" ]; then
     info "finta $VERSION is already installed at $INSTALL_PATH"
     info ""
     info "Next steps:"
+    info "  finta"
     info "  finta --help"
-    info "  finta login"
     exit 0
   fi
 
@@ -329,7 +329,7 @@ esac
 
 info ""
 info "Next steps:"
+info "  finta"
 info "  finta --help"
-info "  finta login"
 `;
 }

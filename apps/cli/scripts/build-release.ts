@@ -60,7 +60,7 @@ async function buildArtifact(
       outputPath,
       "--target",
       `bun-${target.key}`,
-      "src/distribution/index.ts",
+      "src/distribution/index.tsx",
     ],
     {
       cwd: packageRoot,
