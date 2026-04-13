@@ -1,4 +1,4 @@
-import type { PublicUser, UserCredentials } from "../contracts/auth";
+import type { ApiKey, PublicUser, UserCredentials } from "../contracts/auth";
 
 export interface IUserRepository {
   existsByEmail(email: string): Promise<boolean>;
@@ -26,4 +26,18 @@ export interface ITokenService {
     expiresIn: number;
     tokenType: "Bearer";
   }>;
+}
+
+export interface IApiKeyRepository {
+  create(input: {
+    userId: number;
+    keyHash: string;
+    name: string;
+    createdAt: string;
+  }): Promise<number>;
+  findByHash(keyHash: string): Promise<ApiKey | null>;
+  listByUserId(userId: number): Promise<ApiKey[]>;
+  findById(id: number): Promise<ApiKey | null>;
+  delete(id: number): Promise<void>;
+  countByUserId(userId: number): Promise<number>;
 }

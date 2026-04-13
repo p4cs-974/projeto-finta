@@ -14,7 +14,7 @@ export async function handleGetLiveQuote(
   ctx: ExecutionContext,
   rawSymbol: string,
 ): Promise<Response> {
-  await requireAuth(request, env.JWT_SECRET);
+  await requireAuth(request, env.JWT_SECRET, env.DB);
 
   const assetType = parseRequestedAssetType(
     new URL(request.url).searchParams.get("type"),

@@ -12,6 +12,7 @@
     "publish": true
   },
   "dependencies": {
+    "@finta/cli-distribution": "workspace:*",
     "@finta/dashboard": "workspace:*",
     "@finta/favorites": "workspace:*",
     "@finta/identity-access": "workspace:*",

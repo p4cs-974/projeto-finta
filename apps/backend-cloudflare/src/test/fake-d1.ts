@@ -14,6 +14,14 @@ interface PublicUserRecord {
   created_at: string;
 }
 
+interface ApiKeyRecord {
+  id: number;
+  user_id: number;
+  key_hash: string;
+  name: string;
+  created_at: string;
+}
+
 interface FakeD1Result {
   meta: {
     last_row_id?: number;
@@ -71,10 +79,12 @@ function sqliteNow(): string {
 
 export function createFakeD1Database() {
   let nextId = 1;
+  let nextApiKeyId = 1;
   let nextRecentId = 1;
   let nextFavoriteId = 1;
   let nextUserActivityEventId = 1;
   const users = new Map<number, UserRecord>();
+  const apiKeys = new Map<number, ApiKeyRecord>();
   const recentSelections = new Map<number, RecentAssetSelectionRecord>();
   const favoriteAssets = new Map<number, FavoriteAssetRecord>();
   const userActivityEvents = new Map<number, UserActivityEventRecord>();
@@ -109,6 +119,31 @@ export function createFakeD1Database() {
     }
 
     async all<T>(sql: string, values: unknown[]): Promise<FakeD1AllResult<T>> {
+      if (
+        sql ===
+        [
+          "SELECT id, user_id, key_hash, name, created_at",
+          "FROM api_keys",
+          "WHERE user_id = ?",
+          "ORDER BY created_at DESC, id DESC",
+        ].join(" ")
+      ) {
+        const userId = Number(values[0]);
+        const results = Array.from(apiKeys.values())
+          .filter((item) => item.user_id === userId)
+          .sort((left, right) => {
+            const timeDiff =
+              Date.parse(right.created_at) - Date.parse(left.created_at);
+            return timeDiff !== 0 ? timeDiff : right.id - left.id;
+          }) as T[];
+
+        return {
+          results,
+          success: true,
+          meta: {},
+        };
+      }
+
       if (
         sql ===
         [
@@ -206,6 +241,50 @@ export function createFakeD1Database() {
         );
 
         return user ? ({ id: user.id } as T) : null;
+      }
+
+      if (
+        sql ===
+        [
+          "SELECT id, user_id, key_hash, name, created_at",
+          "FROM api_keys",
+          "WHERE key_hash = ?",
+          "LIMIT 1",
+        ].join(" ")
+      ) {
+        const keyHash = String(values[0]);
+        const apiKey = Array.from(apiKeys.values()).find(
+          (candidate) => candidate.key_hash === keyHash,
+        );
+
+        return (apiKey ?? null) as T | null;
+      }
+
+      if (
+        sql ===
+        [
+          "SELECT id, user_id, key_hash, name, created_at",
+          "FROM api_keys",
+          "WHERE id = ?",
+          "LIMIT 1",
+        ].join(" ")
+      ) {
+        const id = Number(values[0]);
+        const apiKey = apiKeys.get(id);
+
+        return (apiKey ?? null) as T | null;
+      }
+
+      if (
+        sql ===
+        "SELECT COUNT(*) AS total FROM api_keys WHERE user_id = ?"
+      ) {
+        const userId = Number(values[0]);
+        const total = Array.from(apiKeys.values()).filter(
+          (item) => item.user_id === userId,
+        ).length;
+
+        return { total } as T;
       }
 
       if (
@@ -325,6 +404,37 @@ export function createFakeD1Database() {
     }
 
     async run(sql: string, values: unknown[]): Promise<FakeD1Result> {
+      if (
+        sql ===
+        [
+          "INSERT INTO api_keys",
+          "(user_id, key_hash, name, created_at)",
+          "VALUES (?, ?, ?, ?)",
+        ].join(" ")
+      ) {
+        const id = nextApiKeyId;
+        nextApiKeyId += 1;
+        apiKeys.set(id, {
+          id,
+          user_id: Number(values[0]),
+          key_hash: String(values[1]),
+          name: String(values[2]),
+          created_at: String(values[3]),
+        });
+
+        return {
+          meta: {
+            last_row_id: id,
+          },
+        };
+      }
+
+      if (sql === "DELETE FROM api_keys WHERE id = ?") {
+        apiKeys.delete(Number(values[0]));
+
+        return { meta: {} };
+      }
+
       if (
         sql ===
         [
@@ -554,6 +664,9 @@ export function createFakeD1Database() {
     getUsers() {
       return Array.from(users.values());
     },
+    getApiKeys() {
+      return Array.from(apiKeys.values());
+    },
     getRecentSelections() {
       return Array.from(recentSelections.values());
     },
@@ -574,6 +687,17 @@ export function createFakeD1Database() {
       });
 
       return users.get(id)!;
+    },
+    seedApiKey(input: Omit<ApiKeyRecord, "id"> & { id?: number }): ApiKeyRecord {
+      const id = input.id ?? nextApiKeyId;
+      nextApiKeyId = Math.max(nextApiKeyId, id + 1);
+      const record: ApiKeyRecord = {
+        id,
+        ...input,
+      };
+      apiKeys.set(id, record);
+
+      return record;
     },
     seedFavoriteAsset(
       input: Omit<FavoriteAssetRecord, "id"> & { id?: number },

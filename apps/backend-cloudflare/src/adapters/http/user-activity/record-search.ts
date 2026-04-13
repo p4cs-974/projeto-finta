@@ -37,7 +37,7 @@ export async function handleRecordSearchActivity(
   request: Request,
   env: AppEnv,
 ): Promise<Response> {
-  const auth = await requireAuth(request, env.JWT_SECRET);
+  const auth = await requireAuth(request, env.JWT_SECRET, env.DB);
   const payload = parseRecordSearchRequest(await parseJsonRequest(request));
   const userId = parseAuthenticatedUserId(auth.sub);
   const service = new DashboardActivityService({

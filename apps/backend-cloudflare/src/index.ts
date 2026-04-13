@@ -1,6 +1,9 @@
 import { createNoopExecutionContext, type AppEnv } from "./app-env";
 import { handleLogin } from "./adapters/http/identity-access/login";
 import { handleRegister } from "./adapters/http/identity-access/register";
+import { handleGetMe } from "./adapters/http/identity-access/get-me";
+import { handleListApiKeys } from "./adapters/http/identity-access/list-api-keys";
+import { handleRevokeApiKey } from "./adapters/http/identity-access/revoke-api-key";
 import { handleGetCachedQuote } from "./adapters/http/price-query/get-cached-quote";
 import { handleGetLiveQuote } from "./adapters/http/price-query/get-live-quote";
 import { handleStreamQuote } from "./adapters/http/price-query/stream-quote";
@@ -41,6 +44,25 @@ async function routeRequest(
 
   if (request.method === "POST" && url.pathname === "/auth/login") {
     return handleLogin(request, env);
+  }
+
+  if (request.method === "GET" && url.pathname === "/auth/me") {
+    return handleGetMe(request, env);
+  }
+
+  if (request.method === "GET" && url.pathname === "/auth/api-keys") {
+    return handleListApiKeys(request, env);
+  }
+
+  if (
+    request.method === "DELETE" &&
+    /^\/auth\/api-keys\/\d+$/u.test(url.pathname)
+  ) {
+    return handleRevokeApiKey(
+      request,
+      env,
+      Number.parseInt(url.pathname.slice("/auth/api-keys/".length), 10),
+    );
   }
 
   if (request.method === "GET" && url.pathname === "/users/me/recent-assets") {

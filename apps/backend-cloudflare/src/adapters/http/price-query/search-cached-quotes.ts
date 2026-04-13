@@ -16,7 +16,7 @@ export async function handleSearchCachedQuotes(
   request: Request,
   env: AppEnv,
 ): Promise<Response> {
-  await requireAuth(request, env.JWT_SECRET);
+  await requireAuth(request, env.JWT_SECRET, env.DB);
 
   const url = new URL(request.url);
   const assetType = parseRequestedAssetType(url.searchParams.get("type"));

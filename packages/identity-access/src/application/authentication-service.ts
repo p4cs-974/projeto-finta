@@ -4,6 +4,7 @@ import type {
   AuthSessionResult,
   IAuthenticationService,
   LoginInput,
+  PublicUser,
 } from "../contracts/auth";
 import type { IPasswordHasher, ITokenService, IUserRepository } from "../ports";
 
@@ -16,7 +17,7 @@ export interface AuthenticationServiceOptions {
 export class AuthenticationService implements IAuthenticationService {
   constructor(private readonly options: AuthenticationServiceOptions) {}
 
-  async login(input: LoginInput): Promise<AuthSessionResult> {
+  async authenticate(input: LoginInput): Promise<PublicUser> {
     const user = await this.options.userRepository.findCredentialsByEmail(
       input.email,
     );
@@ -42,6 +43,17 @@ export class AuthenticationService implements IAuthenticationService {
       );
     }
 
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+    };
+  }
+
+  async login(input: LoginInput): Promise<AuthSessionResult> {
+    const user = await this.authenticate(input);
+
     const token = await this.options.tokenService.issueAccessToken({
       sub: String(user.id),
       email: user.email,
@@ -49,12 +61,7 @@ export class AuthenticationService implements IAuthenticationService {
     });
 
     return {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        createdAt: user.createdAt,
-      },
+      user,
       token: token.token,
       tokenType: token.tokenType,
       expiresIn: token.expiresIn,

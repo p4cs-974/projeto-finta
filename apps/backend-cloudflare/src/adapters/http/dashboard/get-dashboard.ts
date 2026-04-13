@@ -14,7 +14,7 @@ export async function handleGetDashboard(
   request: Request,
   env: AppEnv,
 ): Promise<Response> {
-  const auth = await requireAuth(request, env.JWT_SECRET);
+  const auth = await requireAuth(request, env.JWT_SECRET, env.DB);
   const userId = parseAuthenticatedUserId(auth.sub);
   const service = new DashboardService({
     favoritesReader: new D1FavoriteAssetRepository(env.DB),

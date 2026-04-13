@@ -40,7 +40,7 @@ export async function handleRemoveFavorite(
   request: Request,
   env: AppEnv,
 ): Promise<Response> {
-  const auth = await requireAuth(request, env.JWT_SECRET);
+  const auth = await requireAuth(request, env.JWT_SECRET, env.DB);
   const payload = parseRemoveFavoriteRequest(await parseJsonRequest(request));
   const userId = parseAuthenticatedUserId(auth.sub);
   const repository = new D1UserAssetRepository(env.DB);
