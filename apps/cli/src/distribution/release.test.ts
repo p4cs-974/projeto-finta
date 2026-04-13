@@ -32,7 +32,6 @@ describe("createReleaseOutputs", () => {
       version: "1.2.3",
       publishedAt: "2026-04-12T21:00:00.000Z",
       releasesDir,
-      artifactBaseUrl: "https://finta.p4cs.com.br/releases",
     });
 
     expect(outputs.manifest.version).toBe("1.2.3");
@@ -43,12 +42,12 @@ describe("createReleaseOutputs", () => {
     expect(outputs.manifest.targets["linux-arm64"].size).toBe(
       "linux-arm64".length,
     );
-    expect(outputs.latestManifestPath).toBe(
-      join(releasesDir, "latest", "manifest.json"),
+    expect(outputs.versionManifestPath).toBe(
+      join(releasesDir, "1.2.3", "manifest.json"),
     );
-    expect(outputs.generatedModuleSource).toContain(
-      '"manifestUrl": "https://finta.p4cs.com.br/releases/latest/manifest.json"',
+    expect(outputs.manifest.install.manifestUrl).toBe(
+      "https://finta.p4cs.com.br/releases/latest/manifest.json",
     );
-    expect(outputs.generatedModuleSource).toContain('"linux-arm64"');
+    expect(outputs.manifest.targets["linux-arm64"]).toBeDefined();
   });
 });

@@ -1,10 +1,13 @@
-import { latestReleaseManifest } from "@finta/cli-distribution";
+import {
+  LATEST_MANIFEST_OBJECT_KEY,
+  RELEASE_MANIFEST_CONTENT_TYPE,
+} from "@finta/cli-distribution";
+
+import { serveReleaseObject } from "@/lib/cli-release-storage";
 
 export async function GET() {
-  return Response.json(latestReleaseManifest, {
-    status: 200,
-    headers: {
-      "cache-control": "public, max-age=300, s-maxage=300",
-    },
-  });
+  return await serveReleaseObject(
+    LATEST_MANIFEST_OBJECT_KEY,
+    RELEASE_MANIFEST_CONTENT_TYPE,
+  );
 }

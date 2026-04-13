@@ -25,21 +25,24 @@ describe("CLI distribution contract", () => {
     const manifest = createReleaseManifest({
       version: "1.2.3",
       publishedAt: "2026-04-12T18:30:00.000Z",
-      artifactBaseUrl: "https://downloads.finta.test/releases",
       targets: {
         "darwin-x64": {
+          url: "https://downloads.finta.test/releases/1.2.3/finta-darwin-x64",
           sha256: "a".repeat(64),
           size: 101,
         },
         "darwin-arm64": {
+          url: "https://downloads.finta.test/releases/1.2.3/finta-darwin-arm64",
           sha256: "b".repeat(64),
           size: 102,
         },
         "linux-x64": {
+          url: "https://downloads.finta.test/releases/1.2.3/finta-linux-x64",
           sha256: "c".repeat(64),
           size: 103,
         },
         "linux-arm64": {
+          url: "https://downloads.finta.test/releases/1.2.3/finta-linux-arm64",
           sha256: "d".repeat(64),
           size: 104,
         },

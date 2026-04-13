@@ -10,6 +10,9 @@
     "dev": "bun run src/index.tsx",
     "build": "bun build src/index.tsx --outdir dist --target bun",
     "build:release": "bun run scripts/build-release.ts",
+    "publish:release": "bun run scripts/publish-release.ts",
+    "verify:release": "bun run scripts/verify-release.ts",
+    "promote:release": "bun run scripts/promote-release.ts",
     "check": "bun run type-check",
     "test": "vitest run",
     "type-check": "tsc --noEmit"

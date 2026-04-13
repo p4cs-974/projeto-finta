@@ -4,10 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import {
-  RELEASE_ARTIFACT_BASE_URL,
-  RELEASE_TARGETS,
-} from "@finta/cli-distribution";
+import { RELEASE_TARGETS } from "@finta/cli-distribution";
 
 import { RELEASES_DIR, writeReleaseOutputs } from "../src/distribution/release";
 import { CLI_VERSION } from "../src/version";
@@ -78,8 +75,6 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const version = args.version ?? CLI_VERSION;
   const publishedAt = args["published-at"] ?? new Date().toISOString();
-  const artifactBaseUrl =
-    args["artifact-base-url"] ?? RELEASE_ARTIFACT_BASE_URL;
   const targetKeys = (args.targets?.split(",") ??
     RELEASE_TARGETS.map(
       (target) => target.key,
@@ -94,12 +89,9 @@ async function main() {
     version,
     publishedAt,
     releasesDir: RELEASES_DIR,
-    artifactBaseUrl,
   });
 
   process.stdout.write(`Wrote ${outputs.versionManifestPath}\n`);
-  process.stdout.write(`Wrote ${outputs.latestManifestPath}\n`);
-  process.stdout.write(`Wrote ${outputs.generatedModulePath}\n`);
 }
 
 main().catch((error) => {

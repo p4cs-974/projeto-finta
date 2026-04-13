@@ -40,21 +40,24 @@ async function startFixtureServer(options: {
   const manifest = createReleaseManifest({
     version: "1.2.3",
     publishedAt: "2026-04-12T20:00:00.000Z",
-    artifactBaseUrl: "http://127.0.0.1:0/releases",
     targets: {
       "darwin-x64": {
+        url: "http://127.0.0.1:0/releases/1.2.3/finta-darwin-x64",
         sha256: "a".repeat(64),
         size: 100,
       },
       "darwin-arm64": {
+        url: "http://127.0.0.1:0/releases/1.2.3/finta-darwin-arm64",
         sha256: "b".repeat(64),
         size: 100,
       },
       "linux-x64": {
+        url: "http://127.0.0.1:0/releases/1.2.3/finta-linux-x64",
         sha256: "c".repeat(64),
         size: 100,
       },
       "linux-arm64": {
+        url: "http://127.0.0.1:0/releases/1.2.3/finta-linux-arm64",
         sha256: "d".repeat(64),
         size: 100,
       },
@@ -64,7 +67,7 @@ async function startFixtureServer(options: {
   const server = createServer((request, response) => {
     if (request.url === "/releases/latest/manifest.json") {
       response.setHeader("content-type", "application/json; charset=utf-8");
-      response.end(JSON.stringify(manifest));
+      response.end(JSON.stringify(manifest, null, 2));
       return;
     }
 

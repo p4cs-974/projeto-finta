@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "channel": "stable",
+  "name": "finta",
+  "version": "0.1.0",
+  "publishedAt": "2026-04-13T04:29:49.574Z",
+  "install": {
+    "command": "curl -fsSL https://finta.p4cs.com.br/install.sh | bash",
+    "bootstrapUrl": "https://finta.p4cs.com.br/install.sh",
+    "manifestUrl": "https://finta.p4cs.com.br/releases/latest/manifest.json"
+  },
+  "targets": {
+    "darwin-x64": {
+      "os": "darwin",
+      "arch": "x64",
+      "url": "https://finta.p4cs.com.br/releases/0.1.0/finta-darwin-x64",
+      "sha256": "1f792b6ec58d8d05165ceca64a48e878b9ea9e74dc2d5c8da36c6d495e775cc2",
+      "size": 64595248
+    },
+    "darwin-arm64": {
+      "os": "darwin",
+      "arch": "arm64",
+      "url": "https://finta.p4cs.com.br/releases/0.1.0/finta-darwin-arm64",
+      "sha256": "600f775c05e892932a620105ea64e9295a00d78ab3cf278ef6f74283b5c77186",
+      "size": 59878704
+    },
+    "linux-x64": {
+      "os": "linux",
+      "arch": "x64",
+      "url": "https://finta.p4cs.com.br/releases/0.1.0/finta-linux-x64",
+      "sha256": "bec6ef19783df175bc1c853179e49b7cb4fe4de70b1850b1463592e26a0f8364",
+      "size": 102001712
+    },
+    "linux-arm64": {
+      "os": "linux",
+      "arch": "arm64",
+      "url": "https://finta.p4cs.com.br/releases/0.1.0/finta-linux-arm64",
+      "sha256": "63745e117037e2d2ff9e1f1bea7357711f689423515002012f3033bb253d5125",
+      "size": 96391722
+    }
+  }
+}

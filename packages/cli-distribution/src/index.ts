@@ -2,9 +2,16 @@ export const RELEASE_SCHEMA_VERSION = 1;
 export const RELEASE_CHANNEL = "stable";
 export const CLI_NAME = "finta";
 export const CANONICAL_HOST = "https://finta.p4cs.com.br";
+export const RELEASES_PATH_PREFIX = "releases";
+export const RELEASE_MANIFEST_FILENAME = "manifest.json";
 export const CANONICAL_BOOTSTRAP_URL = `${CANONICAL_HOST}/install.sh`;
-export const CANONICAL_MANIFEST_URL = `${CANONICAL_HOST}/releases/latest/manifest.json`;
+export const CANONICAL_MANIFEST_URL = `${CANONICAL_HOST}/${RELEASES_PATH_PREFIX}/latest/${RELEASE_MANIFEST_FILENAME}`;
 export const CANONICAL_INSTALL_COMMAND = `curl -fsSL ${CANONICAL_BOOTSTRAP_URL} | bash`;
+export const VERSIONED_RELEASE_CACHE_CONTROL =
+  "public, max-age=31536000, immutable";
+export const LATEST_RELEASE_CACHE_CONTROL = "public, max-age=300, s-maxage=300";
+export const RELEASE_BINARY_CONTENT_TYPE = "application/octet-stream";
+export const RELEASE_MANIFEST_CONTENT_TYPE = "application/json; charset=utf-8";
 
 export type SupportedTargetKey =
   | "darwin-x64"
@@ -20,6 +27,7 @@ export type SupportedTarget = {
 };
 
 export type ReleaseTargetArtifact = {
+  url: string;
   sha256: string;
   size: number;
 };
@@ -47,7 +55,7 @@ export type ReleaseManifest = {
   >;
 };
 
-export const RELEASE_ARTIFACT_BASE_URL = `${CANONICAL_HOST}/releases`;
+export const RELEASE_ARTIFACT_BASE_URL = `${CANONICAL_HOST}/${RELEASES_PATH_PREFIX}`;
 
 export const RELEASE_TARGETS: SupportedTarget[] = [
   {
@@ -80,14 +88,51 @@ function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, "");
 }
 
+export function getReleasePublicUrl(pathname: string, host = CANONICAL_HOST) {
+  return `${trimTrailingSlash(host)}/${pathname.replace(/^\/+/, "")}`;
+}
+
+export function getVersionManifestObjectKey(version: string) {
+  return `${RELEASES_PATH_PREFIX}/${version}/${RELEASE_MANIFEST_FILENAME}`;
+}
+
+export const LATEST_MANIFEST_OBJECT_KEY = `${RELEASES_PATH_PREFIX}/latest/${RELEASE_MANIFEST_FILENAME}`;
+
+export function getVersionManifestUrl(version: string, host = CANONICAL_HOST) {
+  return getReleasePublicUrl(getVersionManifestObjectKey(version), host);
+}
+
+export function getReleaseArtifactObjectKey(
+  version: string,
+  targetKey: SupportedTargetKey,
+) {
+  const target = RELEASE_TARGETS.find(
+    (candidate) => candidate.key === targetKey,
+  );
+
+  if (!target) {
+    throw new Error(`Unsupported release target: ${targetKey}`);
+  }
+
+  return `${RELEASES_PATH_PREFIX}/${version}/${target.artifactName}`;
+}
+
+export function getReleaseArtifactUrl(
+  version: string,
+  targetKey: SupportedTargetKey,
+  host = CANONICAL_HOST,
+) {
+  return getReleasePublicUrl(
+    getReleaseArtifactObjectKey(version, targetKey),
+    host,
+  );
+}
+
 export function createReleaseManifest(input: {
   version: string;
   publishedAt: string;
-  artifactBaseUrl: string;
   targets: Record<SupportedTargetKey, ReleaseTargetArtifact>;
 }): ReleaseManifest {
-  const artifactBaseUrl = trimTrailingSlash(input.artifactBaseUrl);
-
   return {
     schemaVersion: RELEASE_SCHEMA_VERSION,
     channel: RELEASE_CHANNEL,
@@ -105,7 +150,7 @@ export function createReleaseManifest(input: {
         {
           os: target.os,
           arch: target.arch,
-          url: `${artifactBaseUrl}/${input.version}/${target.artifactName}`,
+          url: input.targets[target.key].url,
           sha256: input.targets[target.key].sha256,
           size: input.targets[target.key].size,
         },
@@ -206,7 +251,8 @@ detect_arch() {
 }
 
 extract_version() {
-  printf '%s' "$1" | sed -n 's/.*"version":"\\([^"]*\\)".*/\\1/p'
+  compact_manifest=$(printf '%s' "$1" | tr -d '\n\r\t ')
+  printf '%s' "$compact_manifest" | sed -n 's/.*"version":"\\([^"]*\\)".*/\\1/p'
 }
 
 extract_target_line() {
@@ -287,5 +333,3 @@ info "  finta --help"
 info "  finta login"
 `;
 }
-
-export { latestReleaseManifest } from "./generated/latest-release";

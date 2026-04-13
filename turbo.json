@@ -12,10 +12,25 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*", ".env.*local"],
-      "outputs": [".next/**", "!.next/cache/**", ".open-next/**", ".wrangler/**", "dist/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        ".open-next/**",
+        ".wrangler/**",
+        "dist/**"
+      ]
+    },
+    "build:release": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/releases/**"]
     },
     "cf-typegen": {
-      "inputs": ["$TURBO_DEFAULT$", "wrangler.json", "wrangler.jsonc", "wrangler.toml"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "wrangler.json",
+        "wrangler.jsonc",
+        "wrangler.toml"
+      ],
       "outputs": ["env.d.ts", "worker-configuration.d.ts"]
     },
     "check": {
@@ -28,6 +43,21 @@
     },
     "lint": {
       "dependsOn": ["^lint"]
+    },
+    "publish:release": {
+      "cache": false,
+      "dependsOn": ["build:release"]
+    },
+    "verify:release": {
+      "cache": false,
+      "dependsOn": ["publish:release"]
+    },
+    "promote:release": {
+      "cache": false,
+      "dependsOn": ["verify:release"]
+    },
+    "smoke:release": {
+      "cache": false
     },
     "test": {
       "dependsOn": ["^build"],
