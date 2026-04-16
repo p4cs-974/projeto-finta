@@ -1,0 +1,56 @@
+@startuml 07-op-realizar-login
+left to right direction
+skinparam shadowing false
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #425466
+skinparam ArrowThickness 1.2
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #486581
+  FontColor #102A43
+}
+skinparam note {
+  BackgroundColor #F8FAFB
+  BorderColor #A0AEC0
+  FontColor #102A43
+}
+
+title Operacao realizarLogin
+
+class "realizarLogin()" as RealizarLogin <<operation>> {
+  + email: string
+  + senha: string
+}
+
+class RealizarLoginRequest <<request>> {
+  + email: string
+  + senha: string
+}
+
+class TokenJWT <<response>> {
+  + accessToken: string
+  + tokenType: string = "Bearer"
+  + expiresAt: datetime
+}
+
+class ErroAutenticacao <<error>> {
+  + status: integer = 401
+  + codigo: string = "INVALID_CREDENTIALS"
+  + mensagem: string
+  + timestamp: datetime
+}
+
+RealizarLogin --> RealizarLoginRequest : recebe
+RealizarLogin --> TokenJWT : retorna
+RealizarLogin --> ErroAutenticacao : falha
+
+note bottom of RealizarLogin
+Valida credenciais e emite
+um token JWT Bearer.
+end note
+
+@enduml

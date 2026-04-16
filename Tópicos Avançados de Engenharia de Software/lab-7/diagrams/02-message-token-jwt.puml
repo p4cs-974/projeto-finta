@@ -1,0 +1,32 @@
+@startuml 02-message-token-jwt
+skinparam shadowing false
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #486581
+  FontColor #102A43
+}
+skinparam note {
+  BackgroundColor #F8FAFB
+  BorderColor #A0AEC0
+  FontColor #102A43
+}
+
+title TokenJWT
+
+class TokenJWT <<response>> {
+  + accessToken: string
+  + tokenType: string = "Bearer"
+  + expiresAt: datetime
+}
+
+note right of TokenJWT
+Mensagem de resposta da operacao
+realizarLogin.
+end note
+
+@enduml
