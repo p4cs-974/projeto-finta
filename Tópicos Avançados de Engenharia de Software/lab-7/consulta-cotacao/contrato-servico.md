@@ -3,7 +3,7 @@
 **Projeto:** Consulta de Cotação de Ativos (Ações e Criptomoedas)
 **Serviço:** Consulta de Cotação
 **Tipo:** Serviço de Tarefa (orquestrador do processo de consulta)
-**Autor:** Gabriel Albertini
+**Autor:** Alexandre Pierri
 **Data de emissão:** 15/04/2026
 
 ---
@@ -220,9 +220,3 @@ Medido entre o recebimento da requisição HTTP no serviço e o envio da respost
 - SLA revisado trimestralmente.
 - Quedas abaixo de 99,5% de disponibilidade mensal geram post-mortem em até 5 dias úteis.
 
----
-
-## Referências
-
-- Lab 6 — *Análise de Serviços* (documento base com os serviços candidatos identificados).
-- Lab 1 — *Processo TO-BE de Consulta de Cotação de Ativos*.
