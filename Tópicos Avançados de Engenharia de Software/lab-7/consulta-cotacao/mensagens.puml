@@ -1,0 +1,104 @@
+@startuml EsquemasMensagensConsultaCotacao
+!pragma layout smetana
+title Esquemas de Mensagens - Serviço de Consulta de Cotação
+
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #2C3E50
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam stereotypeNBackgroundColor #FFF4E6
+
+' =============== REQUISIÇÃO ===============
+package "Requisição" <<Rectangle>> {
+
+  class ReceberSolicitacaoConsultaRequest <<Message / Input>> {
+    + tipoAtivo        : TipoAtivo  {obrigatório}
+    + simboloInformado : string     {obrigatório, 1..15}
+    + tokenBearer      : string     {obrigatório, JWT Bearer}
+  }
+
+  class ConsultarCotacaoAtivoRequest <<Message / Input>> {
+    + tipoAtivo   : TipoAtivo {obrigatório, normalizado}
+    + simbolo     : string    {obrigatório, normalizado}
+    + tokenBearer : string    {obrigatório, JWT Bearer}
+  }
+
+  enum TipoAtivo {
+    ACAO
+    CRIPTO
+  }
+
+  ReceberSolicitacaoConsultaRequest --> TipoAtivo
+  ConsultarCotacaoAtivoRequest --> TipoAtivo
+}
+
+' =============== RESPOSTA (SUCESSO) ===============
+package "Resposta (Sucesso)" <<Rectangle>> {
+
+  class ConsultaCotacaoResponse <<Message / Output>> {
+    + cotacao         : CotacaoFormatada
+    + origem          : OrigemDados
+    + provedorOrigem  : string    {quando origem=PROVEDOR_EXTERNO}
+    + atualizadoEm    : datetime  {ISO-8601, UTC}
+  }
+
+  class CotacaoFormatada <<DTO>> {
+    + tipoAtivo      : TipoAtivo
+    + simbolo        : string
+    + preco          : decimal(18,8)
+    + moeda          : string        {ISO-4217}
+    + variacaoDia    : decimal(8,4)  {percentual}
+    + volume         : decimal(20,2)
+    + dataReferencia : datetime      {ISO-8601, UTC}
+  }
+
+  enum OrigemDados {
+    CACHE
+    PROVEDOR_EXTERNO
+  }
+
+  ConsultaCotacaoResponse "1" *-- "1" CotacaoFormatada
+  ConsultaCotacaoResponse --> OrigemDados
+  CotacaoFormatada --> TipoAtivo
+}
+
+' =============== RESPOSTA (ERRO) ===============
+package "Resposta (Erro)" <<Rectangle>> {
+
+  class ErroConsulta <<Message / Error>> {
+    + codigo   : int        {401 | 422 | 404 | 502}
+    + chave    : ChaveErro
+    + mensagem : string
+    + traceId  : string     {rastreabilidade}
+  }
+
+  enum ChaveErro {
+    INVALID_TOKEN
+    VALIDATION_ERROR
+    ASSET_NOT_FOUND
+    EXTERNAL_SERVICE_ERROR
+  }
+
+  ErroConsulta --> ChaveErro
+}
+
+note right of ReceberSolicitacaoConsultaRequest
+  **Operação:** receberSolicitacaoConsulta
+  Entrada bruta vinda do cliente (API gateway).
+  O símbolo ainda não foi normalizado.
+end note
+
+note right of ConsultarCotacaoAtivoRequest
+  **Operação:** consultarCotacaoAtivo
+  Invocada internamente após normalização
+  pelo Serviço de Cotação de Ativo.
+end note
+
+note bottom of ErroConsulta
+  401 INVALID_TOKEN       → falha de autenticação
+  422 VALIDATION_ERROR    → símbolo/tipo inválidos
+  404 ASSET_NOT_FOUND     → ativo inexistente
+  502 EXTERNAL_SERVICE_ERROR → falha do provedor externo
+end note
+
+@enduml

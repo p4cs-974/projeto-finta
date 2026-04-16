@@ -1,0 +1,75 @@
+@startuml InterfaceConsultaCotacao
+!pragma layout smetana
+title Interface - Serviço de Consulta de Cotação
+
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #2C3E50
+skinparam stereotypeCBackgroundColor #E8F4FD
+
+interface "IConsultaCotacao" as ISvc <<Service Interface>> {
+  + receberSolicitacaoConsulta(req: ReceberSolicitacaoConsultaRequest): ConsultaCotacaoResponse
+  + consultarCotacaoAtivo(req: ConsultarCotacaoAtivoRequest): ConsultaCotacaoResponse
+}
+
+class ReceberSolicitacaoConsultaRequest <<DTO / Entrada>> {
+  + tipoAtivo        : TipoAtivo  {ACAO | CRIPTO}
+  + simboloInformado : string     {bruto, 1..15}
+  + tokenBearer      : string     {JWT Bearer}
+}
+
+class ConsultarCotacaoAtivoRequest <<DTO / Entrada>> {
+  + tipoAtivo   : TipoAtivo
+  + simbolo     : string   {normalizado}
+  + tokenBearer : string
+}
+
+class ConsultaCotacaoResponse <<DTO / Saída>> {
+  + cotacao        : CotacaoFormatada
+  + origem         : OrigemDados {CACHE | PROVEDOR_EXTERNO}
+  + provedorOrigem : string
+  + atualizadoEm   : datetime (ISO-8601, UTC)
+}
+
+class CotacaoFormatada <<DTO>> {
+  + tipoAtivo      : TipoAtivo
+  + simbolo        : string
+  + preco          : decimal(18,8)
+  + moeda          : string (ISO-4217)
+  + variacaoDia    : decimal(8,4)
+  + volume         : decimal(20,2)
+  + dataReferencia : datetime (UTC)
+}
+
+class ErroConsulta <<DTO / Erro>> {
+  + codigo   : int        {401 | 422 | 404 | 502}
+  + chave    : string     {INVALID_TOKEN | VALIDATION_ERROR | ASSET_NOT_FOUND | EXTERNAL_SERVICE_ERROR}
+  + mensagem : string
+  + traceId  : string
+}
+
+enum TipoAtivo {
+  ACAO
+  CRIPTO
+}
+
+ISvc ..> ReceberSolicitacaoConsultaRequest : consome
+ISvc ..> ConsultarCotacaoAtivoRequest      : consome
+ISvc ..> ConsultaCotacaoResponse           : produz
+ISvc ..> ErroConsulta                      : lança
+ConsultaCotacaoResponse --> CotacaoFormatada
+CotacaoFormatada --> TipoAtivo
+ReceberSolicitacaoConsultaRequest --> TipoAtivo
+ConsultarCotacaoAtivoRequest --> TipoAtivo
+
+note right of ISvc
+  **Serviço:** Tarefa / Orquestrador
+  **Operações:**
+   - receberSolicitacaoConsulta (entry-point externo)
+   - consultarCotacaoAtivo (invocação interna)
+  **Erros:** 401, 422, 404, 502
+  Orquestra: Autenticação → Cotação de Ativo
+  → Cache → Integração com Provedores.
+end note
+
+@enduml
