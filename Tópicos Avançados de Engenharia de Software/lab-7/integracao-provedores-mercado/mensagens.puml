@@ -1,0 +1,82 @@
+@startuml EsquemasMensagensIntegracaoProvedoresMercado
+!pragma layout smetana
+title Esquemas de Mensagens - Serviço de Integração com Provedores de Mercado
+
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #2C3E50
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam stereotypeNBackgroundColor #FFF4E6
+
+' =============== REQUISIÇÃO ===============
+package "Requisição" <<Rectangle>> {
+
+  class ConsultarCotacaoExternaRequest <<Message / Input>> {
+    + tipoAtivo : TipoAtivo  {obrigatório}
+    + simbolo  : string      {obrigatório, uppercase, 1..15}
+    --
+    <i>Entrada já normalizada e validada</i>
+    <i>pelo Serviço de Cotação de Ativo.</i>
+  }
+
+  enum TipoAtivo {
+    ACAO
+    CRIPTO
+  }
+
+  ConsultarCotacaoExternaRequest --> TipoAtivo
+}
+
+' =============== RESPOSTA (SUCESSO) ===============
+package "Resposta (Sucesso)" <<Rectangle>> {
+
+  class ConsultarCotacaoExternaResponse <<Message / Output>> {
+    + cotacao        : CotacaoNormalizada
+    + provedorOrigem : string   {ex: "B3_API", "COINGECKO"}
+    + timestamp      : datetime {ISO-8601, UTC}
+  }
+
+  class CotacaoNormalizada <<DTO>> {
+    + tipoAtivo      : TipoAtivo
+    + simbolo        : string
+    + preco          : decimal(18,8)
+    + moeda          : string         {ISO-4217}
+    + variacaoDia    : decimal(8,4)   {percentual}
+    + volume         : decimal(20,2)
+    + dataReferencia : datetime       {ISO-8601, UTC}
+  }
+
+  ConsultarCotacaoExternaResponse "1" *-- "1" CotacaoNormalizada
+  CotacaoNormalizada --> TipoAtivo
+}
+
+' =============== RESPOSTA (ERRO) ===============
+package "Resposta (Erro)" <<Rectangle>> {
+
+  class ErroIntegracao <<Message / Error>> {
+    + codigo   : int     {404 | 502}
+    + chave    : ChaveErro
+    + mensagem : string
+    + detalhe  : string  {opcional - debug}
+  }
+
+  enum ChaveErro {
+    ASSET_NOT_FOUND
+    EXTERNAL_SERVICE_ERROR
+  }
+
+  ErroIntegracao --> ChaveErro
+}
+
+note right of ConsultarCotacaoExternaRequest
+  **Operação:** consultarCotacaoExterna
+  Invocada pelo Serviço de Consulta
+  de Cotação (orquestrador).
+end note
+
+note bottom of ErroIntegracao
+  404 ASSET_NOT_FOUND → ativo inexistente no provedor
+  502 EXTERNAL_SERVICE_ERROR → timeout/falha/indisponibilidade
+end note
+
+@enduml
