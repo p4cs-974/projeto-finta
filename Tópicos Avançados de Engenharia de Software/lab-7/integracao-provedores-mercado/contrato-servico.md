@@ -18,7 +18,7 @@ Operação exposta: `consultarCotacaoExterna(tipoAtivo, simbolo)`
 
 ## 1. Esquemas de Mensagens
 
-Os esquemas de entrada, saída de sucesso e saída de erro da operação `consultarCotacaoExterna` estão representados no diagrama de classes UML abaixo (fonte em `mensagens.puml`):
+Os esquemas de entrada, saída de sucesso e saída de erro da operação `consultarCotacaoExterna` estão representados no diagrama de classes UML abaixo:
 
 ![Esquemas de Mensagens](./EsquemasMensagensIntegracaoProvedoresMercado.png)
 
