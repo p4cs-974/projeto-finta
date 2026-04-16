@@ -1,0 +1,40 @@
+@startuml
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+hide empty members
+left to right direction
+
+title Interfaces de Servico - Servico de Cotacao de Ativo
+
+interface "ICotacaoAtivoService" as ICotacaoAtivoService {
+  + validarAtivoConsulta(tipoAtivo: AssetType?, simboloInformado: string): ConsultaAtivoValida
+}
+
+class "Servico de Cotacao de Ativo" as ServicoCotacaoAtivo <<Servico de Entidade>> {
+  + validarAtivoConsulta(tipoAtivo: AssetType?, simboloInformado: string): ConsultaAtivoValida
+}
+
+class "Servico de Consulta de Cotacao" as ServicoConsultaCotacao <<Servico de Tarefa>>
+
+class "ConsultaAtivoValida" as ConsultaAtivoValida {
+  + tipoAtivo: AssetType
+  + simboloNormalizado: string
+}
+
+class "ErroPadrao" as ErroPadrao {
+  + error.code: string
+  + error.message: string
+  + error.details.fieldErrors?: map<string, string[]>
+}
+
+ServicoCotacaoAtivo ..|> ICotacaoAtivoService
+ServicoConsultaCotacao ..> ICotacaoAtivoService : valida ativo
+ICotacaoAtivoService ..> ConsultaAtivoValida : retorno sucesso
+ICotacaoAtivoService ..> ErroPadrao : retorno erro 422/500
+
+note right of ServicoCotacaoAtivo
+Contrato de design derivado do Lab 6.
+Uso interno no fluxo de consulta.
+end note
+
+@enduml
