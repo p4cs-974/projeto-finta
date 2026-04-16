@@ -22,6 +22,12 @@
     "prettier": "^3.0.0"
   },
   "packageManager": "pnpm@10.17.1",
+  "pnpm": {
+    "supportedArchitectures": {
+      "os": ["darwin", "linux"],
+      "cpu": ["x64", "arm64"]
+    }
+  },
   "dependencies": {
     "@types/node": "^25.4.0",
     "zod": "^4.3.6"
