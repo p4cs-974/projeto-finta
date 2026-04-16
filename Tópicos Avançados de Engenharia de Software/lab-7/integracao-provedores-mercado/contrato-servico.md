@@ -187,10 +187,3 @@ Medido entre o recebimento da requisição pelo serviço e a emissão da respost
 ### 4.6 Penalidades e revisão
 - SLA revisado trimestralmente.
 - Quedas abaixo de 99% de disponibilidade mensal geram relatório post-mortem em até 5 dias úteis.
-
----
-
-## Referências
-
-- Lab 6 — *Análise de Serviços* (documento base com os serviços candidatos identificados).
-- Lab 1 — *Processo TO-BE de Consulta de Cotação de Ativos*.
