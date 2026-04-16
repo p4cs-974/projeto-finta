@@ -1,0 +1,64 @@
+@startuml
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+hide empty methods
+left to right direction
+
+title Esquemas de Mensagens - Servico de Cotacao de Ativo
+
+enum AssetType {
+  stock
+  crypto
+}
+
+enum ErrorCode {
+  VALIDATION_ERROR
+  INTERNAL_ERROR
+}
+
+class "ValidarAtivoConsultaRequest" <<Request>> {
+  + tipoAtivo: AssetType [0..1]
+  + simboloInformado: string
+}
+
+class "ConsultaAtivoValida" <<Response>> {
+  + tipoAtivo: AssetType
+  + simboloNormalizado: string
+}
+
+class "ErroPadrao" <<ErrorResponse>> {
+  + error: ErrorPayload
+}
+
+class "ErrorPayload" {
+  + code: ErrorCode
+  + message: string
+  + details: ErrorDetails [0..1]
+}
+
+class "ErrorDetails" {
+  + fieldErrors: map<string, string[]> [0..1]
+}
+
+ValidarAtivoConsultaRequest --> AssetType
+ConsultaAtivoValida --> AssetType
+ErroPadrao *-- ErrorPayload
+ErrorPayload o-- ErrorDetails
+
+note right of ValidarAtivoConsultaRequest
+Normalizacao da entrada:
+- trim(simboloInformado)
+- uppercase(simboloInformado)
+
+Regex por tipo:
+- stock: ^[A-Z]{4}[0-9]{1,2}(?:\.[A-Z]{2,5})?$
+- crypto: ^[A-Z0-9.-]{2,15}$
+end note
+
+note bottom of ErroPadrao
+Mapeamento esperado:
+- VALIDATION_ERROR -> HTTP 422
+- INTERNAL_ERROR -> HTTP 500
+end note
+
+@enduml
