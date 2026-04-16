@@ -180,11 +180,11 @@ A interface está representada no diagrama UML abaixo (fonte em `interface.puml`
 Por ser o serviço entry-point do fluxo, a meta é mais rigorosa que a das dependências individuais. Degradações parciais (ex.: provedor externo indisponível, servindo apenas via cache) **não** contam como indisponibilidade.
 
 ### 4.2 Tempo de resposta (end-to-end)
-| Percentil | Cache hit   | Cache miss (com chamada a provedor) |
+| Porcentagem | Cache hit   | Cache miss (com chamada a provedor) |
 |-----------|-------------|-------------------------------------|
-| p50       | ≤ 120 ms    | ≤ 700 ms                            |
-| p95       | ≤ 300 ms    | ≤ 2.000 ms                          |
-| p99       | ≤ 500 ms    | ≤ 3.500 ms                          |
+| 50%       | ≤ 120 ms    | ≤ 700 ms                            |
+| 95%       | ≤ 300 ms    | ≤ 2.000 ms                          |
+| 99%       | ≤ 500 ms    | ≤ 3.500 ms                          |
 
 Medido entre o recebimento da requisição HTTP no serviço e o envio da resposta ao cliente.
 
