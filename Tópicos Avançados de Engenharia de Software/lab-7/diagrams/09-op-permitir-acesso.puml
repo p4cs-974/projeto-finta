@@ -1,0 +1,59 @@
+@startuml 09-op-permitir-acesso
+left to right direction
+skinparam shadowing false
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #425466
+skinparam ArrowThickness 1.2
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #486581
+  FontColor #102A43
+}
+skinparam note {
+  BackgroundColor #F8FAFB
+  BorderColor #A0AEC0
+  FontColor #102A43
+}
+
+title Operacao permitirAcesso
+
+class "permitirAcesso()" as PermitirAcesso <<operation>> {
+  + usuarioId: UUID
+  + nome: string
+  + email: string
+  + expiresAt: datetime
+}
+
+class PermitirAcessoRequest <<request>> {
+  + usuarioId: UUID
+  + nome: string
+  + email: string
+  + expiresAt: datetime
+}
+
+class AcessoPermitido <<response>> {
+  + permitido: boolean
+  + usuarioId: UUID
+}
+
+class ErroAutenticacao <<error>> {
+  + status: integer = 401
+  + codigo: string = "INVALID_TOKEN"
+  + mensagem: string
+  + timestamp: datetime
+}
+
+PermitirAcesso --> PermitirAcessoRequest : recebe
+PermitirAcesso --> AcessoPermitido : retorna
+PermitirAcesso --> ErroAutenticacao : falha
+
+note bottom of PermitirAcesso
+Confirma que o contexto do usuario
+autenticado e valido para prosseguir.
+end note
+
+@enduml

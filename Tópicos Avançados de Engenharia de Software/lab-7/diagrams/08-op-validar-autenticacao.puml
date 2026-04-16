@@ -1,0 +1,55 @@
+@startuml 08-op-validar-autenticacao
+left to right direction
+skinparam shadowing false
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #425466
+skinparam ArrowThickness 1.2
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #486581
+  FontColor #102A43
+}
+skinparam note {
+  BackgroundColor #F8FAFB
+  BorderColor #A0AEC0
+  FontColor #102A43
+}
+
+title Operacao validarAutenticacao
+
+class "validarAutenticacao()" as ValidarAutenticacao <<operation>> {
+  + authorization: string
+}
+
+class ValidarAutenticacaoRequest <<request>> {
+  + authorization: string
+}
+
+class UsuarioAutenticado <<response>> {
+  + usuarioId: UUID
+  + nome: string
+  + email: string
+  + expiresAt: datetime
+}
+
+class ErroAutenticacao <<error>> {
+  + status: integer = 401
+  + codigo: string = "INVALID_TOKEN"
+  + mensagem: string
+  + timestamp: datetime
+}
+
+ValidarAutenticacao --> ValidarAutenticacaoRequest : recebe
+ValidarAutenticacao --> UsuarioAutenticado : retorna
+ValidarAutenticacao --> ErroAutenticacao : falha
+
+note bottom of ValidarAutenticacao
+Espera o header Authorization
+no formato Bearer <jwt>.
+end note
+
+@enduml
