@@ -1,5 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useKeyboard } from "@opentui/react";
+import type { QuoteWithCacheMeta } from "@finta/price-query";
+import type { AssetType } from "@finta/shared-kernel";
 
 import {
   api,
@@ -19,6 +21,15 @@ interface AuthScreenProps {
 
 type GuestMode = "login" | "register";
 type AuthField = "name" | "email" | "password";
+type AuthenticatedView = "home" | "quote-details";
+
+function formatSignedNumber(value: number, digits = 2) {
+  const formatted = value.toFixed(digits);
+  if (value > 0) {
+    return `+${formatted}`;
+  }
+  return formatted;
+}
 
 export function AuthScreen({
   config,
@@ -38,6 +49,13 @@ export function AuthScreen({
   const [focused, setFocused] = useState<AuthField | null>("email");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [authenticatedView, setAuthenticatedView] =
+    useState<AuthenticatedView>("home");
+  const [quoteSymbol, setQuoteSymbol] = useState("");
+  const [quoteType, setQuoteType] = useState<AssetType>("stock");
+  const [quoteResult, setQuoteResult] = useState<QuoteWithCacheMeta | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
 
   const authenticated = Boolean(config);
   const isRegister = mode === "register";
@@ -55,6 +73,16 @@ export function AuthScreen({
     }),
     [colors.card, colors.foreground, colors.mutedForeground],
   );
+
+  useEffect(() => {
+    if (!authenticated) {
+      setAuthenticatedView("home");
+      setQuoteResult(null);
+      setQuoteError(null);
+      setQuoteSymbol("");
+      setQuoteType("stock");
+    }
+  }, [authenticated]);
 
   const focusUp = useCallback(() => {
     setFocused((prev) => {
@@ -82,6 +110,33 @@ export function AuthScreen({
     setFocused(isRegister ? "email" : "name");
   }, [authenticated, isRegister]);
 
+  const handleLoadQuote = useCallback(async () => {
+    if (!config) {
+      return;
+    }
+
+    const symbol = quoteSymbol.trim().toUpperCase();
+    if (!symbol) {
+      setQuoteError("Type an asset symbol first (example: PETR4 or BTC)");
+      return;
+    }
+
+    setQuoteError(null);
+    setQuoteLoading(true);
+
+    try {
+      const result = await api.quotes.get(config.apiKey, symbol, quoteType);
+      setQuoteResult(result);
+    } catch (err) {
+      setQuoteResult(null);
+      setQuoteError(
+        err instanceof Error ? err.message : "Failed to load asset details",
+      );
+    } finally {
+      setQuoteLoading(false);
+    }
+  }, [config, quoteSymbol, quoteType]);
+
   useKeyboard((key) => {
     const phase = getPhase();
 
@@ -105,10 +160,39 @@ export function AuthScreen({
       return;
     }
 
-    if (authenticated) {
-      if (key.name === "return" && !loading) {
-        void handleLogout();
+    if (authenticated && config) {
+      if (authenticatedView === "home") {
+        if (key.name === "return" && !loading) {
+          void handleLogout();
+          return;
+        }
+
+        if (key.name === "d") {
+          setAuthenticatedView("quote-details");
+          setQuoteError(null);
+          return;
+        }
       }
+
+      if (authenticatedView === "quote-details") {
+        if (key.name === "escape") {
+          setAuthenticatedView("home");
+          setQuoteError(null);
+          return;
+        }
+
+        if (key.name === "tab") {
+          setQuoteType((prev) => (prev === "stock" ? "crypto" : "stock"));
+          setQuoteError(null);
+          return;
+        }
+
+        if (key.name === "return") {
+          void handleLoadQuote();
+          return;
+        }
+      }
+
       return;
     }
 
@@ -166,7 +250,7 @@ export function AuthScreen({
     }
   }, [onLogout]);
 
-  if (authenticated && config) {
+  if (authenticated && config && authenticatedView === "home") {
     return (
       <box
         style={{
@@ -204,12 +288,118 @@ export function AuthScreen({
           <text fg={colors.ring}>{config.keyName}</text>
           {notice && <text fg={colors.ring}>{notice}</text>}
           {error && <text fg={colors.destructive}>{`✗ ${error}`}</text>}
+          <text fg={colors.sidebarPrimary}>Press D to view asset indicators</text>
           <text fg={loading ? colors.mutedForeground : colors.sidebarPrimary}>
             {loading ? "Revoking key..." : "Press Enter to logout"}
           </text>
         </box>
 
-        <text fg={colors.ring}>{"Ctrl+T toggle theme  ·  Enter logout  ·  Ctrl+C exit  ·  Ctrl+Q quit"}</text>
+        <text fg={colors.ring}>
+          {"D asset details  ·  Enter logout  ·  Ctrl+T toggle theme  ·  Ctrl+C exit  ·  Ctrl+Q quit"}
+        </text>
+        {overlay}
+      </box>
+    );
+  }
+
+  if (authenticated && config && authenticatedView === "quote-details") {
+    const quote = quoteResult?.data;
+    const symbol = quote ? ("ticker" in quote ? quote.ticker : quote.symbol) : null;
+    const market = quote ? ("ticker" in quote ? quote.market : "CRYPTO") : null;
+
+    return (
+      <box
+        style={{
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          flexGrow: 1,
+          gap: 1,
+        }}
+      >
+        <box style={{ flexDirection: "column", alignItems: "center", gap: 0, marginBottom: 1 }}>
+          <text fg={colors.sidebarPrimary} attributes={1}>
+            ◆ FINTA
+          </text>
+          <text fg={colors.mutedForeground}>Asset indicator details</text>
+        </box>
+
+        <box
+          style={{
+            width: 68,
+            flexDirection: "column",
+            border: true,
+            borderColor: colors.border,
+            borderStyle: "rounded",
+            backgroundColor: colors.card,
+            padding: 2,
+            gap: 1,
+          }}
+        >
+          <box
+            title="Asset symbol"
+            style={{
+              border: true,
+              borderColor: colors.sidebarPrimary,
+              borderStyle: "rounded",
+              height: 3,
+              width: "100%",
+            }}
+          >
+            <input
+              placeholder="PETR4 or BTC"
+              value={quoteSymbol}
+              onInput={(value) => setQuoteSymbol(value.toUpperCase())}
+              onSubmit={() => void handleLoadQuote()}
+              focused
+              style={inputTheme}
+            />
+          </box>
+
+          <text fg={colors.mutedForeground}>
+            {`Type: ${quoteType} (press Tab to switch stock/crypto)`}
+          </text>
+
+          {quoteError && <text fg={colors.destructive}>{`✗ ${quoteError}`}</text>}
+
+          <text fg={quoteLoading ? colors.mutedForeground : colors.sidebarPrimary}>
+            {quoteLoading ? "Loading quote..." : "Press Enter to fetch asset details"}
+          </text>
+
+          {quoteResult && quote && symbol && market && (
+            <box
+              style={{
+                flexDirection: "column",
+                border: true,
+                borderColor: colors.input,
+                borderStyle: "rounded",
+                padding: 1,
+                gap: 0,
+              }}
+            >
+              <text fg={colors.sidebarPrimary} attributes={1}>{`Asset: ${symbol}`}</text>
+              <text fg={colors.foreground}>{`Name: ${quote.name}`}</text>
+              <text fg={colors.mutedForeground}>{`Market: ${market}`}</text>
+              <text fg={colors.mutedForeground}>{`Currency: ${quote.currency}`}</text>
+              <text fg={colors.foreground}>{`Price: ${quote.price.toFixed(2)}`}</text>
+              <text fg={quote.change >= 0 ? colors.sidebarPrimary : colors.destructive}>
+                {`Change: ${formatSignedNumber(quote.change)} (${formatSignedNumber(
+                  quote.changePercent,
+                )}%)`}
+              </text>
+              <text fg={colors.mutedForeground}>{`Quoted at: ${quote.quotedAt}`}</text>
+              <text fg={colors.mutedForeground}>{`Source: ${quoteResult.cache.source}`}</text>
+              <text fg={colors.mutedForeground}>
+                {`Stale: ${quoteResult.cache.stale ? "yes" : "no"}`}
+              </text>
+              <text fg={colors.mutedForeground}>{`Cache key: ${quoteResult.cache.key}`}</text>
+            </box>
+          )}
+        </box>
+
+        <text fg={colors.ring}>
+          {"Tab switch type  ·  Enter fetch  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"}
+        </text>
         {overlay}
       </box>
     );
@@ -305,8 +495,7 @@ export function AuthScreen({
           title="Password"
           style={{
             border: true,
-            borderColor:
-              focused === "password" ? colors.sidebarPrimary : colors.input,
+            borderColor: focused === "password" ? colors.sidebarPrimary : colors.input,
             borderStyle: "rounded",
             height: 3,
             width: "100%",

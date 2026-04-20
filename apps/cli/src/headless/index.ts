@@ -10,6 +10,27 @@ import {
   toStoredCliConfig,
 } from "../api/client";
 
+type QuoteApiResponse = {
+  data: {
+    ticker?: string;
+    symbol?: string;
+    name: string;
+    market?: string;
+    currency: string;
+    price: number;
+    change: number;
+    changePercent: number;
+    quotedAt: string;
+    logoUrl?: string | null;
+  };
+  cache: {
+    key: string;
+    updatedAt: string;
+    stale: boolean;
+    source: "cache" | "live";
+  };
+};
+
 function printJson(data: unknown) {
   process.stdout.write(JSON.stringify(data, null, 2) + "\n");
 }
@@ -106,6 +127,54 @@ function parseNamedArgs(args: string[]): Record<string, string> {
   }
 
   return parsed;
+}
+
+function parseAssetTypeFlag(
+  rawType: string | undefined,
+): "stock" | "crypto" | undefined {
+  if (!rawType) {
+    return undefined;
+  }
+
+  if (rawType === "stock" || rawType === "crypto") {
+    return rawType;
+  }
+
+  process.stderr.write("invalid --type value. expected: stock | crypto\n");
+  process.exit(1);
+}
+
+function formatSignedNumber(value: number, digits = 2) {
+  const formatted = value.toFixed(digits);
+  if (value > 0) {
+    return `+${formatted}`;
+  }
+  return formatted;
+}
+
+function printQuoteDetails(payload: QuoteApiResponse) {
+  const quote = payload.data;
+  const symbol = quote.ticker ?? quote.symbol ?? "-";
+  const market = quote.market ?? "CRYPTO";
+  const staleLabel = payload.cache.stale ? "yes" : "no";
+
+  process.stdout.write(
+    [
+      `Asset: ${symbol}`,
+      `Name: ${quote.name}`,
+      `Market: ${market}`,
+      `Currency: ${quote.currency}`,
+      `Price: ${quote.price.toFixed(2)}`,
+      `Change: ${formatSignedNumber(quote.change)} (${formatSignedNumber(
+        quote.changePercent,
+      )}%)`,
+      `Quoted at: ${quote.quotedAt}`,
+      `Source: ${payload.cache.source}`,
+      `Stale: ${staleLabel}`,
+      `Cache key: ${payload.cache.key}`,
+      `Cache updated at: ${payload.cache.updatedAt}`,
+    ].join("\n") + "\n",
+  );
 }
 
 async function promptFor(field: string): Promise<string> {
@@ -214,14 +283,17 @@ async function handleFavorites(args: string[]) {
 
 async function handleQuote(args: string[]) {
   const token = await requireApiKey();
-  const [ticker] = args;
+  const [ticker, ...rest] = args;
 
   if (!ticker) {
-    process.stderr.write("usage: finta quote <ticker>\n");
+    process.stderr.write("usage: finta quote <ticker> [--type <stock|crypto>]\n");
     process.exit(1);
   }
-  const data = await api.quotes.get(token, ticker);
-  printJson(data);
+
+  const flags = parseNamedArgs(rest);
+  const assetType = parseAssetTypeFlag(flags.type);
+  const data = (await api.quotes.get(token, ticker, assetType)) as QuoteApiResponse;
+  printQuoteDetails(data);
 }
 
 async function handleSearch(args: string[]) {
