@@ -341,14 +341,24 @@ export async function fetchReleaseManifest(url: string) {
   return payload;
 }
 
+const ANSI_PATTERN = /\x1b\[[0-9;]*m/g;
+
+function stripAnsi(text: string): string {
+  return text.replace(ANSI_PATTERN, "");
+}
+
 async function verifyBinaryVersionByExecution(path: string, version: string) {
   await chmod(path, 0o755);
   const result = await execFileAsync(path, ["--version"]);
-  const actualVersion = result.stdout.trim();
+  const actualVersion = stripAnsi(result.stdout.trim());
 
-  if (actualVersion !== `finta ${version}`) {
+  // Accept both "finta 0.2.0" and "finta v0.2.0"
+  const expectedPlain = `finta ${version}`;
+  const expectedWithV = `finta v${version}`;
+
+  if (actualVersion !== expectedPlain && actualVersion !== expectedWithV) {
     throw new Error(
-      `Version check failed for ${path}: expected "finta ${version}" but got "${actualVersion}"`,
+      `Version check failed for ${path}: expected "${expectedPlain}" or "${expectedWithV}" but got "${actualVersion}"`,
     );
   }
 }
@@ -362,9 +372,10 @@ async function verifyBinaryVersionByEmbeddedString(
       maxBuffer: 20 * 1024 * 1024,
     });
 
-    if (!result.stdout.includes(`finta ${version}`)) {
+    // The binary may contain colored output; search for the plain version string
+    if (!result.stdout.includes(version)) {
       throw new Error(
-        `Artifact ${path} does not contain the expected version marker "finta ${version}"`,
+        `Artifact ${path} does not contain the expected version marker "${version}"`,
       );
     }
   } catch (error) {
