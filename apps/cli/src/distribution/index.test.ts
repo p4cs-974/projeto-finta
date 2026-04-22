@@ -3,6 +3,8 @@ import { execFile as execFileCallback } from "node:child_process";
 
 import { describe, expect, it } from "vitest";
 
+import packageJson from "../../package.json";
+
 const execFile = promisify(execFileCallback);
 
 describe("standalone distribution entrypoint", () => {
@@ -15,6 +17,8 @@ describe("standalone distribution entrypoint", () => {
       },
     );
 
-    expect(result.stdout.trim()).toBe("finta 0.1.0");
+    // The version line now includes ANSI color codes
+    expect(result.stdout.trim()).toContain(`finta`);
+    expect(result.stdout.trim()).toContain(packageJson.version);
   });
 });
