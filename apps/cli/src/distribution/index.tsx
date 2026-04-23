@@ -7,6 +7,7 @@ import { loadConfig } from "../api/client";
 import { CLI_VERSION } from "../version";
 import { ThemeProvider } from "../theme-provider";
 import { App } from "../app";
+import { c } from "../style";
 
 function shouldPrintVersion(args: string[]) {
   return (
@@ -22,7 +23,7 @@ async function main() {
   const rawArgs = process.argv.slice(2);
 
   if (shouldPrintVersion(rawArgs)) {
-    process.stdout.write(`finta ${CLI_VERSION}\n`);
+    process.stdout.write(c.brand("finta") + c.dim(" v" + CLI_VERSION) + "\n");
     return;
   }
 
@@ -30,6 +31,11 @@ async function main() {
 
   if (help && !command) {
     await runHeadless({ name: "help", args: [] });
+    return;
+  }
+
+  if (help && command) {
+    await runHeadless({ name: "help", args: [command.name] });
     return;
   }
 
@@ -62,7 +68,7 @@ async function main() {
 
 main().catch((error) => {
   process.stderr.write(
-    `fatal: ${error instanceof Error ? error.message : String(error)}\n`,
+    c.error("✗") + " " + (error instanceof Error ? error.message : String(error)) + "\n",
   );
   process.exit(1);
 });

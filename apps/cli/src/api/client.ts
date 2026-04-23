@@ -1,7 +1,12 @@
 import { hostname } from "node:os";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 
+import type {
+  CachedQuoteSearchResponse,
+  QuoteWithCacheMeta,
+} from "@finta/price-query";
 import type { ApiErrorBody } from "@finta/shared-kernel";
+import type { AssetType } from "@finta/shared-kernel";
 
 const DEFAULT_API_URL = "http://localhost:8787";
 const DEFAULT_CLI_RATE_LIMIT_MAX_REQUESTS = 30;
@@ -93,6 +98,14 @@ function getCliRateLimitWindowMs(): number {
     process.env.FINTA_CLI_RATE_LIMIT_WINDOW_MS,
     DEFAULT_CLI_RATE_LIMIT_WINDOW_MS,
   );
+}
+
+function toAssetTypeParams(type?: AssetType): { type: "crypto" } | undefined {
+  if (type === "crypto") {
+    return { type: "crypto" };
+  }
+
+  return undefined;
 }
 
 export function getDeviceName(): string {
@@ -306,15 +319,22 @@ export const api = {
 
   quotes: {
     search: (token: string, query: string, type?: string) =>
-      request("/ativos/cache-search", {
+      request<CachedQuoteSearchResponse>("/ativos/cache-search", {
         token,
         params: { q: query, ...(type ? { type } : {}) },
       }),
 
-    get: (token: string, ticker: string) => request(`/ativos/${ticker}`, { token }),
+    get: (token: string, ticker: string, type?: AssetType) =>
+      request<QuoteWithCacheMeta>(`/ativos/${ticker}`, {
+        token,
+        params: toAssetTypeParams(type),
+      }),
 
-    getCached: (token: string, ticker: string) =>
-      request(`/ativos/${ticker}/cache`, { token }),
+    getCached: (token: string, ticker: string, type?: AssetType) =>
+      request<QuoteWithCacheMeta>(`/ativos/${ticker}/cache`, {
+        token,
+        params: toAssetTypeParams(type),
+      }),
   },
 
   recentAssets: {
