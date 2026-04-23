@@ -1,0 +1,23 @@
+@startuml 10-servico-autenticacao-interface
+skinparam shadowing false
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #486581
+  FontColor #102A43
+}
+
+title Interface do Servico de Autenticacao
+
+class "Servico de Autenticacao" as ServicoAutenticacao <<interface>> {
+  + realizarCadastro(nome, email, senha): UsuarioCadastrado
+  + realizarLogin(email, senha): TokenJWT
+  + validarAutenticacao(tokenBearer): UsuarioAutenticado
+  + permitirAcesso(usuarioAutenticado): AcessoPermitido
+}
+
+@enduml

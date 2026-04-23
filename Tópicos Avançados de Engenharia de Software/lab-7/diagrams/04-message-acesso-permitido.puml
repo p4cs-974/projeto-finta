@@ -1,0 +1,31 @@
+@startuml 04-message-acesso-permitido
+skinparam shadowing false
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #486581
+  FontColor #102A43
+}
+skinparam note {
+  BackgroundColor #F8FAFB
+  BorderColor #A0AEC0
+  FontColor #102A43
+}
+
+title AcessoPermitido
+
+class AcessoPermitido <<response>> {
+  + permitido: boolean
+  + usuarioId: UUID
+}
+
+note right of AcessoPermitido
+Mensagem de resposta da operacao
+permitirAcesso.
+end note
+
+@enduml

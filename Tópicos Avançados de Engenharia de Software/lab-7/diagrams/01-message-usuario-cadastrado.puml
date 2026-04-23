@@ -1,0 +1,33 @@
+@startuml 01-message-usuario-cadastrado
+skinparam shadowing false
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #486581
+  FontColor #102A43
+}
+skinparam note {
+  BackgroundColor #F8FAFB
+  BorderColor #A0AEC0
+  FontColor #102A43
+}
+
+title UsuarioCadastrado
+
+class UsuarioCadastrado <<response>> {
+  + id: UUID
+  + nome: string
+  + email: string
+  + criadoEm: datetime
+}
+
+note right of UsuarioCadastrado
+Mensagem de resposta da operacao
+realizarCadastro.
+end note
+
+@enduml

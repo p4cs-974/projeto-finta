@@ -1,0 +1,33 @@
+@startuml 05-message-erro-autenticacao
+skinparam shadowing false
+skinparam dpi 180
+skinparam backgroundColor #FCFCFA
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FFF6F6
+  BorderColor #B23A48
+  FontColor #7A1F2B
+}
+skinparam note {
+  BackgroundColor #FFF8F8
+  BorderColor #D9A5A5
+  FontColor #7A1F2B
+}
+
+title ErroAutenticacao
+
+class ErroAutenticacao <<error>> {
+  + status: integer
+  + codigo: string
+  + mensagem: string
+  + timestamp: datetime
+}
+
+note right of ErroAutenticacao
+Contrato de erro usado pelo servico
+de autenticacao.
+end note
+
+@enduml
