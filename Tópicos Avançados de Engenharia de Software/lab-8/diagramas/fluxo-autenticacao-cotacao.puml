@@ -1,0 +1,51 @@
+@startuml
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+title Fluxo web: autenticação e consulta de cotação
+
+actor "Usuário" as User
+participant "Frontend Web" as Frontend
+participant "Serviço de Autenticação" as Auth
+participant "Banco D1\n(usuários)" as D1
+database "Cache de Cotação\n(KV)" as Cache
+participant "Serviço de Consulta\nde Cotação" as Quote
+participant "Provedor Externo\n(Brapi/CoinCap)" as Provider
+
+User -> Frontend: informa e-mail e senha
+Frontend -> Auth: POST /auth/login\n{ email, password }
+Auth -> D1: buscar credenciais por e-mail
+D1 --> Auth: usuário + hash da senha
+Auth -> Auth: validar senha e emitir JWT
+Auth --> Frontend: 200 OK\n{ tokenType: Bearer, token }
+
+User -> Frontend: solicita cotação de ativo
+Frontend -> Quote: GET /ativos/{ticker}\nAuthorization: Bearer JWT
+Quote -> Auth: validar Bearer JWT
+
+alt token ausente, inválido ou expirado
+  Auth --> Quote: token inválido
+  Quote --> Frontend: 401 INVALID_TOKEN
+else token válido
+  Auth --> Quote: identidade autenticada
+  Quote -> Cache: get(assetType, symbol)
+
+  alt cache válido
+    Cache --> Quote: snapshot válido
+    Quote --> Frontend: 200 OK\nsource=cache, stale=false
+  else cache ausente
+    Cache --> Quote: null
+    Quote -> Provider: buscar cotação atual
+    Provider --> Quote: cotação do ativo
+    Quote -> Cache: salvar snapshot
+    Quote --> Frontend: 200 OK\nsource=live, stale=false
+  else cache expirado
+    Cache --> Quote: snapshot expirado
+    Quote --> Frontend: 200 OK\nsource=cache, stale=true
+    Quote -> Cache: adquirir lock de refresh
+    Cache --> Quote: lock adquirido
+    Quote ->> Provider: refresh em background
+    Provider -->> Quote: cotação atualizada
+    Quote ->> Cache: atualizar snapshot e liberar lock
+  end
+end
+@enduml
