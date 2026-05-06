@@ -11,6 +11,7 @@ import {
 } from "../api/client";
 import { CLI_VERSION } from "../version";
 import { c, box } from "../style";
+import { parseAssetTypeOrExit } from "./asset-type";
 
 type QuoteApiResponse = {
   data: {
@@ -297,21 +298,7 @@ function parseAssetTypeFlag(
     return undefined;
   }
 
-  if (rawType === "stock" || rawType === "crypto") {
-    return rawType;
-  }
-
-  process.stderr.write(
-    c.error("✗") +
-      " Invalid --type value: " +
-      c.code(rawType) +
-      "\n  Expected: " +
-      c.code("stock") +
-      " | " +
-      c.code("crypto") +
-      "\n",
-  );
-  process.exit(1);
+  return parseAssetTypeOrExit(rawType);
 }
 
 function formatSignedNumber(value: number, digits = 2) {
@@ -465,8 +452,8 @@ async function handleFavorites(args: string[]) {
   }
 
   if (subcommand === "add") {
-    const [symbol, assetType] = args.slice(1);
-    if (!symbol || !assetType) {
+    const [symbol, rawAssetType] = args.slice(1);
+    if (!symbol || !rawAssetType) {
       process.stderr.write(
         c.error("✗") +
           " Missing arguments.\n  Usage: " +
@@ -477,6 +464,7 @@ async function handleFavorites(args: string[]) {
       );
       process.exit(1);
     }
+    const assetType = parseAssetTypeOrExit(rawAssetType);
     const data = await api.favorites.add(token, symbol, assetType);
     process.stdout.write(
       c.success("✓") +
@@ -491,8 +479,8 @@ async function handleFavorites(args: string[]) {
   }
 
   if (subcommand === "remove") {
-    const [symbol, assetType] = args.slice(1);
-    if (!symbol || !assetType) {
+    const [symbol, rawAssetType] = args.slice(1);
+    if (!symbol || !rawAssetType) {
       process.stderr.write(
         c.error("✗") +
           " Missing arguments.\n  Usage: " +
@@ -503,6 +491,7 @@ async function handleFavorites(args: string[]) {
       );
       process.exit(1);
     }
+    const assetType = parseAssetTypeOrExit(rawAssetType);
     const data = await api.favorites.remove(token, symbol, assetType);
     process.stdout.write(
       c.success("✓") +
