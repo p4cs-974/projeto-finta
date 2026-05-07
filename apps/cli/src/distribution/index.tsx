@@ -27,29 +27,29 @@ async function main() {
     return;
   }
 
-  const { noUi, json: _, help, command } = parseCliArgs(rawArgs);
+  const { noUi, json, help, command } = parseCliArgs(rawArgs);
 
   if (help && !command) {
-    await runHeadless({ name: "help", args: [] });
+    await runHeadless({ name: "help", args: [] }, { json });
     return;
   }
 
   if (help && command) {
-    await runHeadless({ name: "help", args: [command.name] });
+    await runHeadless({ name: "help", args: [command.name] }, { json });
     return;
   }
 
   if (noUi || command) {
     if (command) {
-      await runHeadless(command);
+      await runHeadless(command, { json });
       return;
     }
-    await runHeadless({ name: "help", args: [] });
+    await runHeadless({ name: "help", args: [] }, { json });
     return;
   }
 
   if (!isInteractiveTerminal()) {
-    await runHeadless({ name: "help", args: [] });
+    await runHeadless({ name: "help", args: [] }, { json });
     return;
   }
 
@@ -59,16 +59,17 @@ async function main() {
 
   createRoot(renderer).render(
     <ThemeProvider>
-      <App
-        initialConfig={config}
-      />
+      <App initialConfig={config} />
     </ThemeProvider>,
   );
 }
 
 main().catch((error) => {
   process.stderr.write(
-    c.error("✗") + " " + (error instanceof Error ? error.message : String(error)) + "\n",
+    c.error("✗") +
+      " " +
+      (error instanceof Error ? error.message : String(error)) +
+      "\n",
   );
   process.exit(1);
 });
