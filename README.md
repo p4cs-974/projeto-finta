@@ -19,6 +19,16 @@ Facilitar o acompanhamento de indicadores financeiros, como valor de ações, ta
 - Autenticação.
 - Favoritos.
 
+## CLI
+
+Instale a CLI do Finta com:
+
+```bash
+curl -fsSL https://finta.p4cs.com.br/install.sh | bash
+```
+
+A CLI usa `https://api.finta.p4cs.com.br` por padrão. Para desenvolvimento local, execute os comandos com `FINTA_API_URL=http://localhost:8787`.
+
 ## Processos de negódio
 > Identificados em [Processos-de-negocio.md](./Tópicos%20Avançados%20de%20Engenharia%20de%20Software/lab-1/Processos-de-negocio.md).
 

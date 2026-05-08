@@ -9,7 +9,7 @@ import type {
 import type { ApiErrorBody } from "@finta/shared-kernel";
 import type { AssetType } from "@finta/shared-kernel";
 
-const DEFAULT_API_URL = "http://localhost:8787";
+const DEFAULT_API_URL = "https://api.finta.p4cs.com.br";
 const DEFAULT_CLI_RATE_LIMIT_MAX_REQUESTS = 30;
 const DEFAULT_CLI_RATE_LIMIT_WINDOW_MS = 60_000;
 

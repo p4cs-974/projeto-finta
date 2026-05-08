@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   clearConfig,
+  getApiUrl,
   loadConfig,
   saveConfig,
   type StoredConfig,
@@ -21,13 +22,14 @@ describe("CLI API client", () => {
 
   afterEach(async () => {
     delete process.env.FINTA_CONFIG_DIR;
+    delete process.env.FINTA_API_URL;
     await rm(configDir, { recursive: true, force: true });
   });
 
   function createConfig(): StoredConfig {
     return {
       apiKey: "finta_test-key",
-      apiUrl: "http://localhost:8787",
+      apiUrl: "https://api.finta.p4cs.com.br",
       user: {
         id: 1,
         name: "Pedro Custodio",
@@ -37,6 +39,18 @@ describe("CLI API client", () => {
       keyId: 7,
     };
   }
+
+  it("defaults to the production API URL", () => {
+    delete process.env.FINTA_API_URL;
+
+    expect(getApiUrl()).toBe("https://api.finta.p4cs.com.br");
+  });
+
+  it("allows the API URL to be overridden for local development", () => {
+    process.env.FINTA_API_URL = "http://localhost:8787";
+
+    expect(getApiUrl()).toBe("http://localhost:8787");
+  });
 
   it("writes valid JSON to the config file", async () => {
     const config = createConfig();
