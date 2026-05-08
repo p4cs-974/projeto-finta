@@ -29,6 +29,17 @@ import {
   useCliQuoteStreams,
 } from "../dashboard/quote-stream";
 import { useTheme } from "../theme-provider";
+import { sortFavorites } from "../favorites/sort";
+
+interface CliFavoriteAsset {
+  symbol: string;
+  type: AssetType;
+  label?: string;
+  market?: string | null;
+  currency?: string | null;
+  logoUrl?: string | null;
+  favoritedAt?: string;
+}
 
 interface AuthScreenProps {
   config: StoredConfig | null;
@@ -39,7 +50,7 @@ interface AuthScreenProps {
 
 type GuestMode = "login" | "register";
 type AuthField = "name" | "email" | "password";
-type AuthenticatedView = "dashboard" | "quote-details";
+type AuthenticatedView = "dashboard" | "quote-details" | "favorites";
 
 function formatSignedNumber(value: number, digits = 2) {
   const formatted = value.toFixed(digits);
@@ -80,6 +91,22 @@ export function AuthScreen({
   );
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [quoteIsFavorited, setQuoteIsFavorited] = useState<boolean | null>(null);
+  const [favoriteToggleLoading, setFavoriteToggleLoading] = useState(false);
+  const [favoriteToggleError, setFavoriteToggleError] = useState<string | null>(
+    null,
+  );
+  const [favoritesList, setFavoritesList] = useState<CliFavoriteAsset[]>([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [favoritesError, setFavoritesError] = useState<string | null>(null);
+  const [favoritesCursor, setFavoritesCursor] = useState(0);
+  const [favoritesConfirmRemove, setFavoritesConfirmRemove] = useState(false);
+  const [favoritesActionLoading, setFavoritesActionLoading] = useState(false);
+
+  const sortedFavorites = useMemo(
+    () => sortFavorites(favoritesList),
+    [favoritesList],
+  );
 
   const authenticated = Boolean(config);
   const isRegister = mode === "register";
@@ -106,8 +133,159 @@ export function AuthScreen({
       setQuoteError(null);
       setQuoteSymbol("");
       setQuoteType("stock");
+      setQuoteIsFavorited(null);
+      setFavoriteToggleError(null);
+      setFavoritesList([]);
+      setFavoritesError(null);
+      setFavoritesCursor(0);
+      setFavoritesConfirmRemove(false);
     }
   }, [authenticated]);
+
+  const handleAuthFailure = useCallback(
+    (err: unknown) => {
+      if (isRevokedKeyError(err)) {
+        void onLogout();
+        return true;
+      }
+      return false;
+    },
+    [onLogout],
+  );
+
+  const refetchFavorites = useCallback(async () => {
+    if (!config) {
+      return;
+    }
+    setFavoritesError(null);
+    setFavoritesLoading(true);
+    try {
+      const response = (await api.favorites.list(config.apiKey)) as {
+        data: CliFavoriteAsset[];
+      };
+      setFavoritesList(response.data ?? []);
+    } catch (err) {
+      if (handleAuthFailure(err)) return;
+      setFavoritesList([]);
+      setFavoritesError(
+        err instanceof Error ? err.message : "Failed to load favorites",
+      );
+    } finally {
+      setFavoritesLoading(false);
+    }
+  }, [config, handleAuthFailure]);
+
+  useEffect(() => {
+    if (authenticated && authenticatedView === "favorites") {
+      void refetchFavorites();
+    }
+  }, [authenticated, authenticatedView, refetchFavorites]);
+
+  useEffect(() => {
+    if (sortedFavorites.length === 0) {
+      setFavoritesCursor(0);
+      return;
+    }
+    setFavoritesCursor((prev) =>
+      Math.min(Math.max(prev, 0), sortedFavorites.length - 1),
+    );
+  }, [sortedFavorites.length]);
+
+  const refreshFavoritedFlag = useCallback(async () => {
+    if (!config || !quoteResult) {
+      setQuoteIsFavorited(null);
+      return;
+    }
+    const quote = quoteResult.data;
+    const symbol = "ticker" in quote ? quote.ticker : quote.symbol;
+    setFavoriteToggleError(null);
+    try {
+      const response = (await api.favorites.list(config.apiKey)) as {
+        data: CliFavoriteAsset[];
+      };
+      const found = (response.data ?? []).some(
+        (item) =>
+          item.symbol.toUpperCase() === symbol.toUpperCase() &&
+          item.type === quoteType,
+      );
+      setQuoteIsFavorited(found);
+    } catch (err) {
+      if (handleAuthFailure(err)) return;
+      setQuoteIsFavorited(null);
+      setFavoriteToggleError(
+        err instanceof Error
+          ? err.message
+          : "Failed to read favorited state",
+      );
+    }
+  }, [config, handleAuthFailure, quoteResult, quoteType]);
+
+  useEffect(() => {
+    if (!quoteResult) {
+      setQuoteIsFavorited(null);
+      return;
+    }
+    void refreshFavoritedFlag();
+  }, [quoteResult, refreshFavoritedFlag]);
+
+  const handleToggleFavoriteForQuote = useCallback(async () => {
+    if (!config || !quoteResult || quoteIsFavorited === null) {
+      return;
+    }
+    const quote = quoteResult.data;
+    const symbol = "ticker" in quote ? quote.ticker : quote.symbol;
+    setFavoriteToggleError(null);
+    setFavoriteToggleLoading(true);
+    try {
+      if (quoteIsFavorited) {
+        await api.favorites.remove(config.apiKey, symbol, quoteType);
+        setQuoteIsFavorited(false);
+      } else {
+        await api.favorites.add(config.apiKey, symbol, quoteType);
+        setQuoteIsFavorited(true);
+      }
+    } catch (err) {
+      if (handleAuthFailure(err)) return;
+      setFavoriteToggleError(
+        err instanceof Error
+          ? err.message
+          : "Failed to update favorite",
+      );
+    } finally {
+      setFavoriteToggleLoading(false);
+    }
+  }, [config, handleAuthFailure, quoteResult, quoteIsFavorited, quoteType]);
+
+  const handleConfirmRemoveFavorite = useCallback(async () => {
+    if (!config) {
+      return;
+    }
+    const target = sortedFavorites[favoritesCursor];
+    if (!target) {
+      setFavoritesConfirmRemove(false);
+      return;
+    }
+    setFavoritesActionLoading(true);
+    setFavoritesError(null);
+    try {
+      await api.favorites.remove(config.apiKey, target.symbol, target.type);
+      setFavoritesConfirmRemove(false);
+      await refetchFavorites();
+    } catch (err) {
+      if (handleAuthFailure(err)) return;
+      setFavoritesError(
+        err instanceof Error ? err.message : "Failed to remove favorite",
+      );
+    } finally {
+      setFavoritesActionLoading(false);
+    }
+  }, [
+    config,
+    favoritesCursor,
+    handleAuthFailure,
+    refetchFavorites,
+    sortedFavorites,
+  ]);
 
   const focusUp = useCallback(() => {
     setFocused((prev) => {
@@ -307,12 +485,20 @@ export function AuthScreen({
           setSelectedDashboardIndex((index) => Math.max(0, index - 1));
           return;
         }
+
+        if (key.name.toLowerCase() === "f") {
+          setAuthenticatedView("favorites");
+          setFavoritesError(null);
+          setFavoritesConfirmRemove(false);
+          return;
+        }
       }
 
       if (authenticatedView === "quote-details") {
         if (key.name === "escape") {
           setAuthenticatedView("dashboard");
           setQuoteError(null);
+          setFavoriteToggleError(null);
           return;
         }
 
@@ -322,8 +508,60 @@ export function AuthScreen({
           return;
         }
 
+        if (
+          key.name.toLowerCase() === "f" &&
+          quoteResult &&
+          quoteIsFavorited !== null &&
+          !favoriteToggleLoading
+        ) {
+          void handleToggleFavoriteForQuote();
+          return;
+        }
+
         if (key.name === "return") {
           void handleLoadQuote();
+          return;
+        }
+      }
+
+      if (authenticatedView === "favorites") {
+        if (favoritesConfirmRemove) {
+          if (key.name.toLowerCase() === "y" && !favoritesActionLoading) {
+            void handleConfirmRemoveFavorite();
+            return;
+          }
+          if (key.name.toLowerCase() === "n" || key.name === "escape") {
+            setFavoritesConfirmRemove(false);
+            return;
+          }
+          return;
+        }
+
+        if (key.name === "escape") {
+          setAuthenticatedView("dashboard");
+          return;
+        }
+
+        if (key.name === "up") {
+          setFavoritesCursor((prev) => Math.max(prev - 1, 0));
+          return;
+        }
+
+        if (key.name === "down") {
+          setFavoritesCursor((prev) =>
+            Math.min(prev + 1, Math.max(sortedFavorites.length - 1, 0)),
+          );
+          return;
+        }
+
+        if (key.name.toLowerCase() === "x" && sortedFavorites.length > 0) {
+          setFavoritesConfirmRemove(true);
+          return;
+        }
+
+        if (key.name.toLowerCase() === "d") {
+          setAuthenticatedView("quote-details");
+          setQuoteError(null);
           return;
         }
       }
@@ -526,6 +764,7 @@ export function AuthScreen({
               )}
             </box>
           )}
+          <text fg={colors.sidebarPrimary}>Press F to manage favorites</text>
           <text fg={loading ? colors.mutedForeground : colors.sidebarPrimary}>
             {loading
               ? "Revoking key..."
@@ -535,7 +774,7 @@ export function AuthScreen({
 
         <text fg={colors.ring}>
           {
-            "↑↓ select  ·  Enter details  ·  R refresh  ·  L logout  ·  Ctrl+T theme  ·  Ctrl+C exit"
+            "↑↓ select  ·  Enter details  ·  F favorites  ·  R refresh  ·  L logout  ·  Ctrl+T theme  ·  Ctrl+C exit"
           }
         </text>
         {overlay}
@@ -663,14 +902,114 @@ export function AuthScreen({
               <text
                 fg={colors.mutedForeground}
               >{`Cache key: ${liveQuoteResult.cache.key}`}</text>
+              {quoteIsFavorited !== null && (
+                <text
+                  fg={
+                    favoriteToggleLoading
+                      ? colors.mutedForeground
+                      : colors.sidebarPrimary
+                  }
+                >
+                  {favoriteToggleLoading
+                    ? "Updating favorite..."
+                    : quoteIsFavorited
+                    ? "Press F to unfavorite"
+                    : "Press F to favorite"}
+                </text>
+              )}
+              {favoriteToggleError && (
+                <text fg={colors.destructive}>{`✗ ${favoriteToggleError}`}</text>
+              )}
             </box>
           )}
         </box>
 
         <text fg={colors.ring}>
-          {
-            "Tab switch type  ·  Enter fetch  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"
-          }
+          {"Tab switch type  ·  Enter fetch  ·  F favorite  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"}
+        </text>
+        {overlay}
+      </box>
+    );
+  }
+
+  if (authenticated && config && authenticatedView === "favorites") {
+    return (
+      <box
+        style={{
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          flexGrow: 1,
+          gap: 1,
+        }}
+      >
+        <box
+          style={{
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 0,
+            marginBottom: 1,
+          }}
+        >
+          <text fg={colors.sidebarPrimary} attributes={1}>
+            ◆ FINTA
+          </text>
+          <text fg={colors.mutedForeground}>Favorites</text>
+        </box>
+
+        <box
+          style={{
+            width: 60,
+            flexDirection: "column",
+            border: true,
+            borderColor: colors.border,
+            borderStyle: "rounded",
+            backgroundColor: colors.card,
+            padding: 2,
+            gap: 1,
+          }}
+        >
+          {favoritesLoading && (
+            <text fg={colors.mutedForeground}>Loading favorites...</text>
+          )}
+          {favoritesError && (
+            <text fg={colors.destructive}>{`✗ ${favoritesError}`}</text>
+          )}
+          {!favoritesLoading && !favoritesError && sortedFavorites.length === 0 && (
+            <text fg={colors.mutedForeground}>
+              No favorites yet. Open the asset details screen (D) to add one.
+            </text>
+          )}
+          {!favoritesLoading &&
+            sortedFavorites.length > 0 &&
+            sortedFavorites.map((item, index) => {
+              const isCursor = index === favoritesCursor;
+              return (
+                <text
+                  key={`${item.symbol}:${item.type}`}
+                  fg={isCursor ? colors.sidebarPrimary : colors.foreground}
+                  attributes={isCursor ? 1 : 0}
+                >
+                  {`${isCursor ? "›" : " "} ${item.symbol} (${item.type})${
+                    item.label ? ` — ${item.label}` : ""
+                  }`}
+                </text>
+              );
+            })}
+
+          {favoritesConfirmRemove && sortedFavorites[favoritesCursor] && (
+            <text fg={colors.destructive}>
+              {favoritesActionLoading
+                ? "Removing..."
+                : `Remove ${sortedFavorites[favoritesCursor]!.symbol} (${
+                    sortedFavorites[favoritesCursor]!.type
+                  })? Press Y to confirm, N to cancel.`}
+            </text>
+          )}
+        </box>
+
+        <text fg={colors.ring}>
+          {"↑↓ navigate  ·  D details  ·  X delete  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"}
         </text>
         {overlay}
       </box>

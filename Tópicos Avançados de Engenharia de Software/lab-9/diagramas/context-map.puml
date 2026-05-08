@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+title Finta — Context Map (DDD Estratégico)
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam wrapWidth 220
+skinparam maxMessageSize 160
+
+rectangle "Cliente Web/Mobile" as Cliente <<External Customer>>
+
+package "Finta" {
+  rectangle "Experiência de Consulta\n/API Orchestrator" as Experiencia <<Bounded Context>>
+  rectangle "Consulta de Cotação\nde Ativos" as Cotacao <<Core Domain\nBounded Context>>
+  rectangle "Biblioteca de Favoritos" as Biblioteca <<Bounded Context>>
+  rectangle "Identidade e Acesso" as Identidade <<Bounded Context>>
+  rectangle "Integração com\nProvedores de Mercado" as Integracao <<Bounded Context\nACL>>
+}
+
+cloud "Provedores externos\n(Brapi/B3 equivalente, CoinCap)" as Provedores <<External System>>
+database "Cache de Cotações\n(KV/infraestrutura)" as Cache <<Infrastructure Detail>>
+database "Banco de Usuários" as UserDB <<Infrastructure Detail>>
+database "Catálogo/Biblioteca" as AssetDB <<Infrastructure Detail>>
+
+Cliente --> Experiencia : consome API pública\nCustomer/Supplier
+Experiencia --> Identidade : valida token/sessão\nCustomer/Supplier
+Experiencia --> Cotacao : solicita cotação por ticker\nCustomer/Supplier
+Experiencia --> Biblioteca : consulta/salva favoritos\nCustomer/Supplier
+
+Cotacao --> Biblioteca : valida ativo catalogado\ne metadados\nCustomer/Supplier
+Cotacao --> Integracao : obtém cotação externa\nCustomer/Supplier + ACL
+Cotacao ..> Cache : lê/escreve snapshots\ninfraestrutura
+
+Identidade ..> UserDB : persiste usuário/sessão
+Biblioteca ..> AssetDB : persiste ativos favoritos
+Integracao --> Provedores : adapta contratos externos\nACL/Conformist
+
+note right of Cotacao
+Core Domain:
+regras para consultar cotação de ações e criptomoedas,
+normalizar ticker, compor resposta e decidir uso de dados.
+Cache é detalhe técnico, não Bounded Context.
+end note
+
+note bottom of Integracao
+A camada anticorrupção impede que modelos e
+limitações dos provedores externos contaminem
+a linguagem interna do Finta.
+end note
+@enduml
