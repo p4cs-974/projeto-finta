@@ -86,24 +86,34 @@ function parseArgs(argv) {
   let bumpType;
   let dryRun = false;
   let yes = false;
+  let version;
+  let from = "bump";
 
-  for (const arg of argv) {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
     if (arg === "--patch") bumpType = "patch";
     else if (arg === "--minor") bumpType = "minor";
     else if (arg === "--major") bumpType = "major";
     else if (arg === "--dry-run") dryRun = true;
     else if (arg === "--yes" || arg === "-y") yes = true;
+    else if (arg === "--version") version = argv[++index];
+    else if (arg === "--from") from = argv[++index] ?? from;
   }
 
-  return { bumpType, dryRun, yes };
+  const validFrom = new Set(["bump", "build", "publish", "verify", "promote", "smoke"]);
+  if (!validFrom.has(from)) {
+    throw new Error(`Invalid --from value: ${from}`);
+  }
+
+  return { bumpType, dryRun, yes, version, from };
 }
 
 async function main() {
-  const { bumpType: flagBumpType, dryRun, yes } = parseArgs(process.argv.slice(2));
+  const { bumpType: flagBumpType, dryRun, yes, version: resumeVersion, from } = parseArgs(process.argv.slice(2));
 
   let bumpType = flagBumpType;
 
-  if (!bumpType) {
+  if (!resumeVersion && !bumpType) {
     console.log(c.dim("No --patch / --minor / --major flag provided.\n"));
     const answer = await prompt(
       `Bump version type: ${c.code("patch")} / ${c.code("minor")} / ${c.code("major")} `,
@@ -118,31 +128,38 @@ async function main() {
   }
 
   const currentVersion = await readCliVersion();
-  const newVersion = bumpVersion(currentVersion, bumpType);
+  const newVersion = resumeVersion ?? bumpVersion(currentVersion, bumpType);
 
   console.log(
-    `\n${c.brand("finta")} ${c.dim("CLI release")}\n  ${c.dim(currentVersion)} → ${c.code(newVersion)} (${bumpType})`,
+    `\n${c.brand("finta")} ${c.dim("CLI release")}\n  ${resumeVersion ? c.dim("resuming") : c.dim(currentVersion + " →")} ${c.code(newVersion)}${resumeVersion ? ` from ${from}` : ` (${bumpType})`}`,
   );
 
   if (dryRun) {
     console.log(`\n${c.tip("🔍 DRY RUN")} — no changes will be made\n`);
   }
 
+  const shouldRun = (step) => {
+    const order = ["bump", "build", "publish", "verify", "promote", "smoke"];
+    return order.indexOf(step) >= order.indexOf(from);
+  };
+
   // ── Step 1: bump version ──
-  if (dryRun) {
-    console.log(`${c.dim("[DRY RUN]")} Would bump ${CLI_PACKAGE_JSON} to ${newVersion}`);
-  } else {
-    if (await confirm(`Bump ${CLI_PACKAGE_JSON} to ${newVersion}?`, yes)) {
-      await writeCliVersion(newVersion);
-      console.log(c.success("✓") + ` Version bumped to ${c.code(newVersion)}`);
+  if (shouldRun("bump") && !resumeVersion) {
+    if (dryRun) {
+      console.log(`${c.dim("[DRY RUN]")} Would bump ${CLI_PACKAGE_JSON} to ${newVersion}`);
     } else {
-      console.log("Aborted.");
-      process.exit(0);
+      if (await confirm(`Bump ${CLI_PACKAGE_JSON} to ${newVersion}?`, yes)) {
+        await writeCliVersion(newVersion);
+        console.log(c.success("✓") + ` Version bumped to ${c.code(newVersion)}`);
+      } else {
+        console.log("Aborted.");
+        process.exit(0);
+      }
     }
   }
 
   // ── Step 2: build ──
-  await runCommand(
+  if (shouldRun("build")) await runCommand(
     "Building release artifacts",
     "pnpm",
     ["--filter", "@finta/cli", "build:release", "--", "--version", newVersion],
@@ -150,9 +167,9 @@ async function main() {
   );
 
   // ── Step 3: publish ──
-  if (dryRun) {
+  if (shouldRun("publish") && dryRun) {
     console.log(`${c.dim("[DRY RUN]")} Would upload ${newVersion} artifacts to R2`);
-  } else {
+  } else if (shouldRun("publish")) {
     if (await confirm(`Upload ${newVersion} artifacts to R2?`, yes)) {
       await runCommand(
         "Publishing to R2",
@@ -167,7 +184,7 @@ async function main() {
   }
 
   // ── Step 4: verify ──
-  await runCommand(
+  if (shouldRun("verify")) await runCommand(
     "Verifying published artifacts",
     "pnpm",
     ["--filter", "@finta/cli", "verify:release", "--", "--version", newVersion],
@@ -175,9 +192,9 @@ async function main() {
   );
 
   // ── Step 5: promote ──
-  if (dryRun) {
+  if (shouldRun("promote") && dryRun) {
     console.log(`${c.dim("[DRY RUN]")} Would promote ${newVersion} to latest`);
-  } else {
+  } else if (shouldRun("promote")) {
     if (await confirm(`Promote ${newVersion} to latest?`, yes)) {
       await runCommand(
         "Promoting to latest",
@@ -195,7 +212,7 @@ async function main() {
   }
 
   // ── Step 6: smoke test ──
-  await runCommand(
+  if (shouldRun("smoke")) await runCommand(
     "Running frontend smoke checks",
     "pnpm",
     ["--filter", "frontend-cloudflare", "smoke:release"],

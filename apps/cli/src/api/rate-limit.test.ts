@@ -49,7 +49,7 @@ describe("CLI request rate limiting", () => {
       data: { ok: true },
     });
     await expect(api.quotes.get("test-token", "ITUB4")).rejects.toThrow(
-      /rate limit/i,
+      /limite de requisições/i,
     );
 
     expect(fetch).toHaveBeenCalledTimes(2);
@@ -67,7 +67,7 @@ describe("CLI request rate limiting", () => {
 
     await expect(
       secondLoad.api.quotes.get("test-token", "ITUB4"),
-    ).rejects.toThrow(/rate limit/i);
+    ).rejects.toThrow(/limite de requisições/i);
 
     expect(fetch).toHaveBeenCalledTimes(2);
   });
@@ -78,7 +78,7 @@ describe("CLI request rate limiting", () => {
     await api.quotes.get("test-token", "PETR4");
     await api.quotes.get("test-token", "VALE3");
     await expect(api.quotes.get("test-token", "ITUB4")).rejects.toThrow(
-      /rate limit/i,
+      /limite de requisições/i,
     );
 
     vi.setSystemTime(new Date("2026-04-12T12:00:01.001Z"));

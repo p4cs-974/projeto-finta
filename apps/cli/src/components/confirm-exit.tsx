@@ -36,10 +36,10 @@ export function ConfirmExit({ onConfirm, onCancel }: ConfirmExitProps) {
         }}
       >
         <text fg={colors.sidebarPrimary} attributes={1}>
-          Exit Finta?
+          Sair do Finta?
         </text>
         <text fg={colors.mutedForeground}>
-          {"Press Return to confirm or Escape to cancel"}
+          {"Pressione Enter para confirmar ou Escape para cancelar"}
         </text>
       </box>
     </box>
@@ -72,7 +72,7 @@ export function ByeMessage({ onFinished }: ByeMessageProps) {
       }}
     >
       <text fg={colors.sidebarPrimary} attributes={1}>
-        Bye! 👋
+        Até mais! 👋
       </text>
     </box>
   );

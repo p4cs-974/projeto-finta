@@ -4,11 +4,8 @@ export async function serveReleaseObject(
   objectKey: string,
   fallbackContentType?: string,
 ) {
-  console.log("[cli-release-storage] objectKey:", objectKey);
   const { env } = await getCloudflareContext({ async: true });
-  console.log("[cli-release-storage] env keys:", Object.keys(env));
   const bucket = env.FINTA_RELEASES_BUCKET;
-  console.log("[cli-release-storage] bucket exists:", !!bucket);
 
   if (!bucket) {
     throw new Error(
@@ -17,7 +14,6 @@ export async function serveReleaseObject(
   }
 
   const object = await bucket.get(objectKey);
-  console.log("[cli-release-storage] object:", object ? "found" : "null", "key:", objectKey);
 
   if (!object?.body) {
     return new Response("Not found", {

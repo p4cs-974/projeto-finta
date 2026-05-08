@@ -4,6 +4,7 @@ import { RELEASES_DIR } from "../src/distribution/release";
 import {
   createVersionReleaseUploads,
   parseArgs,
+  resolveReleaseBucketName,
   resolveTargetKeys,
   uploadReleaseObject,
 } from "../src/distribution/publishing";
@@ -14,13 +15,7 @@ async function main() {
   const version = args.version ?? CLI_VERSION;
   const publishedAt = args["published-at"] ?? new Date().toISOString();
   const publicHost = args["public-host"] ?? CANONICAL_HOST;
-  const bucketName = args.bucket ?? process.env.FINTA_RELEASES_BUCKET_NAME;
-
-  if (!bucketName) {
-    throw new Error(
-      "Missing release bucket name. Provide --bucket or set FINTA_RELEASES_BUCKET_NAME.",
-    );
-  }
+  const bucketName = await resolveReleaseBucketName(args);
 
   const { uploads } = await createVersionReleaseUploads({
     version,

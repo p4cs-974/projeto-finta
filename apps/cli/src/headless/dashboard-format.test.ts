@@ -60,7 +60,7 @@ const dashboard: DashboardSnapshot = {
 
 describe("formatDashboardText", () => {
   it("formats the dashboard snapshot for headless output", () => {
-    expect(formatDashboardText(dashboard)).toContain("Dashboard");
+    expect(formatDashboardText(dashboard)).toContain("Painel");
     expect(formatDashboardText(dashboard)).toContain("Favoritos: 2");
     expect(formatDashboardText(dashboard)).toContain("Buscas Hoje: 3");
     expect(formatDashboardText(dashboard)).toContain("PETR4");

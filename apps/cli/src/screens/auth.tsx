@@ -168,7 +168,7 @@ export function AuthScreen({
       if (handleAuthFailure(err)) return;
       setFavoritesList([]);
       setFavoritesError(
-        err instanceof Error ? err.message : "Failed to load favorites",
+        err instanceof Error ? err.message : "Falha ao carregar favoritos",
       );
     } finally {
       setFavoritesLoading(false);
@@ -215,7 +215,7 @@ export function AuthScreen({
       setFavoriteToggleError(
         err instanceof Error
           ? err.message
-          : "Failed to read favorited state",
+          : "Falha ao ler estado de favorito",
       );
     }
   }, [config, handleAuthFailure, quoteResult, quoteType]);
@@ -249,7 +249,7 @@ export function AuthScreen({
       setFavoriteToggleError(
         err instanceof Error
           ? err.message
-          : "Failed to update favorite",
+          : "Falha ao atualizar favorito",
       );
     } finally {
       setFavoriteToggleLoading(false);
@@ -274,7 +274,7 @@ export function AuthScreen({
     } catch (err) {
       if (handleAuthFailure(err)) return;
       setFavoritesError(
-        err instanceof Error ? err.message : "Failed to remove favorite",
+        err instanceof Error ? err.message : "Falha ao remover favorito",
       );
     } finally {
       setFavoritesActionLoading(false);
@@ -326,7 +326,7 @@ export function AuthScreen({
       );
     } catch (err) {
       setDashboardError(
-        err instanceof Error ? err.message : "Failed to load dashboard",
+        err instanceof Error ? err.message : "Falha ao carregar painel",
       );
     } finally {
       setDashboardLoading(false);
@@ -384,7 +384,7 @@ export function AuthScreen({
         .then(setQuoteResult)
         .catch((err) => {
           setQuoteError(
-            err instanceof Error ? err.message : "Failed to load asset details",
+            err instanceof Error ? err.message : "Falha ao carregar detalhes do ativo",
           );
         })
         .finally(() => setQuoteLoading(false));
@@ -414,7 +414,7 @@ export function AuthScreen({
 
     const symbol = quoteSymbol.trim().toUpperCase();
     if (!symbol) {
-      setQuoteError("Type an asset symbol first (example: PETR4 or BTC)");
+      setQuoteError("Digite primeiro o símbolo do ativo (exemplo: PETR4 ou BTC)");
       return;
     }
 
@@ -427,7 +427,7 @@ export function AuthScreen({
     } catch (err) {
       setQuoteResult(null);
       setQuoteError(
-        err instanceof Error ? err.message : "Failed to load asset details",
+        err instanceof Error ? err.message : "Falha ao carregar detalhes do ativo",
       );
     } finally {
       setQuoteLoading(false);
@@ -602,7 +602,7 @@ export function AuthScreen({
 
       await onAuth(toStoredCliConfig(result.data));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed");
+      setError(err instanceof Error ? err.message : "Falha na autenticação");
     } finally {
       setLoading(false);
     }
@@ -615,9 +615,9 @@ export function AuthScreen({
       await onLogout();
     } catch (err) {
       if (isRevokedKeyError(err)) {
-        setError("Your key was already revoked. Log in again.");
+        setError("Sua chave já foi revogada. Faça login novamente.");
       } else {
-        setError(err instanceof Error ? err.message : "Logout failed");
+        setError(err instanceof Error ? err.message : "Falha ao sair");
       }
     } finally {
       setLoading(false);
@@ -673,7 +673,7 @@ export function AuthScreen({
           <text fg={colors.sidebarPrimary} attributes={1}>
             ◆ FINTA
           </text>
-          <text fg={colors.mutedForeground}>Dashboard</text>
+          <text fg={colors.mutedForeground}>Painel</text>
         </box>
 
         <box
@@ -698,7 +698,7 @@ export function AuthScreen({
             <text fg={colors.destructive}>{`✗ ${dashboardError}`}</text>
           )}
           {dashboardLoading && (
-            <text fg={colors.mutedForeground}>Refreshing dashboard...</text>
+            <text fg={colors.mutedForeground}>Atualizando painel...</text>
           )}
           {dashboard && (
             <box style={{ flexDirection: "column", gap: 1 }}>
@@ -765,17 +765,17 @@ export function AuthScreen({
               )}
             </box>
           )}
-          <text fg={colors.sidebarPrimary}>Press F to manage favorites</text>
+          <text fg={colors.sidebarPrimary}>Pressione F para gerenciar favoritos</text>
           <text fg={loading ? colors.mutedForeground : colors.sidebarPrimary}>
             {loading
-              ? "Revoking key..."
-              : "↑↓ select · Enter quote details · R refresh · L logout"}
+              ? "Revogando chave..."
+              : "↑↓ selecionar · Enter detalhes da cotação · R atualizar · L sair"}
           </text>
         </box>
 
         <text fg={colors.ring}>
           {
-            "↑↓ select  ·  Enter details  ·  F favorites  ·  R refresh  ·  L logout  ·  Ctrl+T theme  ·  Ctrl+C exit"
+            "↑↓ selecionar  ·  Enter detalhes  ·  F favoritos  ·  R atualizar  ·  L sair  ·  Ctrl+T tema  ·  Ctrl+C fechar"
           }
         </text>
         {overlay}
@@ -810,7 +810,7 @@ export function AuthScreen({
           <text fg={colors.sidebarPrimary} attributes={1}>
             ◆ FINTA
           </text>
-          <text fg={colors.mutedForeground}>Asset indicator details</text>
+          <text fg={colors.mutedForeground}>Detalhes do indicador do ativo</text>
         </box>
 
         <box
@@ -826,7 +826,7 @@ export function AuthScreen({
           }}
         >
           <box
-            title="Asset symbol"
+            title="Símbolo do ativo"
             style={{
               border: true,
               borderColor: colors.sidebarPrimary,
@@ -836,7 +836,7 @@ export function AuthScreen({
             }}
           >
             <input
-              placeholder="PETR4 or BTC"
+              placeholder="PETR4 ou BTC"
               value={quoteSymbol}
               onInput={(value) => setQuoteSymbol(value.toUpperCase())}
               onSubmit={() => void handleLoadQuote()}
@@ -846,7 +846,7 @@ export function AuthScreen({
           </box>
 
           <text fg={colors.mutedForeground}>
-            {`Type: ${quoteType} · stream: ${quoteStreamStatus} (press Tab to switch stock/crypto)`}
+            {`Tipo: ${quoteType} · transmissão: ${quoteStreamStatus} (pressione Tab para alternar stock/crypto)`}
           </text>
 
           {quoteError && (
@@ -857,8 +857,8 @@ export function AuthScreen({
             fg={quoteLoading ? colors.mutedForeground : colors.sidebarPrimary}
           >
             {quoteLoading
-              ? "Loading quote..."
-              : "Press Enter to fetch asset details"}
+              ? "Carregando cotação..."
+              : "Pressione Enter para buscar detalhes do ativo"}
           </text>
 
           {liveQuoteResult && quote && symbol && market && (
@@ -875,34 +875,34 @@ export function AuthScreen({
               <text
                 fg={colors.sidebarPrimary}
                 attributes={1}
-              >{`Asset: ${symbol}`}</text>
-              <text fg={colors.foreground}>{`Name: ${quote.name}`}</text>
-              <text fg={colors.mutedForeground}>{`Market: ${market}`}</text>
+              >{`Ativo: ${symbol}`}</text>
+              <text fg={colors.foreground}>{`Nome: ${quote.name}`}</text>
+              <text fg={colors.mutedForeground}>{`Mercado: ${market}`}</text>
               <text
                 fg={colors.mutedForeground}
-              >{`Currency: ${quote.currency}`}</text>
+              >{`Moeda: ${quote.currency}`}</text>
               <text
                 fg={colors.foreground}
-              >{`Price: ${formatMoney(quote.currency, quote.price)}`}</text>
+              >{`Preço: ${formatMoney(quote.currency, quote.price)}`}</text>
               <text
                 fg={
                   quote.change >= 0 ? colors.sidebarPrimary : colors.destructive
                 }
               >
-                {`Change: ${formatSignedNumber(quote.change)} (${formatPercent(quote.changePercent)})`}
+                {`Variação: ${formatSignedNumber(quote.change)} (${formatPercent(quote.changePercent)})`}
               </text>
               <text
                 fg={colors.mutedForeground}
-              >{`Quoted at: ${formatRelativeTime(quote.quotedAt)}`}</text>
+              >{`Cotado em: ${formatRelativeTime(quote.quotedAt)}`}</text>
               <text
                 fg={colors.mutedForeground}
-              >{`Source: ${liveQuoteResult.cache.source}`}</text>
+              >{`Fonte: ${liveQuoteResult.cache.source}`}</text>
               <text fg={colors.mutedForeground}>
-                {`Stale: ${liveQuoteResult.cache.stale ? "yes" : "no"}`}
+                {`Desatualizado: ${liveQuoteResult.cache.stale ? "sim" : "não"}`}
               </text>
               <text
                 fg={colors.mutedForeground}
-              >{`Cache key: ${liveQuoteResult.cache.key}`}</text>
+              >{`Chave do cache: ${liveQuoteResult.cache.key}`}</text>
               {quoteIsFavorited !== null && (
                 <text
                   fg={
@@ -912,10 +912,10 @@ export function AuthScreen({
                   }
                 >
                   {favoriteToggleLoading
-                    ? "Updating favorite..."
+                    ? "Atualizando favorito..."
                     : quoteIsFavorited
-                    ? "Press Ctrl+F to unfavorite"
-                    : "Press Ctrl+F to favorite"}
+                    ? "Pressione Ctrl+F para remover dos favoritos"
+                    : "Pressione Ctrl+F para favoritar"}
                 </text>
               )}
               {favoriteToggleError && (
@@ -926,7 +926,7 @@ export function AuthScreen({
         </box>
 
         <text fg={colors.ring}>
-          {"Tab switch type  ·  Enter fetch  ·  Ctrl+F favorite  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"}
+          {"Tab alternar tipo  ·  Enter buscar  ·  Ctrl+F favorito  ·  Esc voltar  ·  Ctrl+T alternar tema  ·  Ctrl+C fechar"}
         </text>
         {overlay}
       </box>
@@ -955,7 +955,7 @@ export function AuthScreen({
           <text fg={colors.sidebarPrimary} attributes={1}>
             ◆ FINTA
           </text>
-          <text fg={colors.mutedForeground}>Favorites</text>
+          <text fg={colors.mutedForeground}>Favoritos</text>
         </box>
 
         <box
@@ -971,14 +971,14 @@ export function AuthScreen({
           }}
         >
           {favoritesLoading && (
-            <text fg={colors.mutedForeground}>Loading favorites...</text>
+            <text fg={colors.mutedForeground}>Carregando favoritos...</text>
           )}
           {favoritesError && (
             <text fg={colors.destructive}>{`✗ ${favoritesError}`}</text>
           )}
           {!favoritesLoading && !favoritesError && sortedFavorites.length === 0 && (
             <text fg={colors.mutedForeground}>
-              No favorites yet. Open the asset details screen (D) to add one.
+              Ainda não há favoritos. Abra a tela de detalhes do ativo (D) para adicionar um.
             </text>
           )}
           {!favoritesLoading &&
@@ -1001,16 +1001,16 @@ export function AuthScreen({
           {favoritesConfirmRemove && sortedFavorites[favoritesCursor] && (
             <text fg={colors.destructive}>
               {favoritesActionLoading
-                ? "Removing..."
-                : `Remove ${sortedFavorites[favoritesCursor]!.symbol} (${
+                ? "Removendo..."
+                : `Remover ${sortedFavorites[favoritesCursor]!.symbol} (${
                     sortedFavorites[favoritesCursor]!.type
-                  })? Press Y to confirm, N to cancel.`}
+                  })? Pressione Y para confirmar, N para cancelar.`}
             </text>
           )}
         </box>
 
         <text fg={colors.ring}>
-          {"↑↓ navigate  ·  D details  ·  X delete  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"}
+          {"↑↓ navegar  ·  D detalhes  ·  X excluir  ·  Esc voltar  ·  Ctrl+T alternar tema  ·  Ctrl+C fechar"}
         </text>
         {overlay}
       </box>
@@ -1038,7 +1038,7 @@ export function AuthScreen({
         <text fg={colors.sidebarPrimary} attributes={1}>
           ◆ FINTA
         </text>
-        <text fg={colors.mutedForeground}>FINancial Tracking & Analysis</text>
+        <text fg={colors.mutedForeground}>Rastreamento e Análise Financeira</text>
       </box>
 
       <box
@@ -1060,7 +1060,7 @@ export function AuthScreen({
             }
             attributes={mode === "login" ? 1 : 0}
           >
-            Login
+            Entrar
           </text>
           <text fg={colors.ring}>|</text>
           <text
@@ -1071,14 +1071,14 @@ export function AuthScreen({
             }
             attributes={mode === "register" ? 1 : 0}
           >
-            Register
+            Cadastrar
           </text>
           <text fg={colors.ring}>{" [tab]"}</text>
         </box>
 
         {isRegister && (
           <box
-            title="Name"
+            title="Nome"
             style={{
               border: true,
               borderColor:
@@ -1089,7 +1089,7 @@ export function AuthScreen({
             }}
           >
             <input
-              placeholder="Your name..."
+              placeholder="Seu nome..."
               onInput={setName}
               onSubmit={() => focusDown()}
               focused={focused === "name"}
@@ -1099,7 +1099,7 @@ export function AuthScreen({
         )}
 
         <box
-          title="Email"
+          title="E-mail"
           style={{
             border: true,
             borderColor:
@@ -1119,7 +1119,7 @@ export function AuthScreen({
         </box>
 
         <box
-          title="Password"
+          title="Senha"
           style={{
             border: true,
             borderColor:
@@ -1161,14 +1161,14 @@ export function AuthScreen({
           }}
         >
           <text fg={loading ? colors.mutedForeground : colors.sidebarPrimary}>
-            {loading ? "Submitting..." : "Press Enter to submit"}
+            {loading ? "Enviando..." : "Pressione Enter para enviar"}
           </text>
         </box>
       </box>
 
       <text fg={colors.ring}>
         {
-          "↑↓ navigate  ·  esc unfocus  ·  Ctrl+T toggle theme  ·  tab mode  ·  Ctrl+Q quit  ·  Ctrl+C exit"
+          "↑↓ navegar  ·  esc desfocar  ·  Ctrl+T alternar tema  ·  tab modo  ·  Ctrl+Q sair  ·  Ctrl+C fechar"
         }
       </text>
       {overlay}

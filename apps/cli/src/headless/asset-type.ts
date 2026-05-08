@@ -8,7 +8,7 @@ export class InvalidAssetTypeError extends Error {
 
   constructor(rawValue: string) {
     super(
-      `Invalid asset type: ${JSON.stringify(rawValue)}. Expected one of ${ACCEPTED_ASSET_TYPES.join(", ")}.`,
+      `Tipo de ativo inválido: ${JSON.stringify(rawValue)}. Esperado um destes: ${ACCEPTED_ASSET_TYPES.join(", ")}.`,
     );
     this.rawValue = rawValue;
     this.accepted = ACCEPTED_ASSET_TYPES;
@@ -29,7 +29,7 @@ export function parseAssetTypeOrExit(raw: string): AssetTypeLiteral {
   } catch (error) {
     if (error instanceof InvalidAssetTypeError) {
       process.stderr.write(
-        `✗ Invalid asset type: ${error.rawValue}\n  Expected: ${error.accepted.join(" | ")}\n`,
+        `✗ Tipo de ativo inválido: ${error.rawValue}\n  Esperado: ${error.accepted.join(" | ")}\n`,
       );
       process.exit(1);
     }

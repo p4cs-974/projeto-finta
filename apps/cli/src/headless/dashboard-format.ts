@@ -26,7 +26,7 @@ function formatMover(
 
 export function formatDashboardText(snapshot: DashboardSnapshot): string {
   const lines: string[] = [
-    c.heading("Dashboard"),
+    c.heading("Painel"),
     `  Favoritos: ${snapshot.stats.favoritesCount}`,
     `  Buscas Hoje: ${snapshot.stats.searchesToday}`,
     `  Visualizações Hoje: ${snapshot.stats.viewsToday}`,

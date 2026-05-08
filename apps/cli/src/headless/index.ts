@@ -43,9 +43,9 @@ function printError(error: unknown) {
   if (isRevokedKeyError(error)) {
     process.stderr.write(
       c.error("✗") +
-        " Your stored API key is invalid or was revoked.\n  Run " +
+        " Sua chave de API salva é inválida ou foi revogada.\n  Execute " +
         c.code("finta login") +
-        " to authenticate.\n",
+        " para autenticar.\n",
     );
   } else if (error instanceof Error) {
     process.stderr.write(c.error("✗") + " " + error.message + "\n");
@@ -72,7 +72,7 @@ type CommandHelp = {
 
 const commandHelps: Record<string, CommandHelp> = {
   login: {
-    description: "Authenticate with your Finta account.",
+    description: "Autentique-se com sua conta Finta.",
     usage: "finta login [--email <email>] [--password <password>]",
     examples: [
       "finta login",
@@ -80,7 +80,7 @@ const commandHelps: Record<string, CommandHelp> = {
     ],
   },
   register: {
-    description: "Create a new Finta account.",
+    description: "Crie uma nova conta Finta.",
     usage:
       "finta register [--name <name>] [--email <email>] [--password <password>]",
     examples: [
@@ -89,28 +89,28 @@ const commandHelps: Record<string, CommandHelp> = {
     ],
   },
   logout: {
-    description: "Remove local authentication and delete stored API key.",
+    description: "Remove a autenticação local e exclui a chave de API salva.",
     usage: "finta logout",
     examples: ["finta logout"],
   },
   keys: {
-    description: "List your active API keys.",
+    description: "Lista suas chaves de API ativas.",
     usage: "finta keys",
     examples: ["finta keys"],
   },
   dashboard: {
-    description: "Show your asset dashboard with latest quotes.",
+    description: "Mostra seu painel de ativos com as cotações mais recentes.",
     usage: "finta dashboard [--json]",
-    options: ["--json  Output the normalized dashboard snapshot as JSON."],
+    options: ["--json  Exibe o resumo normalizado do painel em JSON."],
     examples: ["finta dashboard", "finta dashboard --json"],
   },
   favorites: {
-    description: "Manage your favorite assets.",
+    description: "Gerencia seus ativos favoritos.",
     usage:
       "finta favorites [list | add <symbol> <assetType> | remove <symbol> <assetType>]",
     notes: [
-      "If no subcommand is provided, favorites defaults to list.",
-      "assetType must be stock or crypto.",
+      "Se nenhum subcomando for informado, favorites usa list por padrão.",
+      "assetType deve ser stock ou crypto.",
     ],
     examples: [
       "finta favorites",
@@ -121,10 +121,10 @@ const commandHelps: Record<string, CommandHelp> = {
     ],
   },
   quote: {
-    description: "Get a real-time price quote for an asset.",
+    description: "Obtém a cotação em tempo real de um ativo.",
     usage: "finta quote <ticker> [--type <stock|crypto>]",
     options: [
-      "--type <stock|crypto>  Disambiguate tickers that exist in multiple asset types.",
+      "--type <stock|crypto>  Diferencia tickers existentes em vários tipos de ativo.",
     ],
     examples: [
       "finta quote AAPL",
@@ -133,7 +133,7 @@ const commandHelps: Record<string, CommandHelp> = {
     ],
   },
   search: {
-    description: "Search for assets by name or ticker.",
+    description: "Busca ativos por nome ou ticker.",
     usage: "finta search <query> [type]",
     examples: [
       "finta search apple",
@@ -146,7 +146,7 @@ const commandHelps: Record<string, CommandHelp> = {
 function printHeader(): string {
   return box([
     c.brand("finta") + c.dim("  v" + CLI_VERSION),
-    c.dim("FINancial Tracking & Analysis"),
+    c.dim("Rastreamento e Análise Financeira"),
   ]);
 }
 
@@ -154,22 +154,22 @@ function printGlobalHelp() {
   const lines: string[] = [
     printHeader(),
     "",
-    c.heading("Usage"),
+    c.heading("Uso"),
     "  " + c.code("$ finta <command> [options]"),
     "",
-    "  Run with no arguments to launch the interactive TUI.",
+    "  Execute sem argumentos para abrir a interface interativa.",
     "",
-    c.heading("Global Options"),
+    c.heading("Opções Globais"),
     "  " +
       c.code("--no-ui, --headless".padEnd(22)) +
-      "  Force headless mode (no TUI)",
+      "  Força o modo sem interface interativa",
     "  " +
       c.code("--json".padEnd(22)) +
-      "  Output JSON for commands that support it",
-    "  " + c.code("--help, -h".padEnd(22)) + "  Show help",
-    "  " + c.code("--version, -v".padEnd(22)) + "  Show version",
+      "  Exibe JSON para comandos compatíveis",
+    "  " + c.code("--help, -h".padEnd(22)) + "  Mostra ajuda",
+    "  " + c.code("--version, -v".padEnd(22)) + "  Mostra a versão",
     "",
-    c.heading("Commands"),
+    c.heading("Comandos"),
   ];
 
   const maxNameLen = Math.max(
@@ -184,17 +184,17 @@ function printGlobalHelp() {
 
   lines.push(
     "",
-    c.heading("Examples"),
+    c.heading("Exemplos"),
     "  " + c.code("$ finta"),
     "  " + c.code("$ finta login"),
     "  " + c.code("$ finta quote AAPL"),
     "  " + c.code("$ finta search apple"),
     "  " + c.code("$ finta favorites add BTC crypto"),
     "",
-    c.tip("Tip:") +
+    c.tip("Dica:") +
       " Use " +
       c.code("finta <command> --help") +
-      " for details on a specific command.",
+      " para detalhes de um comando específico.",
     "",
   );
 
@@ -205,7 +205,7 @@ function printCommandHelp(commandName: string) {
   const help = commandHelps[commandName];
   if (!help) {
     process.stderr.write(
-      c.error("✗") + " Unknown command: " + c.code(commandName) + "\n",
+      c.error("✗") + " Comando desconhecido: " + c.code(commandName) + "\n",
     );
     printGlobalHelp();
     process.exit(1);
@@ -214,19 +214,19 @@ function printCommandHelp(commandName: string) {
   const lines: string[] = [
     printHeader(),
     "",
-    c.heading("Command"),
+    c.heading("Comando"),
     "  " + c.brand(commandName),
     "",
-    c.heading("Description"),
+    c.heading("Descrição"),
     "  " + help.description,
     "",
-    c.heading("Usage"),
+    c.heading("Uso"),
     "  " + c.code(help.usage),
     "",
   ];
 
   if (help.options?.length) {
-    lines.push(c.heading("Options"));
+    lines.push(c.heading("Opções"));
     for (const option of help.options) {
       lines.push("  " + option);
     }
@@ -234,14 +234,14 @@ function printCommandHelp(commandName: string) {
   }
 
   if (help.notes?.length) {
-    lines.push(c.heading("Notes"));
+    lines.push(c.heading("Observações"));
     for (const note of help.notes) {
       lines.push("  " + note);
     }
     lines.push("");
   }
 
-  lines.push(c.heading("Examples"));
+  lines.push(c.heading("Exemplos"));
 
   for (const ex of help.examples) {
     lines.push("  " + c.code("$ " + ex));
@@ -308,9 +308,9 @@ function parseNamedArgs(args: string[]): Record<string, string> {
     if (!value || value.startsWith("--")) {
       process.stderr.write(
         c.error("✗") +
-          " Missing value for flag " +
+          " Valor ausente para a flag " +
           c.code(current) +
-          "\n  Example: " +
+          "\n  Exemplo: " +
           c.code(`${current} <value>`) +
           "\n",
       );
@@ -346,19 +346,19 @@ function printQuoteDetails(payload: QuoteApiResponse) {
   const quote = payload.data;
   const symbol = quote.ticker ?? quote.symbol ?? "-";
   const market = quote.market ?? "CRYPTO";
-  const staleLabel = payload.cache.stale ? c.tip("yes") : c.success("no");
+  const staleLabel = payload.cache.stale ? c.tip("sim") : c.success("não");
 
   const changeColor = quote.change >= 0 ? c.success : c.error;
 
   process.stdout.write(
     [
-      c.heading("Asset"),
+      c.heading("Ativo"),
       "  " + c.brand(symbol) + "  " + c.dim(quote.name),
       "",
-      c.heading("Market"),
+      c.heading("Mercado"),
       "  " + market,
       "",
-      c.heading("Price"),
+      c.heading("Preço"),
       "  " +
         quote.currency +
         " " +
@@ -370,13 +370,13 @@ function printQuoteDetails(payload: QuoteApiResponse) {
           )}%)`,
         ),
       "",
-      c.heading("Quote Info"),
-      "  Quoted at:   " + quote.quotedAt,
-      "  Source:      " + payload.cache.source,
-      "  Stale:       " + staleLabel,
+      c.heading("Informações da Cotação"),
+      "  Cotado em:   " + quote.quotedAt,
+      "  Fonte:       " + payload.cache.source,
+      "  Desatualizado: " + staleLabel,
       "",
-      c.dim("Cache key:      " + payload.cache.key),
-      c.dim("Cache updated:  " + payload.cache.updatedAt),
+      c.dim("Chave do cache:      " + payload.cache.key),
+      c.dim("Cache atualizado:  " + payload.cache.updatedAt),
       "",
     ].join("\n"),
   );
@@ -397,9 +397,9 @@ async function requireApiKey(): Promise<string> {
   if (!config?.apiKey) {
     process.stderr.write(
       c.error("✗") +
-        " Not logged in.\n  Run " +
+        " Você não está logado.\n  Execute " +
         c.code("finta login") +
-        " to authenticate.\n",
+        " para autenticar.\n",
     );
     process.exit(1);
   }
@@ -411,16 +411,16 @@ async function requireApiKey(): Promise<string> {
 
 async function handleLogin(args: string[]) {
   const flags = parseNamedArgs(args);
-  const email = flags.email ?? (await promptFor("Email"));
-  const password = flags.password ?? (await promptFor("Password"));
+  const email = flags.email ?? (await promptFor("E-mail"));
+  const password = flags.password ?? (await promptFor("Senha"));
   const result = await api.auth.login(email, password);
   const config = toStoredCliConfig(result.data);
   await saveConfig(config);
   process.stdout.write(
     c.success("✓") +
-      " Logged in as " +
+      " Login feito como " +
       c.brand(result.data.user.name) +
-      "\n  Key: " +
+      "\n  Chave: " +
       c.code(config.keyName) +
       "\n",
   );
@@ -428,17 +428,17 @@ async function handleLogin(args: string[]) {
 
 async function handleRegister(args: string[]) {
   const flags = parseNamedArgs(args);
-  const name = flags.name ?? (await promptFor("Name"));
-  const email = flags.email ?? (await promptFor("Email"));
-  const password = flags.password ?? (await promptFor("Password"));
+  const name = flags.name ?? (await promptFor("Nome"));
+  const email = flags.email ?? (await promptFor("E-mail"));
+  const password = flags.password ?? (await promptFor("Senha"));
   const result = await api.auth.register(name, email, password);
   const config = toStoredCliConfig(result.data);
   await saveConfig(config);
   process.stdout.write(
     c.success("✓") +
-      " Registered and logged in as " +
+      " Cadastro feito e login feito como " +
       c.brand(result.data.user.name) +
-      "\n  Key: " +
+      "\n  Chave: " +
       c.code(config.keyName) +
       "\n",
   );
@@ -450,16 +450,16 @@ async function handleLogout() {
   if (!config) {
     process.stdout.write(
       c.tip("!") +
-        " Not currently authenticated.\n  Run " +
+        " Você não está autenticado.\n  Execute " +
         c.code("finta login") +
-        " to log in.\n",
+        " para fazer login.\n",
     );
     return;
   }
 
   await api.auth.logout(config.apiKey, config.keyId);
   await clearConfig();
-  process.stdout.write(c.success("✓") + " Logged out.\n");
+  process.stdout.write(c.success("✓") + " Logout feito.\n");
 }
 
 async function handleKeys() {
@@ -501,9 +501,9 @@ async function handleFavorites(args: string[]) {
     if (!symbol || !rawAssetType) {
       process.stderr.write(
         c.error("✗") +
-          " Missing arguments.\n  Usage: " +
+          " Argumentos ausentes.\n  Uso: " +
           c.code("finta favorites add <symbol> <assetType>") +
-          "\n  Example: " +
+          "\n  Exemplo: " +
           c.code("finta favorites add AAPL stock") +
           "\n",
       );
@@ -513,11 +513,11 @@ async function handleFavorites(args: string[]) {
     const data = await api.favorites.add(token, symbol, assetType);
     process.stdout.write(
       c.success("✓") +
-        " Added " +
+        " Adicionado " +
         c.brand(symbol) +
         " (" +
         assetType +
-        ") to favorites.\n",
+        ") aos favoritos.\n",
     );
     printJson(data);
     return;
@@ -528,9 +528,9 @@ async function handleFavorites(args: string[]) {
     if (!symbol || !rawAssetType) {
       process.stderr.write(
         c.error("✗") +
-          " Missing arguments.\n  Usage: " +
+          " Argumentos ausentes.\n  Uso: " +
           c.code("finta favorites remove <symbol> <assetType>") +
-          "\n  Example: " +
+          "\n  Exemplo: " +
           c.code("finta favorites remove AAPL stock") +
           "\n",
       );
@@ -540,11 +540,11 @@ async function handleFavorites(args: string[]) {
     const data = await api.favorites.remove(token, symbol, assetType);
     process.stdout.write(
       c.success("✓") +
-        " Removed " +
+        " Removido " +
         c.brand(symbol) +
         " (" +
         assetType +
-        ") from favorites.\n",
+        ") dos favoritos.\n",
     );
     printJson(data);
     return;
@@ -552,9 +552,9 @@ async function handleFavorites(args: string[]) {
 
   process.stderr.write(
     c.error("✗") +
-      " Unknown subcommand: " +
+      " Subcomando desconhecido: " +
       c.code(subcommand) +
-      "\n  Expected: " +
+      "\n  Esperado: " +
       c.code("list") +
       " | " +
       c.code("add") +
@@ -572,9 +572,9 @@ async function handleQuote(args: string[]) {
   if (!ticker) {
     process.stderr.write(
       c.error("✗") +
-        " Missing ticker.\n  Usage: " +
+        " Ticker ausente.\n  Uso: " +
         c.code("finta quote <ticker> [--type <stock|crypto>]") +
-        "\n  Example: " +
+        "\n  Exemplo: " +
         c.code("finta quote AAPL") +
         "\n",
     );
@@ -598,9 +598,9 @@ async function handleSearch(args: string[]) {
   if (!query) {
     process.stderr.write(
       c.error("✗") +
-        " Missing search query.\n  Usage: " +
+        " Busca ausente.\n  Uso: " +
         c.code("finta search <query> [type]") +
-        "\n  Example: " +
+        "\n  Exemplo: " +
         c.code("finta search apple") +
         "\n",
     );
@@ -637,7 +637,7 @@ export async function runHeadless(
     const handler = commands[command.name];
     if (!handler) {
       process.stderr.write(
-        c.error("✗") + " Unknown command: " + c.code(command.name) + "\n\n",
+        c.error("✗") + " Comando desconhecido: " + c.code(command.name) + "\n\n",
       );
       printHelp();
       process.exit(1);

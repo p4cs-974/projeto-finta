@@ -56,7 +56,7 @@ describe("headless dashboard command", () => {
   it("prints formatted dashboard text by default", async () => {
     await runHeadless({ name: "dashboard", args: [] });
 
-    expect(stdout).toContain("Dashboard");
+    expect(stdout).toContain("Painel");
     expect(stdout).toContain("Favoritos: 1");
     expect(stdout).not.toMatch(/^\{/);
     expect(fetch).toHaveBeenCalledWith(

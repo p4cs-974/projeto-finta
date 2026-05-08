@@ -2,15 +2,37 @@ const publicHost = (
   process.env.FINTA_PUBLIC_HOST ?? "https://finta.p4cs.com.br"
 ).replace(/\/+$/, "");
 
-async function assertOk(url, description, predicate) {
-  const response = await fetch(url);
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  if (!response.ok) {
-    throw new Error(
-      `${description} failed with status ${response.status}: ${url}`,
-    );
+async function fetchWithRetry(url, description) {
+  const maxAttempts = 8;
+  let lastResponse;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const response = await fetch(url);
+    lastResponse = response;
+
+    if (response.ok) {
+      return response;
+    }
+
+    if (attempt < maxAttempts && (response.status === 503 || response.status >= 500)) {
+      await wait(1000 * attempt + Math.floor(Math.random() * 250));
+      continue;
+    }
+
+    break;
   }
 
+  throw new Error(
+    `${description} failed with status ${lastResponse?.status ?? "unknown"}: ${url}`,
+  );
+}
+
+async function assertOk(url, description, predicate) {
+  const response = await fetchWithRetry(url, description);
   await predicate(response);
 }
 

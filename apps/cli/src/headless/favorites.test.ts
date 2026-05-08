@@ -101,7 +101,7 @@ describe("headless favorites command", () => {
     const exit = await run(["clear"]);
 
     expect(exit).toBe(1);
-    expect(stderrBuffer.toLowerCase()).toContain("unknown subcommand");
+    expect(stderrBuffer.toLowerCase()).toContain("subcomando desconhecido");
     expect(apiMocks.add).not.toHaveBeenCalled();
     expect(apiMocks.remove).not.toHaveBeenCalled();
     expect(apiMocks.list).not.toHaveBeenCalled();
@@ -125,7 +125,7 @@ describe("headless favorites command", () => {
     const exit = await run(["add", "PETR4", "bond"]);
 
     expect(exit).toBe(1);
-    expect(stderrBuffer.toLowerCase()).toContain("invalid asset type");
+    expect(stderrBuffer.toLowerCase()).toContain("tipo de ativo inválido");
     expect(stderrBuffer).toContain("bond");
     expect(apiMocks.add).not.toHaveBeenCalled();
   });

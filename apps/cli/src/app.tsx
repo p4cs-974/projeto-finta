@@ -42,7 +42,7 @@ export function App({ initialConfig }: AppProps) {
         if (isRevokedKeyError(error)) {
           await clearConfig();
           setConfig(null);
-          setNotice("Your key was revoked. Please log in again.");
+          setNotice("Sua chave foi revogada. Faça login novamente.");
         }
 
         setCheckingSession(false);
@@ -65,7 +65,7 @@ export function App({ initialConfig }: AppProps) {
           backgroundColor: colors.background,
         }}
       >
-        <text fg={colors.mutedForeground}>Checking saved session...</text>
+        <text fg={colors.mutedForeground}>Verificando sessão salva...</text>
       </box>
     );
   }

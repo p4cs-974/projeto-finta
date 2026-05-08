@@ -33,6 +33,7 @@ async function main() {
       expectedSha256: target.sha256,
       expectedVersion: manifest.version,
       targetKey,
+      expectedSize: target.size,
     });
   }
 

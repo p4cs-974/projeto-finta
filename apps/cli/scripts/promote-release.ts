@@ -4,6 +4,7 @@ import {
   createLatestManifestUpload,
   fetchReleaseManifest,
   parseArgs,
+  resolveReleaseBucketName,
   uploadReleaseObject,
 } from "../src/distribution/publishing";
 import { CLI_VERSION } from "../src/version";
@@ -12,13 +13,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const version = args.version ?? CLI_VERSION;
   const publicHost = args["public-host"] ?? CANONICAL_HOST;
-  const bucketName = args.bucket ?? process.env.FINTA_RELEASES_BUCKET_NAME;
-
-  if (!bucketName) {
-    throw new Error(
-      "Missing release bucket name. Provide --bucket or set FINTA_RELEASES_BUCKET_NAME.",
-    );
-  }
+  const bucketName = await resolveReleaseBucketName(args);
 
   const manifest = await fetchReleaseManifest(
     getVersionManifestUrl(version, publicHost),

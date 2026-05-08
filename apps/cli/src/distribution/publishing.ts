@@ -79,7 +79,7 @@ export function parseArgs(argv: string[]) {
     const value = argv[index + 1];
 
     if (!value || value.startsWith("--")) {
-      throw new Error(`Missing value for ${arg}`);
+      throw new Error(`Valor ausente para ${arg}`);
     }
 
     parsed[arg.slice(2)] = value;
@@ -89,13 +89,46 @@ export function parseArgs(argv: string[]) {
   return parsed;
 }
 
+function stripJsonComments(content: string) {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "")
+    .replace(/,\s*([}\]])/g, "$1");
+}
+
+export async function resolveReleaseBucketName(args: Record<string, string>) {
+  if (args.bucket) return args.bucket;
+  if (process.env.FINTA_RELEASES_BUCKET_NAME) {
+    return process.env.FINTA_RELEASES_BUCKET_NAME;
+  }
+
+  try {
+    const rawConfig = await readFile(FRONTEND_WRANGLER_CONFIG, "utf-8");
+    const config = JSON.parse(stripJsonComments(rawConfig)) as {
+      r2_buckets?: Array<{ binding?: string; bucket_name?: string }>;
+    };
+    const releaseBucket = config.r2_buckets?.find(
+      (bucket) => bucket.binding === "FINTA_RELEASES_BUCKET",
+    );
+    if (releaseBucket?.bucket_name) {
+      return releaseBucket.bucket_name;
+    }
+  } catch {
+    // Fall through to the explicit error below.
+  }
+
+  throw new Error(
+    `Nome do bucket de releases ausente. Informe --bucket, defina FINTA_RELEASES_BUCKET_NAME ou configure o binding FINTA_RELEASES_BUCKET em ${FRONTEND_WRANGLER_CONFIG}.`,
+  );
+}
+
 export function resolveTargetKeys(rawTargetList?: string) {
   const selectedTargets = (rawTargetList?.split(",") ??
     RELEASE_TARGETS.map((target) => target.key)) as SupportedTargetKey[];
 
   for (const targetKey of selectedTargets) {
     if (!RELEASE_TARGETS.some((target) => target.key === targetKey)) {
-      throw new Error(`Unsupported release target: ${targetKey}`);
+      throw new Error(`Alvo de release não suportado: ${targetKey}`);
     }
   }
 
@@ -129,7 +162,7 @@ export function getArtifactPath(
   );
 
   if (!target) {
-    throw new Error(`Unsupported release target: ${targetKey}`);
+    throw new Error(`Alvo de release não suportado: ${targetKey}`);
   }
 
   return join(releasesDir, version, target.artifactName);
@@ -144,7 +177,7 @@ async function assertFileExists(path: string) {
   try {
     await access(path);
   } catch {
-    throw new Error(`Required release artifact is missing: ${path}`);
+    throw new Error(`Artefato de release obrigatório ausente: ${path}`);
   }
 }
 
@@ -328,14 +361,14 @@ export async function fetchReleaseManifest(url: string) {
 
   if (!response.ok) {
     throw new Error(
-      `Release manifest request failed with status ${response.status} for ${url}`,
+      `Requisição do manifesto de release falhou com status ${response.status} para ${url}`,
     );
   }
 
   const payload = (await response.json()) as ReleaseManifest;
 
   if (typeof payload.version !== "string" || !payload.targets) {
-    throw new Error(`Release manifest from ${url} is invalid`);
+    throw new Error(`Manifesto de release de ${url} é inválido`);
   }
 
   return payload;
@@ -362,7 +395,7 @@ async function verifyBinaryVersionByExecution(path: string, version: string) {
 
   if (actualVersion !== expectedPlain && actualVersion !== expectedWithV) {
     throw new Error(
-      `Version check failed for ${path}: expected "${expectedPlain}" or "${expectedWithV}" but got "${actualVersion}"`,
+      `Verificação de versão falhou para ${path}: esperado "${expectedPlain}" ou "${expectedWithV}", mas recebido "${actualVersion}"`,
     );
   }
 }
@@ -379,12 +412,12 @@ async function verifyBinaryVersionByEmbeddedString(
     // The binary may contain colored output; search for the plain version string
     if (!result.stdout.includes(version)) {
       throw new Error(
-        `Artifact ${path} does not contain the expected version marker "${version}"`,
+        `Artefato ${path} não contém o marcador de versão esperado "${version}"`,
       );
     }
   } catch (error) {
     throw new Error(
-      `Unable to inspect non-native artifact ${path}: ${error instanceof Error ? error.message : String(error)}`,
+      `Não foi possível inspecionar o artefato não nativo ${path}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
@@ -394,6 +427,7 @@ export async function verifyDownloadedArtifact(input: {
   expectedSha256: string;
   expectedVersion: string;
   targetKey: SupportedTargetKey;
+  expectedSize?: number;
 }) {
   const tempDir = await mkdtemp(join(tmpdir(), "finta-release-verify-"));
   const artifactPath = join(tempDir, "finta");
@@ -401,21 +435,32 @@ export async function verifyDownloadedArtifact(input: {
   try {
     let verifiedChecksum = false;
 
-    for (let attempt = 1; attempt <= 6; attempt += 1) {
+    const maxAttempts = 12;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       const response = await fetch(input.artifactUrl);
 
-      if (!response.ok && attempt < 6) {
-        await wait(1000 * attempt);
+      if (!response.ok && attempt < maxAttempts) {
+        await wait(1000 * attempt + Math.floor(Math.random() * 250));
         continue;
       }
 
       if (!response.ok) {
         throw new Error(
-          `Artifact request failed with status ${response.status} for ${input.artifactUrl}`,
+          `Requisição do artefato falhou com status ${response.status} para ${input.artifactUrl}`,
         );
       }
 
       const bytes = Buffer.from(await response.arrayBuffer());
+      if (
+        input.expectedSize !== undefined &&
+        bytes.length !== input.expectedSize &&
+        attempt < maxAttempts
+      ) {
+        await wait(1000 * attempt + Math.floor(Math.random() * 250));
+        continue;
+      }
+
       await writeFile(artifactPath, bytes);
 
       const actualSha256 = await computeSha256(artifactPath);
@@ -424,18 +469,18 @@ export async function verifyDownloadedArtifact(input: {
         break;
       }
 
-      if (attempt === 6) {
+      if (attempt === maxAttempts) {
         throw new Error(
-          `Checksum verification failed for ${input.artifactUrl}: expected ${input.expectedSha256}, got ${actualSha256}`,
+          `Verificação de checksum falhou para ${input.artifactUrl}: esperado ${input.expectedSha256}, recebido ${actualSha256}`,
         );
       }
 
-      await wait(1000 * attempt);
+      await wait(1000 * attempt + Math.floor(Math.random() * 250));
     }
 
     if (!verifiedChecksum) {
       throw new Error(
-        `Checksum verification failed for ${input.artifactUrl}: expected ${input.expectedSha256}`,
+        `Verificação de checksum falhou para ${input.artifactUrl}: esperado ${input.expectedSha256}`,
       );
     }
 

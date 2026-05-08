@@ -38,7 +38,7 @@ export class CliRateLimitError extends Error {
     const windowSeconds = Math.ceil(windowMs / 1000);
 
     super(
-      `CLI rate limit exceeded: ${maxRequests} requests per ${windowSeconds}s. Try again in ${retryAfterSeconds}s.`,
+      `Limite de requisições da CLI excedido: ${maxRequests} requisições em ${windowSeconds}s. Tente novamente em ${retryAfterSeconds}s.`,
     );
   }
 }
@@ -234,7 +234,7 @@ async function request<T>(
     const errorPayload = payload as ApiErrorBody | null;
     throw new FintaApiError(
       errorPayload?.error?.message ??
-        `Request failed with status ${response.status}`,
+        `Requisição falhou com status ${response.status}`,
       response.status,
       errorPayload?.error?.code,
       errorPayload,
