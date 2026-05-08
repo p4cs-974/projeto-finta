@@ -32,7 +32,6 @@ vi.mock("../api/client", () => ({
 describe("headless favorites command", () => {
   let stdoutBuffer: string;
   let stderrBuffer: string;
-  let exitSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     stdoutBuffer = "";
@@ -50,7 +49,7 @@ describe("headless favorites command", () => {
       stderrBuffer += String(chunk);
       return true;
     });
-    exitSpy = vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
+    vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
       throw new Error(`__exit__:${code ?? 0}`);
     }) as never);
   });
