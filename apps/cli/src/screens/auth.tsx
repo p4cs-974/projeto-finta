@@ -510,6 +510,7 @@ export function AuthScreen({
 
         if (
           key.name.toLowerCase() === "f" &&
+          key.ctrl &&
           quoteResult &&
           quoteIsFavorited !== null &&
           !favoriteToggleLoading
@@ -913,8 +914,8 @@ export function AuthScreen({
                   {favoriteToggleLoading
                     ? "Updating favorite..."
                     : quoteIsFavorited
-                    ? "Press F to unfavorite"
-                    : "Press F to favorite"}
+                    ? "Press Ctrl+F to unfavorite"
+                    : "Press Ctrl+F to favorite"}
                 </text>
               )}
               {favoriteToggleError && (
@@ -925,7 +926,7 @@ export function AuthScreen({
         </box>
 
         <text fg={colors.ring}>
-          {"Tab switch type  ·  Enter fetch  ·  F favorite  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"}
+          {"Tab switch type  ·  Enter fetch  ·  Ctrl+F favorite  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"}
         </text>
         {overlay}
       </box>
