@@ -65,6 +65,8 @@ type Command = {
 type CommandHelp = {
   description: string;
   usage: string;
+  options?: string[];
+  notes?: string[];
   examples: string[];
 };
 
@@ -99,12 +101,17 @@ const commandHelps: Record<string, CommandHelp> = {
   dashboard: {
     description: "Show your asset dashboard with latest quotes.",
     usage: "finta dashboard [--json]",
+    options: ["--json  Output the normalized dashboard snapshot as JSON."],
     examples: ["finta dashboard", "finta dashboard --json"],
   },
   favorites: {
     description: "Manage your favorite assets.",
     usage:
       "finta favorites [list | add <symbol> <assetType> | remove <symbol> <assetType>]",
+    notes: [
+      "If no subcommand is provided, favorites defaults to list.",
+      "assetType must be stock or crypto.",
+    ],
     examples: [
       "finta favorites",
       "finta favorites list",
@@ -116,6 +123,9 @@ const commandHelps: Record<string, CommandHelp> = {
   quote: {
     description: "Get a real-time price quote for an asset.",
     usage: "finta quote <ticker> [--type <stock|crypto>]",
+    options: [
+      "--type <stock|crypto>  Disambiguate tickers that exist in multiple asset types.",
+    ],
     examples: [
       "finta quote AAPL",
       "finta quote BTC --type crypto",
@@ -155,7 +165,7 @@ function printGlobalHelp() {
       "  Force headless mode (no TUI)",
     "  " +
       c.code("--json".padEnd(22)) +
-      "  Output raw JSON instead of formatted text",
+      "  Output JSON for commands that support it",
     "  " + c.code("--help, -h".padEnd(22)) + "  Show help",
     "  " + c.code("--version, -v".padEnd(22)) + "  Show version",
     "",
@@ -213,8 +223,25 @@ function printCommandHelp(commandName: string) {
     c.heading("Usage"),
     "  " + c.code(help.usage),
     "",
-    c.heading("Examples"),
   ];
+
+  if (help.options?.length) {
+    lines.push(c.heading("Options"));
+    for (const option of help.options) {
+      lines.push("  " + option);
+    }
+    lines.push("");
+  }
+
+  if (help.notes?.length) {
+    lines.push(c.heading("Notes"));
+    for (const note of help.notes) {
+      lines.push("  " + note);
+    }
+    lines.push("");
+  }
+
+  lines.push(c.heading("Examples"));
 
   for (const ex of help.examples) {
     lines.push("  " + c.code("$ " + ex));
