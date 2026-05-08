@@ -175,5 +175,5 @@ describe("renderInstallScript", () => {
     await fixtureServer.close();
 
     expect(failure.stderr).toContain("Checksum verification failed");
-  });
+  }, 10_000);
 });

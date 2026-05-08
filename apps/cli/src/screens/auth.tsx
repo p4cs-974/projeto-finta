@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useKeyboard } from "@opentui/react";
 import type { QuoteWithCacheMeta } from "@finta/price-query";
 import type { AssetType } from "@finta/shared-kernel";
+import type { DashboardSnapshot } from "@finta/dashboard";
 
 import {
   api,
@@ -10,6 +11,23 @@ import {
   type StoredConfig,
 } from "../api/client";
 import { useExitHandler } from "../components/confirm-exit";
+import {
+  buildDashboardAssetRows,
+  buildDashboardInitialQuotes,
+  buildDashboardStreamConfigs,
+  formatActivityText,
+  formatMoney,
+  formatPercent,
+  formatRelativeTime,
+  getDashboardAssetKey,
+  getQuoteMarket,
+  getQuoteSymbol,
+  type DashboardAssetRow,
+} from "../dashboard/presentation";
+import {
+  useCliQuoteStream,
+  useCliQuoteStreams,
+} from "../dashboard/quote-stream";
 import { useTheme } from "../theme-provider";
 import { sortFavorites } from "../favorites/sort";
 
@@ -32,7 +50,7 @@ interface AuthScreenProps {
 
 type GuestMode = "login" | "register";
 type AuthField = "name" | "email" | "password";
-type AuthenticatedView = "home" | "quote-details" | "favorites";
+type AuthenticatedView = "dashboard" | "quote-details" | "favorites";
 
 function formatSignedNumber(value: number, digits = 2) {
   const formatted = value.toFixed(digits);
@@ -61,10 +79,16 @@ export function AuthScreen({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [authenticatedView, setAuthenticatedView] =
-    useState<AuthenticatedView>("home");
+    useState<AuthenticatedView>("dashboard");
+  const [dashboard, setDashboard] = useState<DashboardSnapshot | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [selectedDashboardIndex, setSelectedDashboardIndex] = useState(0);
   const [quoteSymbol, setQuoteSymbol] = useState("");
   const [quoteType, setQuoteType] = useState<AssetType>("stock");
-  const [quoteResult, setQuoteResult] = useState<QuoteWithCacheMeta | null>(null);
+  const [quoteResult, setQuoteResult] = useState<QuoteWithCacheMeta | null>(
+    null,
+  );
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [quoteIsFavorited, setQuoteIsFavorited] = useState<boolean | null>(null);
@@ -103,7 +127,8 @@ export function AuthScreen({
 
   useEffect(() => {
     if (!authenticated) {
-      setAuthenticatedView("home");
+      setAuthenticatedView("dashboard");
+      setDashboard(null);
       setQuoteResult(null);
       setQuoteError(null);
       setQuoteSymbol("");
@@ -254,7 +279,13 @@ export function AuthScreen({
     } finally {
       setFavoritesActionLoading(false);
     }
-  }, [config, favoritesCursor, handleAuthFailure, refetchFavorites, sortedFavorites]);
+  }, [
+    config,
+    favoritesCursor,
+    handleAuthFailure,
+    refetchFavorites,
+    sortedFavorites,
+  ]);
 
   const focusUp = useCallback(() => {
     setFocused((prev) => {
@@ -281,6 +312,100 @@ export function AuthScreen({
     setError(null);
     setFocused(isRegister ? "email" : "name");
   }, [authenticated, isRegister]);
+
+  const loadDashboard = useCallback(async () => {
+    if (!config) {
+      return;
+    }
+
+    setDashboardLoading(true);
+    setDashboardError(null);
+    try {
+      setDashboard(
+        (await api.dashboard.get(config.apiKey)) as DashboardSnapshot,
+      );
+    } catch (err) {
+      setDashboardError(
+        err instanceof Error ? err.message : "Failed to load dashboard",
+      );
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, [config]);
+
+  useEffect(() => {
+    if (!authenticated || !config) {
+      setDashboard(null);
+      return;
+    }
+
+    void loadDashboard();
+    const timer = setInterval(() => void loadDashboard(), 15_000);
+    return () => clearInterval(timer);
+  }, [authenticated, config, loadDashboard]);
+
+  const dashboardRows = useMemo(
+    () => (dashboard ? buildDashboardAssetRows(dashboard) : []),
+    [dashboard],
+  );
+  const dashboardInitialQuotes = useMemo(
+    () => (dashboard ? buildDashboardInitialQuotes(dashboard) : new Map()),
+    [dashboard],
+  );
+  const dashboardStreams = useMemo(
+    () => (dashboard ? buildDashboardStreamConfigs(dashboard) : []),
+    [dashboard],
+  );
+  const { quotes: streamedDashboardQuotes, statuses: dashboardStreamStatuses } =
+    useCliQuoteStreams({
+      token: config?.apiKey ?? null,
+      streams: dashboardStreams,
+      initialQuotes: dashboardInitialQuotes,
+      enabled: authenticatedView === "dashboard",
+    });
+
+  useEffect(() => {
+    setSelectedDashboardIndex((index) =>
+      Math.min(index, Math.max(0, dashboardRows.length - 1)),
+    );
+  }, [dashboardRows.length]);
+
+  const openAsset = useCallback(
+    (asset: Pick<DashboardAssetRow, "symbol" | "assetType">) => {
+      if (!config) return;
+      setQuoteSymbol(asset.symbol);
+      setQuoteType(asset.assetType);
+      setAuthenticatedView("quote-details");
+      setQuoteError(null);
+      setQuoteResult(null);
+      setQuoteLoading(true);
+      void api.quotes
+        .get(config.apiKey, asset.symbol, asset.assetType)
+        .then(setQuoteResult)
+        .catch((err) => {
+          setQuoteError(
+            err instanceof Error ? err.message : "Failed to load asset details",
+          );
+        })
+        .finally(() => setQuoteLoading(false));
+    },
+    [config],
+  );
+
+  const handleOpenSelectedAsset = useCallback(() => {
+    const asset = dashboardRows[selectedDashboardIndex];
+    if (!asset) return;
+    openAsset(asset);
+  }, [dashboardRows, openAsset, selectedDashboardIndex]);
+
+  const { quote: streamedQuoteResult, status: quoteStreamStatus } =
+    useCliQuoteStream({
+      token: config?.apiKey ?? null,
+      symbol: quoteSymbol,
+      assetType: quoteType,
+      initialQuote: quoteResult,
+      enabled: authenticatedView === "quote-details",
+    });
 
   const handleLoadQuote = useCallback(async () => {
     if (!config) {
@@ -333,15 +458,31 @@ export function AuthScreen({
     }
 
     if (authenticated && config) {
-      if (authenticatedView === "home") {
-        if (key.name === "return" && !loading) {
+      if (authenticatedView === "dashboard") {
+        if (key.name === "return") {
+          handleOpenSelectedAsset();
+          return;
+        }
+
+        if (key.name === "r") {
+          void loadDashboard();
+          return;
+        }
+
+        if (key.name === "l") {
           void handleLogout();
           return;
         }
 
-        if (key.name.toLowerCase() === "d") {
-          setAuthenticatedView("quote-details");
-          setQuoteError(null);
+        if (key.name === "down") {
+          setSelectedDashboardIndex((index) =>
+            Math.min(index + 1, Math.max(0, dashboardRows.length - 1)),
+          );
+          return;
+        }
+
+        if (key.name === "up") {
+          setSelectedDashboardIndex((index) => Math.max(0, index - 1));
           return;
         }
 
@@ -355,7 +496,7 @@ export function AuthScreen({
 
       if (authenticatedView === "quote-details") {
         if (key.name === "escape") {
-          setAuthenticatedView("home");
+          setAuthenticatedView("dashboard");
           setQuoteError(null);
           setFavoriteToggleError(null);
           return;
@@ -369,6 +510,7 @@ export function AuthScreen({
 
         if (
           key.name.toLowerCase() === "f" &&
+          key.ctrl &&
           quoteResult &&
           quoteIsFavorited !== null &&
           !favoriteToggleLoading
@@ -397,7 +539,7 @@ export function AuthScreen({
         }
 
         if (key.name === "escape") {
-          setAuthenticatedView("home");
+          setAuthenticatedView("dashboard");
           return;
         }
 
@@ -482,7 +624,34 @@ export function AuthScreen({
     }
   }, [onLogout]);
 
-  if (authenticated && config && authenticatedView === "home") {
+  if (authenticated && config && authenticatedView === "dashboard") {
+    const recentRows = dashboardRows.filter((row) => row.section === "recent");
+    const gainerRows = dashboardRows.filter((row) => row.section === "gainer");
+    const loserRows = dashboardRows.filter((row) => row.section === "loser");
+    const renderAssetRow = (row: DashboardAssetRow, index: number) => {
+      const selected = selectedDashboardIndex === index;
+      const streamKey = getDashboardAssetKey(row.symbol, row.assetType);
+      const streamedQuote = streamedDashboardQuotes.get(streamKey) ?? row.quote;
+      const status = dashboardStreamStatuses.get(streamKey);
+      const quoteLabel = streamedQuote
+        ? `${formatMoney(streamedQuote.data.currency, streamedQuote.data.price)}  ${formatPercent(streamedQuote.data.changePercent)}  ${status === "connected" ? "●" : status === "error" ? "×" : "○"}`
+        : row.assetType;
+
+      return (
+        <text
+          key={row.key}
+          fg={selected ? colors.sidebarPrimary : colors.foreground}
+          attributes={selected ? 1 : 0}
+          onMouseDown={() => {
+            setSelectedDashboardIndex(index);
+            openAsset(row);
+          }}
+        >
+          {`${selected ? "›" : " "} ${row.symbol.padEnd(8)} ${row.label.slice(0, 24).padEnd(24)} ${quoteLabel}`}
+        </text>
+      );
+    };
+
     return (
       <box
         style={{
@@ -493,16 +662,23 @@ export function AuthScreen({
           gap: 1,
         }}
       >
-        <box style={{ flexDirection: "column", alignItems: "center", gap: 0, marginBottom: 1 }}>
+        <box
+          style={{
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 0,
+            marginBottom: 1,
+          }}
+        >
           <text fg={colors.sidebarPrimary} attributes={1}>
             ◆ FINTA
           </text>
-          <text fg={colors.mutedForeground}>CLI API Key Authentication</text>
+          <text fg={colors.mutedForeground}>Dashboard</text>
         </box>
 
         <box
           style={{
-            width: 56,
+            width: 96,
             flexDirection: "column",
             border: true,
             borderColor: colors.border,
@@ -513,22 +689,94 @@ export function AuthScreen({
           }}
         >
           <text fg={colors.sidebarPrimary} attributes={1}>
-            Logged in
+            {config.user.name}
           </text>
-          <text fg={colors.foreground}>{config.user.name}</text>
           <text fg={colors.mutedForeground}>{config.user.email}</text>
-          <text fg={colors.ring}>{config.keyName}</text>
           {notice && <text fg={colors.ring}>{notice}</text>}
           {error && <text fg={colors.destructive}>{`✗ ${error}`}</text>}
-          <text fg={colors.sidebarPrimary}>Press D to view asset indicators</text>
+          {dashboardError && (
+            <text fg={colors.destructive}>{`✗ ${dashboardError}`}</text>
+          )}
+          {dashboardLoading && (
+            <text fg={colors.mutedForeground}>Refreshing dashboard...</text>
+          )}
+          {dashboard && (
+            <box style={{ flexDirection: "column", gap: 1 }}>
+              <text
+                fg={colors.foreground}
+              >{`Favoritos: ${dashboard.stats.favoritesCount}  Buscas Hoje: ${dashboard.stats.searchesToday}  Visualizações Hoje: ${dashboard.stats.viewsToday}  Atualizado: ${formatRelativeTime(dashboard.generatedAt)}`}</text>
+
+              <text fg={colors.sidebarPrimary} attributes={1}>
+                Buscas Recentes
+              </text>
+              {recentRows.length === 0 ? (
+                <text fg={colors.mutedForeground}>
+                  Ainda não há buscas recentes.
+                </text>
+              ) : (
+                recentRows.map((row, index) => renderAssetRow(row, index))
+              )}
+
+              <text fg={colors.sidebarPrimary} attributes={1}>
+                Maiores Altas
+              </text>
+              {gainerRows.length === 0 ? (
+                <text fg={colors.mutedForeground}>
+                  Nenhuma alta fresca no cache.
+                </text>
+              ) : (
+                gainerRows.map((row, offset) =>
+                  renderAssetRow(row, recentRows.length + offset),
+                )
+              )}
+
+              <text fg={colors.sidebarPrimary} attributes={1}>
+                Maiores Baixas
+              </text>
+              {loserRows.length === 0 ? (
+                <text fg={colors.mutedForeground}>
+                  Nenhuma baixa fresca no cache.
+                </text>
+              ) : (
+                loserRows.map((row, offset) =>
+                  renderAssetRow(
+                    row,
+                    recentRows.length + gainerRows.length + offset,
+                  ),
+                )
+              )}
+
+              <text fg={colors.sidebarPrimary} attributes={1}>
+                Atividade Recente
+              </text>
+              {dashboard.activityTimeline.length === 0 ? (
+                <text fg={colors.mutedForeground}>
+                  Nenhuma atividade recente registrada ainda.
+                </text>
+              ) : (
+                dashboard.activityTimeline
+                  .slice(0, 4)
+                  .map((activity) => (
+                    <text
+                      key={`${activity.type}:${activity.createdAt}:${activity.symbol ?? activity.searchQuery ?? ""}`}
+                      fg={colors.mutedForeground}
+                    >{`${formatActivityText(activity)} · ${formatRelativeTime(activity.createdAt)}`}</text>
+                  ))
+              )}
+            </box>
+          )}
           <text fg={colors.sidebarPrimary}>Press F to manage favorites</text>
           <text fg={loading ? colors.mutedForeground : colors.sidebarPrimary}>
-            {loading ? "Revoking key..." : "Press Enter to logout"}
+            {loading
+              ? "Revoking key..."
+              : "↑↓ select · Enter quote details · R refresh · L logout"}
           </text>
         </box>
 
         <text fg={colors.ring}>
-          {"D asset details  ·  F favorites  ·  Enter logout  ·  Ctrl+T toggle theme  ·  Ctrl+C exit  ·  Ctrl+Q quit"}
+          {
+            "↑↓ select  ·  Enter details  ·  F favorites  ·  R refresh  ·  L logout  ·  Ctrl+T theme  ·  Ctrl+C exit"
+          }
         </text>
         {overlay}
       </box>
@@ -536,9 +784,10 @@ export function AuthScreen({
   }
 
   if (authenticated && config && authenticatedView === "quote-details") {
-    const quote = quoteResult?.data;
-    const symbol = quote ? ("ticker" in quote ? quote.ticker : quote.symbol) : null;
-    const market = quote ? ("ticker" in quote ? quote.market : "CRYPTO") : null;
+    const liveQuoteResult = streamedQuoteResult ?? quoteResult;
+    const quote = liveQuoteResult?.data;
+    const symbol = liveQuoteResult ? getQuoteSymbol(liveQuoteResult) : null;
+    const market = liveQuoteResult ? getQuoteMarket(liveQuoteResult) : null;
 
     return (
       <box
@@ -550,7 +799,14 @@ export function AuthScreen({
           gap: 1,
         }}
       >
-        <box style={{ flexDirection: "column", alignItems: "center", gap: 0, marginBottom: 1 }}>
+        <box
+          style={{
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 0,
+            marginBottom: 1,
+          }}
+        >
           <text fg={colors.sidebarPrimary} attributes={1}>
             ◆ FINTA
           </text>
@@ -590,16 +846,22 @@ export function AuthScreen({
           </box>
 
           <text fg={colors.mutedForeground}>
-            {`Type: ${quoteType} (press Tab to switch stock/crypto)`}
+            {`Type: ${quoteType} · stream: ${quoteStreamStatus} (press Tab to switch stock/crypto)`}
           </text>
 
-          {quoteError && <text fg={colors.destructive}>{`✗ ${quoteError}`}</text>}
+          {quoteError && (
+            <text fg={colors.destructive}>{`✗ ${quoteError}`}</text>
+          )}
 
-          <text fg={quoteLoading ? colors.mutedForeground : colors.sidebarPrimary}>
-            {quoteLoading ? "Loading quote..." : "Press Enter to fetch asset details"}
+          <text
+            fg={quoteLoading ? colors.mutedForeground : colors.sidebarPrimary}
+          >
+            {quoteLoading
+              ? "Loading quote..."
+              : "Press Enter to fetch asset details"}
           </text>
 
-          {quoteResult && quote && symbol && market && (
+          {liveQuoteResult && quote && symbol && market && (
             <box
               style={{
                 flexDirection: "column",
@@ -610,22 +872,37 @@ export function AuthScreen({
                 gap: 0,
               }}
             >
-              <text fg={colors.sidebarPrimary} attributes={1}>{`Asset: ${symbol}`}</text>
+              <text
+                fg={colors.sidebarPrimary}
+                attributes={1}
+              >{`Asset: ${symbol}`}</text>
               <text fg={colors.foreground}>{`Name: ${quote.name}`}</text>
               <text fg={colors.mutedForeground}>{`Market: ${market}`}</text>
-              <text fg={colors.mutedForeground}>{`Currency: ${quote.currency}`}</text>
-              <text fg={colors.foreground}>{`Price: ${quote.price.toFixed(2)}`}</text>
-              <text fg={quote.change >= 0 ? colors.sidebarPrimary : colors.destructive}>
-                {`Change: ${formatSignedNumber(quote.change)} (${formatSignedNumber(
-                  quote.changePercent,
-                )}%)`}
+              <text
+                fg={colors.mutedForeground}
+              >{`Currency: ${quote.currency}`}</text>
+              <text
+                fg={colors.foreground}
+              >{`Price: ${formatMoney(quote.currency, quote.price)}`}</text>
+              <text
+                fg={
+                  quote.change >= 0 ? colors.sidebarPrimary : colors.destructive
+                }
+              >
+                {`Change: ${formatSignedNumber(quote.change)} (${formatPercent(quote.changePercent)})`}
               </text>
-              <text fg={colors.mutedForeground}>{`Quoted at: ${quote.quotedAt}`}</text>
-              <text fg={colors.mutedForeground}>{`Source: ${quoteResult.cache.source}`}</text>
+              <text
+                fg={colors.mutedForeground}
+              >{`Quoted at: ${formatRelativeTime(quote.quotedAt)}`}</text>
+              <text
+                fg={colors.mutedForeground}
+              >{`Source: ${liveQuoteResult.cache.source}`}</text>
               <text fg={colors.mutedForeground}>
-                {`Stale: ${quoteResult.cache.stale ? "yes" : "no"}`}
+                {`Stale: ${liveQuoteResult.cache.stale ? "yes" : "no"}`}
               </text>
-              <text fg={colors.mutedForeground}>{`Cache key: ${quoteResult.cache.key}`}</text>
+              <text
+                fg={colors.mutedForeground}
+              >{`Cache key: ${liveQuoteResult.cache.key}`}</text>
               {quoteIsFavorited !== null && (
                 <text
                   fg={
@@ -637,8 +914,8 @@ export function AuthScreen({
                   {favoriteToggleLoading
                     ? "Updating favorite..."
                     : quoteIsFavorited
-                    ? "Press F to unfavorite"
-                    : "Press F to favorite"}
+                    ? "Press Ctrl+F to unfavorite"
+                    : "Press Ctrl+F to favorite"}
                 </text>
               )}
               {favoriteToggleError && (
@@ -649,7 +926,7 @@ export function AuthScreen({
         </box>
 
         <text fg={colors.ring}>
-          {"Tab switch type  ·  Enter fetch  ·  F favorite  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"}
+          {"Tab switch type  ·  Enter fetch  ·  Ctrl+F favorite  ·  Esc back  ·  Ctrl+T toggle theme  ·  Ctrl+C exit"}
         </text>
         {overlay}
       </box>
@@ -750,7 +1027,14 @@ export function AuthScreen({
         gap: 1,
       }}
     >
-      <box style={{ flexDirection: "column", alignItems: "center", gap: 0, marginBottom: 1 }}>
+      <box
+        style={{
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 0,
+          marginBottom: 1,
+        }}
+      >
         <text fg={colors.sidebarPrimary} attributes={1}>
           ◆ FINTA
         </text>
@@ -771,14 +1055,20 @@ export function AuthScreen({
       >
         <box style={{ flexDirection: "row", justifyContent: "center", gap: 2 }}>
           <text
-            fg={mode === "login" ? colors.sidebarPrimary : colors.mutedForeground}
+            fg={
+              mode === "login" ? colors.sidebarPrimary : colors.mutedForeground
+            }
             attributes={mode === "login" ? 1 : 0}
           >
             Login
           </text>
           <text fg={colors.ring}>|</text>
           <text
-            fg={mode === "register" ? colors.sidebarPrimary : colors.mutedForeground}
+            fg={
+              mode === "register"
+                ? colors.sidebarPrimary
+                : colors.mutedForeground
+            }
             attributes={mode === "register" ? 1 : 0}
           >
             Register
@@ -791,7 +1081,8 @@ export function AuthScreen({
             title="Name"
             style={{
               border: true,
-              borderColor: focused === "name" ? colors.sidebarPrimary : colors.input,
+              borderColor:
+                focused === "name" ? colors.sidebarPrimary : colors.input,
               borderStyle: "rounded",
               height: 3,
               width: "100%",
@@ -811,7 +1102,8 @@ export function AuthScreen({
           title="Email"
           style={{
             border: true,
-            borderColor: focused === "email" ? colors.sidebarPrimary : colors.input,
+            borderColor:
+              focused === "email" ? colors.sidebarPrimary : colors.input,
             borderStyle: "rounded",
             height: 3,
             width: "100%",
@@ -830,7 +1122,8 @@ export function AuthScreen({
           title="Password"
           style={{
             border: true,
-            borderColor: focused === "password" ? colors.sidebarPrimary : colors.input,
+            borderColor:
+              focused === "password" ? colors.sidebarPrimary : colors.input,
             borderStyle: "rounded",
             height: 3,
             width: "100%",
@@ -874,7 +1167,9 @@ export function AuthScreen({
       </box>
 
       <text fg={colors.ring}>
-        {"↑↓ navigate  ·  esc unfocus  ·  Ctrl+T toggle theme  ·  tab mode  ·  Ctrl+Q quit  ·  Ctrl+C exit"}
+        {
+          "↑↓ navigate  ·  esc unfocus  ·  Ctrl+T toggle theme  ·  tab mode  ·  Ctrl+Q quit  ·  Ctrl+C exit"
+        }
       </text>
       {overlay}
     </box>

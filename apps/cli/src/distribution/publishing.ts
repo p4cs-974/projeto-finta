@@ -347,6 +347,10 @@ function stripAnsi(text: string): string {
   return text.replace(ANSI_PATTERN, "");
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function verifyBinaryVersionByExecution(path: string, version: string) {
   await chmod(path, 0o755);
   const result = await execFileAsync(path, ["--version"]);
@@ -395,21 +399,43 @@ export async function verifyDownloadedArtifact(input: {
   const artifactPath = join(tempDir, "finta");
 
   try {
-    const response = await fetch(input.artifactUrl);
+    let verifiedChecksum = false;
 
-    if (!response.ok) {
-      throw new Error(
-        `Artifact request failed with status ${response.status} for ${input.artifactUrl}`,
-      );
+    for (let attempt = 1; attempt <= 6; attempt += 1) {
+      const response = await fetch(input.artifactUrl);
+
+      if (!response.ok && attempt < 6) {
+        await wait(1000 * attempt);
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Artifact request failed with status ${response.status} for ${input.artifactUrl}`,
+        );
+      }
+
+      const bytes = Buffer.from(await response.arrayBuffer());
+      await writeFile(artifactPath, bytes);
+
+      const actualSha256 = await computeSha256(artifactPath);
+      if (actualSha256 === input.expectedSha256) {
+        verifiedChecksum = true;
+        break;
+      }
+
+      if (attempt === 6) {
+        throw new Error(
+          `Checksum verification failed for ${input.artifactUrl}: expected ${input.expectedSha256}, got ${actualSha256}`,
+        );
+      }
+
+      await wait(1000 * attempt);
     }
 
-    const bytes = Buffer.from(await response.arrayBuffer());
-    await writeFile(artifactPath, bytes);
-
-    const actualSha256 = await computeSha256(artifactPath);
-    if (actualSha256 !== input.expectedSha256) {
+    if (!verifiedChecksum) {
       throw new Error(
-        `Checksum verification failed for ${input.artifactUrl}: expected ${input.expectedSha256}, got ${actualSha256}`,
+        `Checksum verification failed for ${input.artifactUrl}: expected ${input.expectedSha256}`,
       );
     }
 

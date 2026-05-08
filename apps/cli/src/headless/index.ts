@@ -11,6 +11,7 @@ import {
 } from "../api/client";
 import { CLI_VERSION } from "../version";
 import { c, box } from "../style";
+import { formatDashboardText } from "./dashboard-format";
 import { parseAssetTypeOrExit } from "./asset-type";
 
 type QuoteApiResponse = {
@@ -64,6 +65,8 @@ type Command = {
 type CommandHelp = {
   description: string;
   usage: string;
+  options?: string[];
+  notes?: string[];
   examples: string[];
 };
 
@@ -82,7 +85,7 @@ const commandHelps: Record<string, CommandHelp> = {
       "finta register [--name <name>] [--email <email>] [--password <password>]",
     examples: [
       "finta register",
-      "finta register --name \"John Doe\" --email you@example.com --password secret",
+      'finta register --name "John Doe" --email you@example.com --password secret',
     ],
   },
   logout: {
@@ -97,12 +100,18 @@ const commandHelps: Record<string, CommandHelp> = {
   },
   dashboard: {
     description: "Show your asset dashboard with latest quotes.",
-    usage: "finta dashboard",
-    examples: ["finta dashboard"],
+    usage: "finta dashboard [--json]",
+    options: ["--json  Output the normalized dashboard snapshot as JSON."],
+    examples: ["finta dashboard", "finta dashboard --json"],
   },
   favorites: {
     description: "Manage your favorite assets.",
-    usage: "finta favorites [list | add <symbol> <assetType> | remove <symbol> <assetType>]",
+    usage:
+      "finta favorites [list | add <symbol> <assetType> | remove <symbol> <assetType>]",
+    notes: [
+      "If no subcommand is provided, favorites defaults to list.",
+      "assetType must be stock or crypto.",
+    ],
     examples: [
       "finta favorites",
       "finta favorites list",
@@ -114,6 +123,9 @@ const commandHelps: Record<string, CommandHelp> = {
   quote: {
     description: "Get a real-time price quote for an asset.",
     usage: "finta quote <ticker> [--type <stock|crypto>]",
+    options: [
+      "--type <stock|crypto>  Disambiguate tickers that exist in multiple asset types.",
+    ],
     examples: [
       "finta quote AAPL",
       "finta quote BTC --type crypto",
@@ -148,8 +160,12 @@ function printGlobalHelp() {
     "  Run with no arguments to launch the interactive TUI.",
     "",
     c.heading("Global Options"),
-    "  " + c.code("--no-ui, --headless".padEnd(22)) + "  Force headless mode (no TUI)",
-    "  " + c.code("--json".padEnd(22)) + "  Output raw JSON instead of formatted text",
+    "  " +
+      c.code("--no-ui, --headless".padEnd(22)) +
+      "  Force headless mode (no TUI)",
+    "  " +
+      c.code("--json".padEnd(22)) +
+      "  Output JSON for commands that support it",
     "  " + c.code("--help, -h".padEnd(22)) + "  Show help",
     "  " + c.code("--version, -v".padEnd(22)) + "  Show version",
     "",
@@ -162,10 +178,7 @@ function printGlobalHelp() {
 
   for (const [name, help] of Object.entries(commandHelps)) {
     lines.push(
-      "  " +
-        c.code(name.padEnd(maxNameLen)) +
-        "  " +
-        c.dim(help.description),
+      "  " + c.code(name.padEnd(maxNameLen)) + "  " + c.dim(help.description),
     );
   }
 
@@ -178,7 +191,10 @@ function printGlobalHelp() {
     "  " + c.code("$ finta search apple"),
     "  " + c.code("$ finta favorites add BTC crypto"),
     "",
-    c.tip("Tip:") + " Use " + c.code("finta <command> --help") + " for details on a specific command.",
+    c.tip("Tip:") +
+      " Use " +
+      c.code("finta <command> --help") +
+      " for details on a specific command.",
     "",
   );
 
@@ -207,8 +223,25 @@ function printCommandHelp(commandName: string) {
     c.heading("Usage"),
     "  " + c.code(help.usage),
     "",
-    c.heading("Examples"),
   ];
+
+  if (help.options?.length) {
+    lines.push(c.heading("Options"));
+    for (const option of help.options) {
+      lines.push("  " + option);
+    }
+    lines.push("");
+  }
+
+  if (help.notes?.length) {
+    lines.push(c.heading("Notes"));
+    for (const note of help.notes) {
+      lines.push("  " + note);
+    }
+    lines.push("");
+  }
+
+  lines.push(c.heading("Examples"));
 
   for (const ex of help.examples) {
     lines.push("  " + c.code("$ " + ex));
@@ -435,10 +468,22 @@ async function handleKeys() {
   printJson(data);
 }
 
+type RunHeadlessOptions = {
+  json?: boolean;
+};
+
+let runOptions: RunHeadlessOptions = {};
+
 async function handleDashboard() {
   const token = await requireApiKey();
   const data = await api.dashboard.get(token);
-  printJson(data);
+  if (runOptions.json) {
+    printJson(data);
+    return;
+  }
+  process.stdout.write(
+    formatDashboardText(data as Parameters<typeof formatDashboardText>[0]),
+  );
 }
 
 async function handleFavorites(args: string[]) {
@@ -538,7 +583,11 @@ async function handleQuote(args: string[]) {
 
   const flags = parseNamedArgs(rest);
   const assetType = parseAssetTypeFlag(flags.type);
-  const data = (await api.quotes.get(token, ticker, assetType)) as QuoteApiResponse;
+  const data = (await api.quotes.get(
+    token,
+    ticker,
+    assetType,
+  )) as QuoteApiResponse;
   printQuoteDetails(data);
 }
 
@@ -579,15 +628,16 @@ export function parseCliArgs(argv: string[]) {
   return parseArgs(argv);
 }
 
-export async function runHeadless(command: Command) {
+export async function runHeadless(
+  command: Command,
+  options: RunHeadlessOptions = {},
+) {
+  runOptions = options;
   try {
     const handler = commands[command.name];
     if (!handler) {
       process.stderr.write(
-        c.error("✗") +
-          " Unknown command: " +
-          c.code(command.name) +
-          "\n\n",
+        c.error("✗") + " Unknown command: " + c.code(command.name) + "\n\n",
       );
       printHelp();
       process.exit(1);

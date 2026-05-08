@@ -1,6 +1,7 @@
 import { hostname } from "node:os";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 
+import type { DashboardSnapshot } from "@finta/dashboard";
 import type {
   CachedQuoteSearchResponse,
   QuoteWithCacheMeta,
@@ -243,6 +244,76 @@ async function request<T>(
   return payload as T;
 }
 
+type BackendDashboardPayload = {
+  data: {
+    stats: DashboardSnapshot["stats"];
+    recentSelections: Array<{
+      symbol: string;
+      type: AssetType;
+      label: string;
+      market: string | null;
+      currency: string | null;
+      logoUrl: string | null;
+      lastSelectedAt: string;
+    }>;
+    activityTimeline: DashboardSnapshot["activityTimeline"];
+    marketMovers: {
+      gainers: Array<{
+        symbol: string;
+        type: AssetType;
+        initialQuote: QuoteWithCacheMeta;
+      }>;
+      losers: Array<{
+        symbol: string;
+        type: AssetType;
+        initialQuote: QuoteWithCacheMeta;
+      }>;
+    };
+    generatedAt: string;
+  };
+};
+
+function isBackendDashboardPayload(
+  payload: DashboardSnapshot | BackendDashboardPayload,
+): payload is BackendDashboardPayload {
+  return "data" in payload && typeof payload.data === "object";
+}
+
+function toDashboardSnapshot(
+  payload: DashboardSnapshot | BackendDashboardPayload,
+): DashboardSnapshot {
+  if (!isBackendDashboardPayload(payload)) {
+    return payload;
+  }
+
+  return {
+    stats: payload.data.stats,
+    recentSelections: payload.data.recentSelections.map((item) => ({
+      symbol: item.symbol,
+      assetType: item.type,
+      label: item.label,
+      market: item.market,
+      currency: item.currency,
+      logoUrl: item.logoUrl,
+      lastSelectedAt: item.lastSelectedAt,
+    })),
+    activityTimeline: payload.data.activityTimeline,
+    marketMovers: {
+      gainers: payload.data.marketMovers.gainers.map((item) => ({
+        symbol: item.symbol,
+        assetType: item.type,
+        initialQuote: item.initialQuote,
+      })),
+      losers: payload.data.marketMovers.losers.map((item) => ({
+        symbol: item.symbol,
+        assetType: item.type,
+        initialQuote: item.initialQuote,
+      })),
+    },
+    generatedAt: payload.data.generatedAt,
+  };
+}
+
 function withCliAuthBody<T extends Record<string, string>>(
   body: T,
 ): T & { client_type: "cli"; device_name: string } {
@@ -296,7 +367,13 @@ export const api = {
   },
 
   dashboard: {
-    get: (token: string) => request("/users/me/dashboard", { token }),
+    get: async (token: string): Promise<DashboardSnapshot> =>
+      toDashboardSnapshot(
+        await request<DashboardSnapshot | BackendDashboardPayload>(
+          "/users/me/dashboard",
+          { token },
+        ),
+      ),
   },
 
   favorites: {

@@ -11,7 +11,7 @@ import {
   type StoredConfig,
 } from "./client";
 
-describe("CLI config storage", () => {
+describe("CLI API client", () => {
   let configDir: string;
 
   beforeEach(async () => {
@@ -74,6 +74,67 @@ describe("CLI config storage", () => {
     const loaded = await loadConfig();
 
     expect(loaded).toEqual(config);
+  });
+
+  it("normalizes the backend dashboard envelope into the shared dashboard snapshot", async () => {
+    process.env.FINTA_API_URL = "http://api.test";
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            stats: { favoritesCount: 1, searchesToday: 2, viewsToday: 3 },
+            recentSelections: [
+              {
+                symbol: "PETR4",
+                type: "stock",
+                label: "Petrobras",
+                market: "B3",
+                currency: "BRL",
+                logoUrl: null,
+                lastSelectedAt: "2026-05-06T12:00:00.000Z",
+              },
+            ],
+            activityTimeline: [],
+            marketMovers: {
+              gainers: [
+                {
+                  symbol: "BTC",
+                  type: "crypto",
+                  initialQuote: {
+                    data: {
+                      symbol: "BTC",
+                      name: "Bitcoin",
+                      currency: "USD",
+                      price: 100000,
+                      change: 1,
+                      changePercent: 1,
+                      quotedAt: "2026-05-06T12:00:00.000Z",
+                      logoUrl: null,
+                    },
+                    cache: {
+                      key: "crypto:BTC",
+                      updatedAt: "2026-05-06T12:00:00.000Z",
+                      stale: false,
+                      source: "cache",
+                    },
+                  },
+                },
+              ],
+              losers: [],
+            },
+            generatedAt: "2026-05-06T12:10:00.000Z",
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const { api } = await import("./client");
+    const snapshot = await api.dashboard.get("token");
+
+    expect(snapshot.recentSelections[0]?.assetType).toBe("stock");
+    expect(snapshot.marketMovers.gainers[0]?.assetType).toBe("crypto");
+    expect(snapshot.stats.favoritesCount).toBe(1);
   });
 });
 

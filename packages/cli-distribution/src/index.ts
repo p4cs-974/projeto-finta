@@ -203,12 +203,12 @@ fetch_text() {
 
 download_file() {
   if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$1" -o "$2"
+    curl -fsSL --retry 3 --retry-delay 1 --retry-all-errors "$1" -o "$2"
     return
   fi
 
   if command -v wget >/dev/null 2>&1; then
-    wget -qO "$2" "$1"
+    wget --tries=4 --waitretry=1 -qO "$2" "$1"
     return
   fi
 
@@ -284,14 +284,16 @@ EXPECTED_SHA=$(printf '%s' "$TARGET_LINE" | cut -d '|' -f 2)
 
 if [ -x "$INSTALL_PATH" ]; then
   CURRENT_VERSION=$("$INSTALL_PATH" --version 2>/dev/null || true)
-  if [ "$CURRENT_VERSION" = "finta $VERSION" ]; then
-    info "finta $VERSION is already installed at $INSTALL_PATH"
-    info ""
-    info "Next steps:"
-    info "  finta"
-    info "  finta --help"
-    exit 0
-  fi
+  case "$CURRENT_VERSION" in
+    *"$VERSION"*)
+      info "finta $VERSION is already installed at $INSTALL_PATH"
+      info ""
+      info "Next steps:"
+      info "  finta"
+      info "  finta --help"
+      exit 0
+      ;;
+  esac
 
   if [ -n "$CURRENT_VERSION" ]; then
     info "Upgrading $CURRENT_VERSION to finta $VERSION"
@@ -302,10 +304,24 @@ TMP_DIR=$(mktemp -d "\${TMPDIR:-/tmp}/finta-install.XXXXXX")
 ARTIFACT_PATH="$TMP_DIR/finta"
 
 info "Downloading artifact"
-download_file "$ARTIFACT_URL" "$ARTIFACT_PATH" || error "Download failed. Check your network connection and try again."
+attempt=1
+while :; do
+  download_file "$ARTIFACT_URL" "$ARTIFACT_PATH" || error "Download failed. Check your network connection and try again."
 
-ACTUAL_SHA=$(compute_sha256 "$ARTIFACT_PATH")
-[ "$ACTUAL_SHA" = "$EXPECTED_SHA" ] || error "Checksum verification failed for $ARTIFACT_URL"
+  ACTUAL_SHA=$(compute_sha256 "$ARTIFACT_PATH")
+  if [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ]; then
+    break
+  fi
+
+  if [ "$attempt" -ge 6 ]; then
+    error "Checksum verification failed for $ARTIFACT_URL"
+  fi
+
+  info "Checksum verification failed; retrying download"
+  attempt=$((attempt + 1))
+  rm -f "$ARTIFACT_PATH"
+  sleep 1
+done
 
 mkdir -p "$INSTALL_DIR"
 chmod +x "$ARTIFACT_PATH"
@@ -313,7 +329,10 @@ mv "$ARTIFACT_PATH" "$INSTALL_PATH"
 chmod +x "$INSTALL_PATH"
 
 INSTALLED_VERSION=$("$INSTALL_PATH" --version 2>/dev/null || true)
-[ "$INSTALLED_VERSION" = "finta $VERSION" ] || error "Installed binary verification failed. Expected finta $VERSION but got: $INSTALLED_VERSION"
+case "$INSTALLED_VERSION" in
+  *"$VERSION"*) ;;
+  *) error "Installed binary verification failed. Expected finta $VERSION but got: $INSTALLED_VERSION" ;;
+esac
 
 info "Installed $INSTALLED_VERSION"
 
