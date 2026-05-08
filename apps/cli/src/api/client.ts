@@ -302,18 +302,18 @@ export const api = {
   favorites: {
     list: (token: string) => request("/users/me/favorites", { token }),
 
-    add: (token: string, symbol: string, assetType: string) =>
+    add: (token: string, symbol: string, assetType: AssetType) =>
       request("/users/me/favorites", {
         method: "POST",
         token,
-        body: { symbol, assetType },
+        body: { symbol, type: assetType },
       }),
 
-    remove: (token: string, symbol: string, assetType: string) =>
+    remove: (token: string, symbol: string, assetType: AssetType) =>
       request("/users/me/favorites", {
         method: "DELETE",
         token,
-        body: { symbol, assetType },
+        body: { symbol, type: assetType },
       }),
   },
 
