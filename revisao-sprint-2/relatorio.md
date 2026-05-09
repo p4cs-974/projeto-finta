@@ -23,11 +23,12 @@ As entregas foram validadas com base nos critérios de aceite de funcionamento e
 ### 2.3. Situação dos Quadros (Kanban)
 Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos:
 
-### Quadro Kanban da Sprint
+
+### Quadro Kanban de Riscos
 
 <img width="1518" height="515" alt="kanban_riscos" src="https://github.com/user-attachments/assets/6aca91c0-278b-49d8-918f-41ba8f27e957" />
 
-### Quadro Kanban de Riscos
+### Quadro Kanban da Sprint
 
 <img width="1158" height="692" alt="kanban_sprint" src="https://github.com/user-attachments/assets/ab7d6537-30b9-40f7-abfe-4cfd959a1823" />
 
