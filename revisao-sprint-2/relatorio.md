@@ -10,12 +10,12 @@ Este documento formaliza o encerramento da Sprint 2, revisando as entregas reali
 ### 2.1. Histórias de Usuário Concluídas
 Todas as histórias planejadas para esta sprint foram implementadas e integradas à CLI:
 
-* **US01 - Cadastro via CLI**: Possibilidade de criar uma conta no Finta diretamente pelo terminal.
-* **US02 - Login via CLI**: Autenticação de usuários existentes no terminal utilizando o comando `finta`.
-* **US03 - Visualização de Ativos**: Acesso à tela de indicadores de ativos através da interface de texto.
-* **US04 - Dashboard Financeiro**: Visualização do resumo financeiro consolidado na tela inicial da CLI.
-* **US05 - Gestão de Favoritos**: Funcionalidade de adicionar e remover ativos da lista de favoritos pelo terminal.
-* **Bônus**: Integração de agente de IA para operação da CLI via linguagem natural.
+* Cadastro via CLI**: Possibilidade de criar uma conta no Finta diretamente pelo terminal.
+* Login via CLI**: Autenticação de usuários existentes no terminal utilizando o comando `finta`.
+* Visualização de detalhes de ativos**: Acesso à tela de indicadores de ativos através da interface de texto.
+* Dashboard Financeiro**: Visualização do resumo financeiro consolidado na tela inicial da CLI com as mesmas informações do dashboard na web.
+* Gestão de Favoritos**: Funcionalidade de adicionar e remover ativos da lista de favoritos pelo terminal.
+* **Bônus**: Integração de agente de IA para operação da CLI via linguagem natural através de uma skill.
 
 ### 2.2. Validação das Entregas
 As entregas foram validadas com base nos critérios de aceite de funcionamento em ambiente Unix-like, garantindo que os comandos executados no terminal reflitam as mesmas informações presentes na plataforma web.
@@ -33,11 +33,10 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 <img width="1158" height="692" alt="kanban_sprint" src="https://github.com/user-attachments/assets/ab7d6537-30b9-40f7-abfe-4cfd959a1823" />
 
 ## 3. Indicadores de Desempenho
-*Dados baseados no fluxo de trabalho da Sprint 2.*
 
 **Throughput** 
 
-5 Histórias -> Volume total de entregas concluídas.
+~2/3 tasks/semana
 
 **Lead Time**
 
@@ -47,15 +46,15 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 
 **Cycle Time**
 
-- 3 dias
+~ 3 dias por tarefa
 
 **Velocity**
-
-<img width="1632" height="500" alt="velocity" src="https://github.com/user-attachments/assets/4afa5f14-50b5-4768-bb0e-69318be4f166" />
+> 20 pontos de história
+<img width="2417" height="1442" alt="image" src="https://github.com/user-attachments/assets/876c569c-0503-4d00-baf0-7614792857e7" />
 
 **Burndown**
 
-<img width="1632" height="500" alt="canvas" src="https://github.com/user-attachments/assets/98b21bb1-5d3b-441f-bd54-96e08e920e6c" />
+<img width="2425" height="1179" alt="image" src="https://github.com/user-attachments/assets/479ff521-7579-4e72-b9be-0800255f1109" />
 
 ## 4. Retrospectiva Final
 
@@ -63,7 +62,7 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 * **Paralelização do esforço**: A equipe conseguiu distribuir as tarefas da CLI de forma simultânea.
 
 ### 4.2. Dificuldades Enfrentadas
-* **Gerenciamento de tempo**: Ajustar o cronograma de desenvolvimento com as entregas acadêmicas.
+* **Gerenciamento de tempo**: Ajustar o cronograma de desenvolvimento com as entregas das outras disciplinas.
 
 ### 4.3. Riscos Ocorridos e Soluções
 * **Incompatibilidade de SO**: Identificada incompatibilidade com Windows. **Solução**: Foco total em sistemas Unix-like para garantir estabilidade.
