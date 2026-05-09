@@ -10,11 +10,11 @@ Este documento formaliza o encerramento da Sprint 2, revisando as entregas reali
 ### 2.1. Histórias de Usuário Concluídas
 Todas as histórias planejadas para esta sprint foram implementadas e integradas à CLI:
 
-* Cadastro via CLI**: Possibilidade de criar uma conta no Finta diretamente pelo terminal.
-* Login via CLI**: Autenticação de usuários existentes no terminal utilizando o comando `finta`.
-* Visualização de detalhes de ativos**: Acesso à tela de indicadores de ativos através da interface de texto.
-* Dashboard Financeiro**: Visualização do resumo financeiro consolidado na tela inicial da CLI com as mesmas informações do dashboard na web.
-* Gestão de Favoritos**: Funcionalidade de adicionar e remover ativos da lista de favoritos pelo terminal.
+* **Cadastro via CLI**: Possibilidade de criar uma conta no Finta diretamente pelo terminal.
+* **Login via CLI**: Autenticação de usuários existentes no terminal utilizando o comando `finta`.
+* **Visualização de detalhes de ativos**: Acesso à tela de indicadores de ativos através da interface de texto.
+* **Dashboard Financeiro**: Visualização do resumo financeiro consolidado na tela inicial da CLI com as mesmas informações do dashboard na web.
+* **Gestão de Favoritos**: Funcionalidade de adicionar e remover ativos da lista de favoritos pelo terminal.
 * **Bônus**: Integração de agente de IA para operação da CLI via linguagem natural através de uma skill.
 
 ### 2.2. Validação das Entregas
