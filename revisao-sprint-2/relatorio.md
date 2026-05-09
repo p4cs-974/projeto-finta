@@ -70,13 +70,8 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 * **Otimização de Agentes**: Criação do arquivo `AGENTS.md` para fornecer contexto reutilizável às IAs, aumentando a produtividade da equipe.
 
 ### 4.5. Lições Aprendidas
-* Adoção da filosofia de que o "pequeno" não é apenas um degrau, mas um destino de excelência em si (baseado em *Rework*).
-
----
+*  Ao invés de expandir o escopo do projeto, o grupo preferiu pivotá-lo para algo mais simples, focando na qualidade final do produto.
 
 ## 5. Pendências e Repositório
 * **Histórias Pendentes**: Nenhuma. Todas as metas da Sprint 2 foram atingidas conforme o planejamento.
 * **Link do Repositório GitHub**: [Adicione o Link para o Repositório aqui]
-
----
-**Data de Emissão**: 08 de maio de 2026.
