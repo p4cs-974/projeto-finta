@@ -46,7 +46,7 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 
 **Cycle Time**
 
-3
+3 dias
 
 **Velocity**
 > 20 pontos de história
