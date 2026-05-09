@@ -36,13 +36,13 @@ Na prática, a sprint buscou entregar:
 
 ## Slide 4 - Histórias Concluídas na Sprint 2
 
-| Ticket | História de usuário | Status no Jira | Responsável | Pontos |
-| --- | --- | --- | --- | ---: |
-| ROBERTO-43 | Visualizar dashboard financeiro através da CLI | Concluído | Pedro Custódio | 5 |
-| ROBERTO-44 | Visualizar detalhes de indicadores de ativos através da CLI | Concluído | Kawan Mark Geronimo da Silva | 5 |
-| ROBERTO-49 | Realização do cadastro do usuário através da CLI | Concluído | Pedro Custódio | 5 |
-| ROBERTO-50 | Editar/adicionar favoritos através da CLI | Concluído | Gabriel Albertini Pinheiro | 5 |
-| ROBERTO-51 | Autenticar CLI com login existente | Concluído fora da sprint | Pedro Custódio | 1 |
+| Ticket     | História de usuário                                        | Status no Jira            | Responsável                 | Pontos |
+| ---------- | ------------------------------------------------------------ | ------------------------- | ---------------------------- | -----: |
+| ROBERTO-43 | Visualizar dashboard financeiro através da CLI              | Concluído                | Pedro Custódio              |      5 |
+| ROBERTO-44 | Visualizar detalhes de indicadores de ativos através da CLI | Concluído                | Kawan Mark Geronimo da Silva |      5 |
+| ROBERTO-49 | Realização do cadastro do usuário através da CLI         | Concluído                | Pedro Custódio              |      5 |
+| ROBERTO-50 | Editar/adicionar favoritos através da CLI                   | Concluído                | Gabriel Albertini Pinheiro   |      5 |
+| ROBERTO-51 | Autenticar CLI com login existente                           | Concluído fora da sprint | Pedro Custódio              |      1 |
 
 Resumo:
 
@@ -62,13 +62,13 @@ A história ROBERTO-51 aparece como `Work items completed outside of sprint`, ou
 
 ## Slide 6 - Validação dos Critérios de Aceite
 
-| História | Critério de aceite | Validação realizada |
-| --- | --- | --- |
-| ROBERTO-43 | Usuário consegue visualizar dashboard financeiro pela CLI | Validado pela implementação da tela/resumo financeiro no terminal |
-| ROBERTO-44 | Usuário consegue visualizar detalhes de indicadores de ativos pela CLI | Validado pela consulta e apresentação de informações de ativos |
-| ROBERTO-49 | Usuário consegue realizar cadastro pela CLI | Validado pelo fluxo de criação de conta via terminal |
-| ROBERTO-50 | Usuário consegue editar/adicionar favoritos pela CLI | Validado pelo fluxo de gestão de favoritos e testes relacionados |
-| ROBERTO-51 | Usuário consegue autenticar a CLI com login existente | Validado pelo fluxo de login/autenticação pelo terminal |
+| História  | Critério de aceite                                                     | Validação realizada                                               |
+| ---------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| ROBERTO-43 | Usuário consegue visualizar dashboard financeiro pela CLI              | Validado pela implementação da tela/resumo financeiro no terminal |
+| ROBERTO-44 | Usuário consegue visualizar detalhes de indicadores de ativos pela CLI | Validado pela consulta e apresentação de informações de ativos  |
+| ROBERTO-49 | Usuário consegue realizar cadastro pela CLI                            | Validado pelo fluxo de criação de conta via terminal              |
+| ROBERTO-50 | Usuário consegue editar/adicionar favoritos pela CLI                   | Validado pelo fluxo de gestão de favoritos e testes relacionados   |
+| ROBERTO-51 | Usuário consegue autenticar a CLI com login existente                  | Validado pelo fluxo de login/autenticação pelo terminal           |
 
 Além da validação funcional, o projeto possui testes automatizados em partes da CLI, incluindo favoritos, formatação do dashboard, cliente de API, autenticação e distribuição da CLI.
 
@@ -92,23 +92,23 @@ Imagem complementar registrada durante o acompanhamento da sprint:
 
 Riscos acompanhados na Sprint 2:
 
-| Risco | Impacto | Situação final |
-| --- | --- | --- |
+| Risco                                         | Impacto                                                                 | Situação final                                                              |
+| --------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Incompatibilidade entre sistemas operacionais | A CLI poderia se comportar de forma diferente em Windows, Linux e macOS | Ocorreu parcialmente; a equipe priorizou funcionamento em ambientes Unix-like |
-| Integração com APIs externas | Falhas externas poderiam impedir consulta de cotações | Risco monitorado e mitigado com tratamento de erros |
-| Validação e tratamento de erros na CLI | Entradas inválidas poderiam prejudicar a experiência do usuário | Mitigado com validações e testes |
-| Ambiente de desenvolvimento | Configuração de pacotes e variáveis poderia atrasar entregas | Mitigado com padronização de comandos e documentação |
+| Integração com APIs externas                | Falhas externas poderiam impedir consulta de cotações                 | Risco monitorado e mitigado com tratamento de erros                           |
+| Validação e tratamento de erros na CLI      | Entradas inválidas poderiam prejudicar a experiência do usuário      | Mitigado com validações e testes                                            |
+| Ambiente de desenvolvimento                   | Configuração de pacotes e variáveis poderia atrasar entregas         | Mitigado com padronização de comandos e documentação                      |
 
 ## Slide 9 - Indicadores Finais da Sprint
 
-| Indicador | Resultado | Interpretação |
-| --- | --- | --- |
-| Burndown | Sprint 2 registrada no Jira com itens concluídos | Mostra a evolução da queima do trabalho planejado |
-| Lead Time | Aproximadamente 27 dias | Tempo entre criação/entrada dos itens e entrega final |
-| Cycle Time | Aproximadamente 3 dias | Tempo médio de desenvolvimento ativo dos itens |
-| Throughput | 4 histórias concluídas dentro da sprint; 5 histórias entregues no total | Quantidade de itens entregues |
-| Velocidade | 20 pontos no Jira; 21 pontos considerando a issue concluída fora da sprint | Pontos entregues na sprint |
-| WIP | Controlado pelo Kanban | Acompanhamento de tarefas simultaneamente em andamento |
+| Indicador  | Resultado                                                                   | Interpretação                                         |
+| ---------- | --------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Burndown   | Sprint 2 registrada no Jira com itens concluídos                           | Mostra a evolução da queima do trabalho planejado     |
+| Lead Time  | Aproximadamente 27 dias                                                     | Tempo entre criação/entrada dos itens e entrega final |
+| Cycle Time | Aproximadamente 3 dias                                                      | Tempo médio de desenvolvimento ativo dos itens         |
+| Throughput | 4 histórias concluídas dentro da sprint; 5 histórias entregues no total  | Quantidade de itens entregues                           |
+| Velocidade | 20 pontos no Jira; 21 pontos considerando a issue concluída fora da sprint | Pontos entregues na sprint                              |
+| WIP        | Controlado pelo Kanban                                                      | Acompanhamento de tarefas simultaneamente em andamento  |
 
 Observação importante:
 
@@ -120,10 +120,10 @@ O Velocity Report do Jira contabiliza 20 pontos concluídos na Sprint 2 porque a
 
 Dados observados no Jira:
 
-| Sprint | Commitment | Completed |
-| --- | ---: | ---: |
-| quadro Sprint 1 | 0 | 0 |
-| quadro Sprint 2 | 0 | 20 |
+| Sprint          | Commitment | Completed |
+| --------------- | ---------: | --------: |
+| quadro Sprint 1 |          0 |         0 |
+| quadro Sprint 2 |          0 |        20 |
 
 Interpretação:
 
