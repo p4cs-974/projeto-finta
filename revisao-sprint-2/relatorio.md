@@ -56,6 +56,18 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 
 <img width="2425" height="1179" alt="image" src="https://github.com/user-attachments/assets/479ff521-7579-4e72-b9be-0800255f1109" />
 
+**WIP (Work in Progress)**
+
+O WIP foi estimado com base no quadro Kanban da sprint e nas datas de início das branches/PRs. O objetivo foi identificar quantas tarefas estavam em desenvolvimento simultâneo em cada momento da sprint.
+
+| Período | Itens em andamento | WIP |
+|---|---|---:|
+| 11/04 a 12/04 | ROBERTO-49 | 1 |
+| 13/04 a 23/04 | ROBERTO-51, ROBERTO-44 | 2 |
+| 06/05 a 08/05 | ROBERTO-50, ROBERTO-43 | 2 |
+
+O pico de WIP identificado foi **2 itens simultâneos**. Esse volume indica que a equipe conseguiu paralelizar o desenvolvimento sem acumular excesso de trabalho em andamento, mantendo uma distribuição controlada das tarefas ao longo da sprint.
+
 ## 4. Retrospectiva Final
 
 ### 4.1. Principais Acertos
