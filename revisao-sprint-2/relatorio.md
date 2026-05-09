@@ -77,3 +77,4 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 
 ## 5. Pendências e Repositório
 * **Histórias Pendentes**: Nenhuma. Todas as metas da Sprint 2 foram atingidas conforme o planejamento.
+* **Link do Repositório**: https://github.com/p4cs-974/projeto-finta/tree/main
