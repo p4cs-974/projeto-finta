@@ -26,7 +26,7 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 
 ### Quadro Kanban de Riscos
 
-<img width="1518" height="515" alt="kanban_riscos" src="https://github.com/user-attachments/assets/6aca91c0-278b-49d8-918f-41ba8f27e957" />
+<img width="2303" height="1065" alt="image" src="https://github.com/user-attachments/assets/91df6c6d-d278-4e99-ab86-2cd3e1f058d8" />
 
 ### Quadro Kanban da Sprint
 
@@ -42,7 +42,7 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 
 - Criação: 11/04/2026
 - Finalização: 08/05/2026
-- Lead Time: 27 dias
+- Lead Time: 14 dias
 
 **Cycle Time**
 
