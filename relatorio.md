@@ -23,13 +23,9 @@ As entregas foram validadas com base nos critérios de aceite de funcionamento e
 ### 2.3. Situação dos Quadros (Kanban)
 Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos:
 
-**[Adicione aqui o Print final do Quadro Kanban da Sprint]**
-> *Nota: Todas as histórias acima devem estar na coluna "Done".*
+<img width="1518" height="515" alt="kanban_riscos" src="https://github.com/user-attachments/assets/6aca91c0-278b-49d8-918f-41ba8f27e957" />
 
-**[Adicione aqui o Print final do Quadro Kanban de Riscos]**
-> *Nota: Os riscos de SO e Ambiente devem estar marcados como mitigados ou encerrados.*
-
----
+<img width="1158" height="692" alt="kanban_sprint" src="https://github.com/user-attachments/assets/ab7d6537-30b9-40f7-abfe-4cfd959a1823" />
 
 ## 3. Indicadores de Desempenho
 *Dados baseados no fluxo de trabalho da Sprint 2.*
@@ -37,14 +33,25 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 | Indicador | Valor | Definição |
 | :--- | :--- | :--- |
 | **Throughput** | 5 Histórias | Volume total de entregas concluídas. |
-| **Velocidade** | [Insira o valor aqui] | Pontos de história ou tarefas por sprint. |
 | **Lead Time** | [Insira o valor aqui] | Tempo total desde a criação da tarefa até a entrega. |
-| **Cycle Time** | [Insira o valor aqui] | Tempo médio gasto no desenvolvimento ativo. |
-| **WIP** | 0 | Trabalho em progresso no encerramento da sprint. |
 
-**[Adicione aqui o link ou imagem do gráfico de Burndown]**
+**Lead Time**
 
----
+- Criação: 11/04/2026
+- Finalização: 08/05/2026
+- Lead Time: 27 dias
+
+**Cycle Time**
+
+- 3 dias
+
+**Velocity**
+
+<img width="1632" height="500" alt="velocity" src="https://github.com/user-attachments/assets/4afa5f14-50b5-4768-bb0e-69318be4f166" />
+
+**Burndown**
+
+<img width="1632" height="500" alt="canvas" src="https://github.com/user-attachments/assets/98b21bb1-5d3b-441f-bd54-96e08e920e6c" />
 
 ## 4. Retrospectiva Final
 
