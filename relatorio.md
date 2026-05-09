@@ -25,6 +25,8 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 
 <img width="1518" height="515" alt="kanban_riscos" src="https://github.com/user-attachments/assets/6aca91c0-278b-49d8-918f-41ba8f27e957" />
 
+
+
 <img width="1158" height="692" alt="kanban_sprint" src="https://github.com/user-attachments/assets/ab7d6537-30b9-40f7-abfe-4cfd959a1823" />
 
 ## 3. Indicadores de Desempenho
