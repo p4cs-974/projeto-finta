@@ -50,6 +50,7 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 
 **Velocity**
 > 20 pontos de história
+
 <img width="2417" height="1442" alt="image" src="https://github.com/user-attachments/assets/876c569c-0503-4d00-baf0-7614792857e7" />
 
 **Burndown**
