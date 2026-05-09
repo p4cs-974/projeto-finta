@@ -34,10 +34,7 @@ Abaixo, a evidência do estado final das atividades e do gerenciamento de riscos
 ## 3. Indicadores de Desempenho
 *Dados baseados no fluxo de trabalho da Sprint 2.*
 
-| Indicador | Valor | Definição |
-| :--- | :--- | :--- |
-| **Throughput** | 5 Histórias | Volume total de entregas concluídas. |
-| **Lead Time** | [Insira o valor aqui] | Tempo total desde a criação da tarefa até a entrega. |
+**Throughput** 5 Histórias -> Volume total de entregas concluídas.
 
 **Lead Time**
 
