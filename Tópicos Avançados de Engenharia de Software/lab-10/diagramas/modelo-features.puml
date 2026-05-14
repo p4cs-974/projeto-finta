@@ -1,0 +1,39 @@
+@startmindmap
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam ArrowColor #4A5568
+
+* Finta LPS
+** Consulta de cotações <<obrigatória>>
+*** Normalizar ticker <<obrigatória>>
+*** Exibir preço e variação <<obrigatória>>
+*** Tipo de ativo <<alternativa>>
+**** Ações
+**** Criptomoedas
+** Integração com provedores <<obrigatória>>
+*** Provedor de ações <<OR>>
+**** Brapi/B3 equivalente
+*** Provedor de criptoativos <<OR>>
+**** CoinCap
+** Cache de cotações <<opcional>>
+*** Cache por ticker
+*** Atualização assíncrona
+** Identidade e acesso <<opcional>>
+*** Cadastro
+*** Login
+*** Validação de sessão
+** Biblioteca de favoritos <<opcional>>
+*** Adicionar favorito
+*** Listar favoritos
+*** Remover favorito
+** Canal de entrega <<alternativa>>
+*** Web App
+**** Interface Next.js
+**** Dashboard visual
+**** Instalação da CLI
+*** CLI
+**** Interface terminal
+**** Modo headless
+**** Controle de limite de requisições
+@endmindmap
